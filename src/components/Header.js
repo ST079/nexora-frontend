@@ -6,10 +6,16 @@ import { Search, ShoppingCart, User, Menu, X, ChevronDown } from "lucide-react";
 import { HOME_ROUTE } from "@/constants/routes";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import ProductsMenu, {
+  CATEGORIES,
+} from "../app/(client)/_components/ProductsMenu";
+import { usePathname } from "next/navigation";
+import { div } from "framer-motion/client";
 
 const Header = () => {
   // const { user } = useAuth();
   // const { totals, setDrawerOpen, pulse } = useCart();
+  const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   // const [mobileCatalogOpen, setMobileCatalogOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -36,11 +42,25 @@ const Header = () => {
         </Link>
 
         <nav className="hidden lg:flex items-center gap-7">
-          {NavLinks.map((navLink) => (
-            <Link href={navLink.route} key={navLink.label}>
-              <li className="list-none">{navLink.label}</li>
-            </Link>
-          ))}
+          {NavLinks.map((navLink) => {
+            const isActive =
+              pathname === navLink.route ||
+              (navLink.route !== "/" && pathname.startsWith(navLink.route));
+
+            return (
+              <div
+                key={navLink.label}
+                className={`eyebrow transition-colors hover:text-ink ${
+                  isActive ? "text-ink" : "text-slate"
+                }`}
+              >
+                <Link href={navLink.route}>
+                  <span>{navLink.label}</span>
+                </Link>
+              </div>
+            );
+          })}
+          <ProductsMenu />
         </nav>
 
         <form

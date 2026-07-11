@@ -18,10 +18,6 @@ const navLinks = [
     label: "Contact",
     route: CONTACT_ROUTE,
   },
-  {
-    label: "Products",
-    route: PRODUCTS_ROUTE,
-  },
 ];
 
 export default navLinks;

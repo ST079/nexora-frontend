@@ -11,10 +11,12 @@ import Header from "@/components/Header";
 
 const RootLayout = ({ children }) => {
   return (
-    <html>
-      <body>
+    <html lang="en">
+      <body className="min-h-screen flex flex-col">
         <Header />
-        {children}
+
+        <main className="flex-1">{children}</main>
+
         <Footer />
       </body>
     </html>
