@@ -3,6 +3,7 @@ import axios from "axios";
 import { div } from "framer-motion/client";
 import Link from "next/link";
 import React from "react";
+import ProductCard from "../_components/ProductCard";
 
 export const metadata = {
   title: "Products | Nexora",
@@ -15,9 +16,9 @@ const ProductsPage = async () => {
 
   return (
     <section className="container-page py-16">
-      <div className="grid grid-cols-1 gap-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
         {products.map((product) => (
-          <Link href={`products/${product._id}`} key={product._id}>{product.name}</Link>
+          <ProductCard key={product._id} product={product} />
         ))}
       </div>
     </section>
