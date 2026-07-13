@@ -4,6 +4,7 @@ import { div } from "framer-motion/client";
 import Link from "next/link";
 import React from "react";
 import ProductCard from "../_components/ProductCard";
+import { SlidersHorizontal } from "lucide-react";
 
 export const metadata = {
   title: "Products | Nexora",
@@ -16,10 +17,73 @@ const ProductsPage = async () => {
 
   return (
     <section className="container-page py-16">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
-        {products.map((product) => (
-          <ProductCard key={product._id} product={product} />
-        ))}
+      <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
+        <div>
+          <p className="eyebrow mb-2">For You</p>
+          <h1 className="font-display text-3xl font-semibold">All listings</h1>
+        </div>
+        <div className="flex items-center gap-3">
+          <select
+            // value={sort}
+            className="field max-w-[180px] cursor-pointer"
+          ></select>
+          <button className="btn-secondary lg:hidden">
+            <SlidersHorizontal size={14} /> Filters
+          </button>
+        </div>
+      </div>
+
+      <div className="grid lg:grid-cols-[220px_1fr] gap-8">
+        <aside className={`block lg:block`}>
+          <div className="card-frame p-5 space-y-5 lg:sticky lg:top-24">
+            <div>
+              <p className="eyebrow mb-2">Category</p>
+              <input
+                // value={draft.category}
+
+                placeholder="e.g. Smartphones"
+                className="field"
+              />
+            </div>
+            <div>
+              <p className="eyebrow mb-2">Brand</p>
+              <input
+                // value={draft.brand}
+
+                placeholder="apple,xiaomi"
+                className="field"
+              />
+            </div>
+            <div>
+              <p className="eyebrow mb-2">Price range (Rs.)</p>
+              <div className="flex items-center gap-2">
+                <input
+                  // value={draft.min}
+
+                  placeholder="Min"
+                  type="number"
+                  className="field"
+                />
+                <span className="text-slate">–</span>
+                <input
+                  // value={draft.max}
+
+                  placeholder="Max"
+                  type="number"
+                  className="field"
+                />
+              </div>
+            </div>
+            <button className="btn-primary w-full">Apply filters</button>
+            <button className="btn-ghost w-full justify-center">Reset</button>
+          </div>
+        </aside>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+          {products.map((product) => (
+            <ProductCard key={product._id} product={product} />
+          ))}
+        </div>
       </div>
     </section>
   );

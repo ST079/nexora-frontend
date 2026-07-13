@@ -2,7 +2,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, ShoppingBag, ShoppingCart } from "lucide-react";
 import { formatNPR, productImage } from "@/utils/format";
 import Image from "next/image";
 import Link from "next/link";
@@ -25,10 +25,12 @@ const ProductCard = ({ product, index = 0 }) => {
         className="card-frame group block"
       >
         <div className="relative aspect-square overflow-hidden bg-paper">
-          <img
+          <Image
             src={productImage(product)}
             alt={product.name}
-            loading="lazy"
+            height={400}
+            width={600}
+            loading="eager"
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
           />
           {hover && (
@@ -46,7 +48,8 @@ const ProductCard = ({ product, index = 0 }) => {
             className="absolute bottom-3 right-3 grid h-9 w-9 place-items-center bg-ink text-paper opacity-0 transition-all duration-300 group-hover:opacity-100 hover:bg-signal disabled:cursor-not-allowed disabled:opacity-0"
             aria-label="Add to cart"
           >
-            <Plus size={16} />
+            {/* <Plus size={16} /> */}
+            <ShoppingCart size={16}/>
           </button>
         </div>
 

@@ -12,7 +12,7 @@ export const generateMetadata = async ({ params }) => {
   const product = await fetchById(id);
   console.log(product.name);
   return {
-    title: product?.name,
+    title: product?.name ?? config.appName,
   };
 };
 
@@ -24,6 +24,7 @@ const ProductDetailPage = async ({ params, searchParams }) => {
 
   return (
     <section className="container-page">
+      
       <div className="container mx-auto px-6">
         {product.name}, {product.brand}, {product.category}, {product.price}
       </div>
