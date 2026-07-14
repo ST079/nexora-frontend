@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 "use client";
 
 import { motion } from "framer-motion";
@@ -19,6 +20,17 @@ const STATS = [
   { label: "Orders shipped", value: "12k+" },
   { label: "City", value: "KTM" },
 ];
+
+const tickerItems = [
+  "Spec-first catalog",
+  "Kathmandu warehouse",
+  "Khalti payments",
+  "Cash on delivery",
+  "Live inventory",
+  "Real-time order tracking",
+];
+
+const marqueeItems = Array.from({ length: 3 }, () => tickerItems).flat();
 
 const VALUES = [
   {
@@ -115,7 +127,7 @@ const AboutPage = () => {
 
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/products" className="btn-primary">
-                Browse catalog <ArrowRight size={15} />
+                Browse Products <ArrowRight size={15} />
               </Link>
 
               <Link href="/contact" className="btn-secondary">
@@ -150,12 +162,129 @@ const AboutPage = () => {
                 </div>
               ))}
             </div>
+            <div className="px-6 py-4 font-mono text-xs text-slate">
+              <span className="text-signal">{">"}</span> nexora.products.load()
+              → <span className="text-ok">success</span>
+            </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Keep the rest of your JSX exactly the same */}
-      {/* Values, Timeline, Team, CTA sections */}
+      <section className="border-y border-hairline bg-ink py-3 overflow-hidden">
+        <div className="flex whitespace-nowrap animate-marquee">
+          {marqueeItems.map((text, index) => (
+            <span key={index} className="mx-8 font-mono text-xs text-paper/60">
+              <span className="text-signal">—</span> {text}
+            </span>
+          ))}
+        </div>
+      </section>
+
+      <section className="container-page py-16">
+        <motion.div {...fadeUp()} className="mb-10">
+          <p className="eyebrow mb-2">What we stand for</p>
+          <h2 className="font-display text-3xl font-semibold">
+            Four things we won't compromise on
+          </h2>
+        </motion.div>
+
+        <div className="grid sm:grid-cols-2 gap-4">
+          {VALUES.map((v, i) => (
+            <motion.div
+              key={v.title}
+              {...fadeUp(i * 0.06)}
+              className="card-frame group p-6 hover:border-ink transition-colors"
+            >
+              <div className="flex items-start gap-4">
+                <span className="grid h-10 w-10 shrink-0 place-items-center border border-hairline bg-paper group-hover:bg-ink group-hover:text-paper transition-colors">
+                  <v.icon size={17} />
+                </span>
+                <div>
+                  <p className="font-display font-semibold mb-1 group-hover:text-signal transition-colors">
+                    {v.title}
+                  </p>
+                  <p className="text-sm text-slate leading-relaxed">{v.desc}</p>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Timeline ── */}
+      <section className="container-page py-6 pb-16">
+        <motion.div {...fadeUp()} className="mb-10">
+          <p className="eyebrow mb-2">How we got here</p>
+          <h2 className="font-display text-3xl font-semibold">The build log</h2>
+        </motion.div>
+
+        <div className="relative border-l border-hairline pl-8 space-y-10">
+          {TIMELINE.map((t, i) => (
+            <motion.div key={t.year} {...fadeUp(i * 0.07)} className="relative">
+              <span className="absolute -left-[2.15rem] top-0.5 grid h-4 w-4 place-items-center border border-signal bg-paper">
+                <span className="h-1.5 w-1.5 bg-signal" />
+              </span>
+              <p className="font-mono text-xs text-signal mb-1">{t.year}</p>
+              <p className="font-display font-semibold mb-1">{t.label}</p>
+              <p className="text-sm text-slate">{t.desc}</p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Team ── */}
+      <section className="container-page py-6 pb-16">
+        <motion.div {...fadeUp()} className="mb-10">
+          <p className="eyebrow mb-2">The people</p>
+          <h2 className="font-display text-3xl font-semibold">
+            Small team, wide scope
+          </h2>
+        </motion.div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {TEAM.map((member, i) => (
+            <motion.div
+              key={member.name}
+              {...fadeUp(i * 0.06)}
+              className="card-frame p-5 group hover:border-ink transition-colors"
+            >
+              <div className="h-12 w-12 border border-hairline bg-ink grid place-items-center mb-4 group-hover:bg-signal transition-colors">
+                <span className="font-display text-sm text-paper">
+                  {member.initials}
+                </span>
+              </div>
+              <p className="font-display font-semibold text-sm">
+                {member.name}
+              </p>
+              <p className="eyebrow mt-1">{member.role}</p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Bottom CTA ── */}
+      <section className="container-page pb-20">
+        <motion.div
+          {...fadeUp()}
+          className="card-frame grid sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-hairline"
+        >
+          <BottomFeature
+            icon={Package}
+            label="500+ SKUs"
+            desc="Products across 8 categories."
+          />
+          <BottomFeature
+            icon={Truck}
+            label="Same-day dispatch"
+            desc="Orders before noon leave today."
+          />
+          <BottomFeature
+            icon={Users}
+            label="Talk to a human"
+            desc="Real support, not a chatbot."
+          />
+        </motion.div>
+      </section>
     </div>
   );
 };

@@ -1,13 +1,26 @@
 @import "tailwindcss";
 
 @theme {
-  --color-ink: #14151A;
-  --color-paper: #FAFAF7;
-  --color-panel: #FFFFFF;
-  --color-signal: #FF6A1A;
-  --color-slate: #64748B;
-  --color-slate-light: #94A3B8;
-  --color-hairline: #E5E7EB;
+  --color-ink: #14151a;
+  --color-paper: #fafaf7;
+  --color-panel: #ffffff;
+  --color-signal: #ff6a1a;
+  --color-slate: #64748b;
+  --color-slate-light: #94a3b8;
+  --color-hairline: #e5e7eb;
+}
+
+@theme {
+  --animate-marquee: marquee 20s linear infinite;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }
 
 @layer base {
@@ -21,18 +34,18 @@
 
   body {
     background-image:
-      linear-gradient(90deg, rgba(20,21,26,0.025) 1px, transparent 1px),
-      linear-gradient(rgba(20,21,26,0.025) 1px, transparent 1px);
+      linear-gradient(90deg, rgba(20, 21, 26, 0.025) 1px, transparent 1px),
+      linear-gradient(rgba(20, 21, 26, 0.025) 1px, transparent 1px);
     background-size: 28px 28px;
   }
 
   ::selection {
-    background: #FF6A1A;
-    color: #FAFAF7;
+    background: #ff6a1a;
+    color: #fafaf7;
   }
 
   :focus-visible {
-    outline: 2px solid #3046E5;
+    outline: 2px solid #3046e5;
     outline-offset: 2px;
   }
 }
