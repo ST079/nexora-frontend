@@ -2,6 +2,7 @@ import React from "react";
 import ProductCard from "../_components/ProductCard";
 import ProductFilter from "../_components/ProductFilter";
 import { getProducts } from "@/api/product";
+import EmptyState from "@/components/EmptyState";
 
 export const metadata = {
   title: "Products | Nexora",
@@ -15,11 +16,20 @@ const ProductsPage = async ({ searchParams }) => {
     <section className="container-page py-16">
       <div className="grid lg:grid-cols-[250px_1fr] gap-8">
         <ProductFilter />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-          {products.map((product) => (
-            <ProductCard key={product._id} product={product} />
-          ))}
-        </div>
+
+        {products.length == 0 ? (
+          <EmptyState
+            title="No matches"
+            description="Nothing fits those filters yet. Try widening the price range or clearing a filter."
+            action={<button className="btn-secondary">Opps!!!!!</button>}
+          />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+            {products.map((product) => (
+              <ProductCard key={product._id} product={product} />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

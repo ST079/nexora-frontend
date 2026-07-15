@@ -9,6 +9,7 @@ import { usePathname } from "next/navigation";
 import ProductsMenu from "@/app/(client)/_components/ProductsMenu";
 import { categories } from "@/constants/categories";
 import navLinks from "@/constants/navLinks";
+import Logo from "./Logo";
 
 
 const Header = () => {
@@ -31,15 +32,7 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-40 border-b border-hairline bg-paper/90 backdrop-blur">
       <div className="container-page flex h-16 items-center justify-between gap-4">
-        <Link href={HOME_ROUTE} className="flex items-center gap-2 shrink-0">
-          <span className="grid h-8 w-8 place-items-center bg-ink font-mono text-sm text-signal">
-            N
-          </span>
-          <span className="font-display text-lg font-semibold tracking-tight">
-            NEXORA
-          </span>
-        </Link>
-
+        <Logo/>
         <nav className="hidden lg:flex items-center gap-7">
           {NavLinks.map((navLink) => {
             const isActive =
