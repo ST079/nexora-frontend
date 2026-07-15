@@ -1,16 +1,14 @@
 "use client";
 import React, { useState } from "react";
 import NavLinks from "@/constants/navLinks";
-import { NavLink } from "react-router-dom";
 import { Search, ShoppingCart, User, Menu, X, ChevronDown } from "lucide-react";
 import { HOME_ROUTE } from "@/constants/routes";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import ProductsMenu, {
-  CATEGORIES,
-} from "../app/(client)/_components/ProductsMenu";
 import { usePathname } from "next/navigation";
-import { div } from "framer-motion/client";
+import ProductsMenu from "@/app/(client)/_components/ProductsMenu";
+import { categories } from "@/constants/categories";
+
 
 const Header = () => {
   // const { user } = useAuth();
@@ -150,7 +148,7 @@ const Header = () => {
                   className="overflow-hidden"
                 >
                   <div className="grid grid-cols-2 gap-2 py-2">
-                    {CATEGORIES.map((c) => (
+                    {categories.map((c) => (
                       <Link
                         key={c.label}
                         href={`/products?category=${encodeURIComponent(c.label)}`}

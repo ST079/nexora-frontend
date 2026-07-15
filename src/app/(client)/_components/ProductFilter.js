@@ -1,5 +1,12 @@
 "use client";
-import { DEFAULT_MIN_Price, DEFAULT_SORT } from "@/constants/defaults";
+import { categories } from "@/constants/categories";
+import {
+  DEFAULT_BRAND,
+  DEFAULT_CATEGORY,
+  DEFAULT_MAX_Price,
+  DEFAULT_MIN_Price,
+  DEFAULT_SORT,
+} from "@/constants/defaults";
 import { SORT_OPTIONS } from "@/constants/sort";
 import { SlidersHorizontal } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -7,17 +14,32 @@ import React, { useState } from "react";
 
 const ProductFilter = () => {
   const router = useRouter();
-  const [minPrice, setMinPrice] = useState(DEFAULT_MIN_Price);
-  const [maxPrice, setMaxPrice] = useState("");
-  const [sort, setSort] = useState(DEFAULT_SORT);
 
-  const ApplyFilter = () => {
+  const [minPrice, setMinPrice] = useState(DEFAULT_MIN_Price);
+  const [maxPrice, setMaxPrice] = useState(DEFAULT_MAX_Price);
+  const [sort, setSort] = useState(DEFAULT_SORT);
+  const [category, setCategory] = useState(DEFAULT_CATEGORY);
+  const [brand, setBrand] = useState(DEFAULT_BRAND);
+
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const applyFilter = () => {
     const params = new URLSearchParams();
     params.set("min", minPrice);
     params.set("max", maxPrice);
     params.set("sort", sort);
+    params.set("category", category);
+    params.set("brand", brand);
 
     router.push(`?${params.toString()}`);
+  };
+
+  const clearFilters = () => {
+    setSort(DEFAULT_SORT);
+    setBrand(DEFAULT_BRAND);
+    setCategory(DEFAULT_CATEGORY);
+    setMaxPrice(DEFAULT_MAX_Price);
+    setMinPrice(DEFAULT_MIN_Price);
   };
 
   return (
@@ -39,7 +61,10 @@ const ProductFilter = () => {
               </option>
             ))}
           </select>
-          <button className="btn-secondary lg:hidden">
+          <button
+            onClick={() => setFiltersOpen((o) => !o)}
+            className="btn-secondary lg:hidden"
+          >
             <SlidersHorizontal size={14} /> Filters
           </button>
         </div>
@@ -48,17 +73,25 @@ const ProductFilter = () => {
       <div>
         <p className="eyebrow mb-2">Category</p>
         <input
-          // value={draft.category}
+          value={category}
           placeholder="e.g. Smartphones"
           className="field"
+          list="product-categories"
+          onChange={(e) => setCategory(e.target.value)}
         />
+        <datalist id="product-categories">
+          {categories.map((category, index) => (
+            <option key={index} value={category.label} />
+          ))}
+        </datalist>
       </div>
       <div>
         <p className="eyebrow mb-2">Brand</p>
         <input
-          // value={draft.brand}
+          value={brand}
           placeholder="apple,xiaomi"
           className="field"
+          onChange={(e)=>setBrand(e.target.value)}
         />
       </div>
       <div>
@@ -82,10 +115,15 @@ const ProductFilter = () => {
           />
         </div>
       </div>
-      <button className="btn-primary w-full" onClick={ApplyFilter}>
+      <button className="btn-primary w-full" onClick={applyFilter}>
         Apply filters
       </button>
-      <button className="btn-ghost w-full justify-center">Reset</button>
+      <button
+        onClick={clearFilters}
+        className="btn-ghost w-full justify-center"
+      >
+        Reset
+      </button>
     </div>
   );
 };

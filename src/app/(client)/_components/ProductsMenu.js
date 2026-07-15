@@ -1,34 +1,9 @@
 import React, { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  ChevronDown,
-  Smartphone,
-  Cpu,
-  Shirt,
-  ShoppingBasket,
-  Home,
-  Sparkles,
-  Dumbbell,
-  BookOpen,
-  ArrowRight,
-} from "lucide-react";
+import { ChevronDown, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { PRODUCTS_ROUTE } from "@/constants/routes";
-
-export const CATEGORIES = [
-  { label: "Smartphones", icon: Smartphone, blurb: "Flagships & mid-range" },
-  {
-    label: "Tech & Electronics",
-    icon: Cpu,
-    blurb: "Laptops, audio, accessories",
-  },
-  { label: "Clothing", icon: Shirt, blurb: "Everyday & seasonal wear" },
-  { label: "Groceries", icon: ShoppingBasket, blurb: "Pantry & household" },
-  { label: "Home & Living", icon: Home, blurb: "Furniture & decor" },
-  { label: "Beauty", icon: Sparkles, blurb: "Skincare & grooming" },
-  { label: "Sports", icon: Dumbbell, blurb: "Gear & equipment" },
-  { label: "Books", icon: BookOpen, blurb: "Fiction & reference" },
-];
+import { categories } from "@/constants/categories";
 
 const ProductsMenu = () => {
   const [open, setOpen] = useState(false);
@@ -71,7 +46,7 @@ const ProductsMenu = () => {
                 </Link>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                {CATEGORIES.map((c, i) => (
+                {categories.map((c, i) => (
                   <motion.div
                     key={c.label}
                     initial={{ opacity: 0, y: 6 }}
