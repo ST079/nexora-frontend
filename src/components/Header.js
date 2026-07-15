@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import NavLinks from "@/constants/NavLinks";
+import NavLinks from "@/constants/navLinks";
 import { NavLink } from "react-router-dom";
 import { Search, ShoppingCart, User, Menu, X, ChevronDown } from "lucide-react";
 import { HOME_ROUTE } from "@/constants/routes";

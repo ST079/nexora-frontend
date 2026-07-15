@@ -1,11 +1,7 @@
-import { config } from "@/config/config";
-import axios from "axios";
 import React from "react";
 import ProductCard from "../_components/ProductCard";
-import { SlidersHorizontal } from "lucide-react";
 import ProductFilter from "../_components/ProductFilter";
-import ProductSort from "../_components/ProductSort";
-import { DEFAULT_SORT } from "@/constants/Defaults";
+import { getProducts } from "@/api/product";
 
 export const metadata = {
   title: "Products | Nexora",
@@ -13,19 +9,11 @@ export const metadata = {
 };
 
 const ProductsPage = async ({ searchParams }) => {
-  const sort = (await searchParams)?.sort ?? DEFAULT_SORT;
-  
-  const response = await axios.get(
-    `${config.apiUrl}/api/v1/products?sort=${sort}`,
-  );
-
-  const products = response.data;
+  const products = await getProducts(searchParams);
 
   return (
     <section className="container-page py-16">
-      <ProductSort />
-
-      <div className="grid lg:grid-cols-[220px_1fr] gap-8">
+      <div className="grid lg:grid-cols-[250px_1fr] gap-8">
         <aside className={`block lg:block`}>
           <ProductFilter />
         </aside>
