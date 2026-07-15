@@ -1,9 +1,17 @@
+"use client";
 import Link from "next/link";
 import { AlertTriangle, ArrowRight, Check, Eye, Loader2 } from "lucide-react";
 import AnimatedField from "@/components/AnimatedField";
 import AuthVisualPanel from "@/components/AuthVisualPanel";
+import { useForm } from "react-hook-form";
 
 const LoginPage = () => {
+  const { register, handleSubmit } = useForm();
+
+  const loginCredentials = (data) => {
+    console.log(data);
+  };
+
   return (
     <div className="flex min-h-[calc(100vh-64px)]">
       <AuthVisualPanel
@@ -36,12 +44,16 @@ const LoginPage = () => {
             <span>Invalid email or password.</span>
           </div>
 
-          <form className="space-y-4">
+          <form className="space-y-4" onSubmit={handleSubmit(loginCredentials)}>
             <AnimatedField
               label="Email"
               type="email"
+              name="email"
               autoComplete="email"
               placeholder="you@example.com"
+              {...register("email", {
+                required: "Email is required",
+              })}
             />
 
             <AnimatedField
@@ -49,6 +61,9 @@ const LoginPage = () => {
               type="password"
               autoComplete="current-password"
               placeholder="••••••••"
+              {...register("password", {
+                required: "Password is required",
+              })}
               right={
                 <button
                   type="button"
