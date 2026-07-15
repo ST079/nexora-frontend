@@ -13,10 +13,10 @@ export const getProducts = async (searchParams) => {
   const min = (await searchParams)?.min ?? DEFAULT_MIN_Price;
   const max = (await searchParams)?.max ?? DEFAULT_MAX_Price;
   const category = (await searchParams)?.category ?? DEFAULT_CATEGORY;
-  const brand =(await searchParams)?.brand ?? DEFAULT_BRAND;
+  const brand =(await searchParams)?.brands ?? DEFAULT_BRAND;
 
   const response = await axios.get(
-    `${config.apiUrl}/api/v1/products?sort=${sort}&min=${min}&max=${max}&category=${category}&brand=${brand}`,
+    `${config.apiUrl}/api/v1/products?sort=${sort}&min=${min}&max=${max}&category=${category}&brands=${brand}`,
   );
 
   return response.data;

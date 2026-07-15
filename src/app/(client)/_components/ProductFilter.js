@@ -1,4 +1,5 @@
 "use client";
+import { brands } from "@/constants/brands";
 import { categories } from "@/constants/categories";
 import {
   DEFAULT_BRAND,
@@ -8,7 +9,7 @@ import {
   DEFAULT_SORT,
 } from "@/constants/defaults";
 import { SORT_OPTIONS } from "@/constants/sort";
-import { SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
@@ -19,17 +20,35 @@ const ProductFilter = () => {
   const [maxPrice, setMaxPrice] = useState(DEFAULT_MAX_Price);
   const [sort, setSort] = useState(DEFAULT_SORT);
   const [category, setCategory] = useState(DEFAULT_CATEGORY);
-  const [brand, setBrand] = useState(DEFAULT_BRAND);
-
+  const [selectedBrands, setSelectedBrands] = useState(DEFAULT_BRAND);
+  const [input, setInput] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const applyFilter = () => {
+
+  const addBrand = (brand) => {
+    if (!selectedBrands.includes(brand)) {
+      setSelectedBrands([...selectedBrands, brand]);
+    }
+    setInput("");
+  };
+
+  const removeBrand = (brand) => {
+    setSelectedBrands(selectedBrands.filter((b) => b !== brand));
+  };
+
+  const filteredBrands = brands.filter(
+    (b) =>
+      b.label.toLowerCase().includes(input.toLowerCase()) &&
+      !selectedBrands.includes(b.label),
+  );
+
+    const applyFilter = () => {
     const params = new URLSearchParams();
     params.set("min", minPrice);
     params.set("max", maxPrice);
     params.set("sort", sort);
     params.set("category", category);
-    params.set("brand", brand);
+    params.set("brands", selectedBrands.join(","));
 
     router.push(`?${params.toString()}`);
   };
@@ -85,15 +104,46 @@ const ProductFilter = () => {
           ))}
         </datalist>
       </div>
+
       <div>
         <p className="eyebrow mb-2">Brand</p>
-        <input
-          value={brand}
-          placeholder="apple,xiaomi"
-          className="field"
-          onChange={(e)=>setBrand(e.target.value)}
-        />
+
+        <div className="field flex flex-wrap gap-2 items-center">
+          {selectedBrands.map((brand) => (
+            <span
+              key={brand}
+              className="inline-flex items-center gap-1 bg-ink text-paper px-2 py-1 text-xs"
+            >
+              {brand}
+              <button type="button" onClick={() => removeBrand(brand)}>
+                <X size={12} />
+              </button>
+            </span>
+          ))}
+
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Search brand..."
+            className="flex-1 outline-none bg-transparent"
+          />
+        </div>
+
+        {input && (
+          <div className="border border-hairline bg-paper mt-1">
+            {filteredBrands.map((brand) => (
+              <button
+                key={brand.label}
+                onClick={() => addBrand(brand.label)}
+                className="block w-full text-left px-3 py-2 hover:bg-gray-100"
+              >
+                {brand.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
+
       <div>
         <p className="eyebrow mb-2">Price range (Rs.)</p>
         <div className="flex items-center gap-2">
