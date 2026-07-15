@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
 import ProductsMenu from "@/app/(client)/_components/ProductsMenu";
 import { categories } from "@/constants/categories";
+import navLinks from "@/constants/navLinks";
 
 
 const Header = () => {
@@ -15,7 +16,7 @@ const Header = () => {
   // const { totals, setDrawerOpen, pulse } = useCart();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  // const [mobileCatalogOpen, setMobileCatalogOpen] = useState(false);
+  const [mobileCatalogOpen, setMobileCatalogOpen] = useState(false);
   const [query, setQuery] = useState("");
   function submitSearch(e) {
     e.preventDefault();
@@ -131,7 +132,7 @@ const Header = () => {
               onClick={() => setMobileCatalogOpen((o) => !o)}
               className="flex items-center justify-between py-2 eyebrow text-ink"
             >
-              Catalog
+              Products
               <motion.span
                 animate={{ rotate: mobileCatalogOpen ? 180 : 0 }}
                 transition={{ duration: 0.2 }}
@@ -168,16 +169,16 @@ const Header = () => {
                     onClick={() => setMobileOpen(false)}
                     className="block py-2 font-mono text-xs text-slate underline"
                   >
-                    View full catalog
+                    View All Products
                   </Link>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {links.map((l) => (
+            {navLinks.map((l) => (
               <Link
                 key={l.label}
-                href={l.to}
+                href={l.route}
                 onClick={() => setMobileOpen(false)}
                 className="eyebrow text-ink py-2"
               >
@@ -189,7 +190,7 @@ const Header = () => {
               onClick={() => setMobileOpen(false)}
               className="eyebrow text-ink py-2"
             >
-              {user ? "My account" : "Sign in"}
+              Sign in
             </Link>
           </div>
         </div>

@@ -24,6 +24,7 @@ const ProductFilter = () => {
   const [input, setInput] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
 
+
   const addBrand = (brand) => {
     if (!selectedBrands.includes(brand)) {
       setSelectedBrands([...selectedBrands, brand]);
