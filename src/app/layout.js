@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import { Toaster } from "react-hot-toast";
 import { config } from "@/config/config";
 import AppProvider from "@/redux/provider";
+import MainLayout from "@/layouts/MainLayout";
 
 export const metadata = {
   title: config.appName,
@@ -16,17 +17,19 @@ const RootLayout = ({ children }) => {
     <html lang="en">
       <body className="min-h-screen flex flex-col">
         <AppProvider>
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Toaster
-            toastOptions={{
-              duration: 3000,
-              style: {
-                fontSize: "14px",
-              },
-            }}
-          />
-          <Footer />
+          <MainLayout>
+            <Header />
+            <main className="flex-1">{children}</main>
+            <Toaster
+              toastOptions={{
+                duration: 3000,
+                style: {
+                  fontSize: "14px",
+                },
+              }}
+            />
+            <Footer />
+          </MainLayout>
         </AppProvider>
       </body>
     </html>
