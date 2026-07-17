@@ -2,8 +2,9 @@ import Footer from "@/components/Footer";
 import "./globals.css";
 import React from "react";
 import Header from "@/components/Header";
-import { config } from "@/config/config";
 import { Toaster } from "react-hot-toast";
+import { config } from "@/config/config";
+import AppProvider from "@/redux/provider";
 
 export const metadata = {
   title: config.appName,
@@ -14,17 +15,19 @@ const RootLayout = ({ children }) => {
   return (
     <html lang="en">
       <body className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-1">{children}</main>
-         <Toaster
-          toastOptions={{
-            duration: 3000,
-            style: {
-              fontSize: "14px",
-            },
-          }}
-        />
-        <Footer />
+        <AppProvider>
+          <Header />
+          <main className="flex-1">{children}</main>
+          <Toaster
+            toastOptions={{
+              duration: 3000,
+              style: {
+                fontSize: "14px",
+              },
+            }}
+          />
+          <Footer />
+        </AppProvider>
       </body>
     </html>
   );
