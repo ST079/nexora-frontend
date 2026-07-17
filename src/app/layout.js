@@ -3,6 +3,7 @@ import "./globals.css";
 import React from "react";
 import Header from "@/components/Header";
 import { config } from "@/config/config";
+import { Toaster } from "react-hot-toast";
 
 export const metadata = {
   title: config.appName,
@@ -16,7 +17,14 @@ const RootLayout = ({ children }) => {
         <Header />
 
         <main className="flex-1">{children}</main>
-
+         <Toaster
+          toastOptions={{
+            duration: 3000,
+            style: {
+              fontSize: "14px",
+            },
+          }}
+        />
         <Footer />
       </body>
     </html>

@@ -1,15 +1,50 @@
 "use client";
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, Check, Eye, Loader2 } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  Check,
+  Eye,
+  EyeOff,
+  Loader2,
+} from "lucide-react";
 import AnimatedField from "@/components/AnimatedField";
 import AuthVisualPanel from "@/components/AuthVisualPanel";
 import { useForm } from "react-hook-form";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
+import { login } from "@/api/auth";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 const LoginPage = () => {
   const { register, handleSubmit } = useForm();
+  const [status, setStatus] = useState("idle");
+  const [showPassword, setShowPassword] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const router = useRouter();
 
-  const loginCredentials = (data) => {
-    console.log(data);
+  const loginCredentials = async (data) => {
+    setStatus("loading");
+    setErrorMessage("");
+    try {
+      const response = await login(data);
+      localStorage.setItem("authToken", response.token);
+      setStatus("success");
+      toast.success("Welcome back.");
+      router.replace("/");
+    } catch (err) {
+      console.error("Login failed:", err);
+      setStatus("error");
+      setErrorMessage(
+        err?.response?.data?.message || err?.message || "Invalid Credentials",
+      );
+    } finally {
+      setTimeout(() => {
+        setStatus("idle");
+        setErrorMessage("");
+      }, 2000);
+    }
   };
 
   return (
@@ -38,11 +73,19 @@ const LoginPage = () => {
             Pick up your cart and order history where you left off.
           </p>
 
-          {/* Error banner — show when login fails */}
-          <div className="flex items-start gap-2 border border-danger/40 bg-danger/5 px-3 py-2.5 text-sm text-danger mb-4">
-            <AlertTriangle size={15} className="mt-0.5 shrink-0" />
-            <span>Invalid email or password.</span>
-          </div>
+          <AnimatePresence>
+            {status === "error" && (
+              <motion.div
+                initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                animate={{ opacity: 1, height: "auto", marginBottom: 16 }}
+                exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                className="flex items-start gap-2 border border-danger/40 bg-danger/5 px-3 py-2.5 text-sm text-danger"
+              >
+                <AlertTriangle size={15} className="mt-0.5 shrink-0" />
+                <span>{errorMessage}</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <form className="space-y-4" onSubmit={handleSubmit(loginCredentials)}>
             <AnimatedField
@@ -58,7 +101,7 @@ const LoginPage = () => {
 
             <AnimatedField
               label="Password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               autoComplete="current-password"
               placeholder="••••••••"
               {...register("password", {
@@ -68,10 +111,11 @@ const LoginPage = () => {
                 <button
                   type="button"
                   tabIndex={-1}
+                  onClick={() => setShowPassword((s) => !s)}
                   className="text-slate hover:text-ink"
-                  aria-label="Show password"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  <Eye size={15} />
+                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               }
             />
@@ -85,25 +129,53 @@ const LoginPage = () => {
               </Link>
             </div>
 
-            {/* ── Idle ── */}
-            <button
+            <motion.button
               type="submit"
-              className="flex w-full items-center justify-center gap-2 bg-ink px-5 py-3 text-sm font-medium tracking-wide text-paper transition-colors hover:bg-signal"
+              disabled={status === "loading" || status === "success"}
+              whileTap={{ scale: 0.98 }}
+              className={`relative flex w-full items-center justify-center gap-2 overflow-hidden px-5 py-3 text-sm font-medium tracking-wide text-paper transition-colors ${
+                status === "success"
+                  ? "bg-ok"
+                  : status === "error"
+                    ? "bg-danger"
+                    : "bg-ink hover:bg-signal"
+              }`}
             >
-              Sign in <ArrowRight size={15} />
-            </button>
-
-            {/* ── Loading (swap above for this while submitting) ──
-            <button disabled className="flex w-full items-center justify-center gap-2 bg-ink px-5 py-3 text-sm font-medium tracking-wide text-paper opacity-60 cursor-not-allowed">
-              <Loader2 size={15} className="animate-spin" /> Verifying…
-            </button>
-            */}
-
-            {/* ── Success (swap above for this on success) ──
-            <button disabled className="flex w-full items-center justify-center gap-2 bg-ok px-5 py-3 text-sm font-medium tracking-wide text-paper cursor-not-allowed">
-              <Check size={15} /> Signed in
-            </button>
-            */}
+              <AnimatePresence mode="wait" initial={false}>
+                {status === "loading" && (
+                  <motion.span
+                    key="loading"
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    className="flex items-center gap-2"
+                  >
+                    <Loader2 size={15} className="animate-spin" /> Verifying…
+                  </motion.span>
+                )}
+                {status === "success" && (
+                  <motion.span
+                    key="success"
+                    initial={{ opacity: 0, scale: 0.7 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex items-center gap-2"
+                  >
+                    <Check size={15} /> Signed in
+                  </motion.span>
+                )}
+                {(status === "idle" || status === "error") && (
+                  <motion.span
+                    key="idle"
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    className="flex items-center gap-2"
+                  >
+                    Sign in <ArrowRight size={15} />
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </motion.button>
           </form>
 
           <p className="mt-6 text-sm text-slate">

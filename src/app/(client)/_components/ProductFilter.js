@@ -55,7 +55,7 @@ const ProductFilter = () => {
 
   const clearFilters = () => {
     setSort(DEFAULT_SORT);
-    setBrand(DEFAULT_BRAND);
+    setSelectedBrands(DEFAULT_BRAND);
     setCategory(DEFAULT_CATEGORY);
     setMaxPrice(DEFAULT_MAX_Price);
     setMinPrice(DEFAULT_MIN_Price);
