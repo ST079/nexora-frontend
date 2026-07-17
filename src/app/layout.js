@@ -15,7 +15,6 @@ const RootLayout = ({ children }) => {
     <html lang="en">
       <body className="min-h-screen flex flex-col">
         <Header />
-
         <main className="flex-1">{children}</main>
          <Toaster
           toastOptions={{
