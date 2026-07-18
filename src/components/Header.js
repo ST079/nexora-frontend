@@ -2,7 +2,6 @@
 import React, { useState } from "react";
 import NavLinks from "@/constants/navLinks";
 import { Search, ShoppingCart, User, Menu, X, ChevronDown } from "lucide-react";
-import { HOME_ROUTE } from "@/constants/routes";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
@@ -11,14 +10,12 @@ import { categories } from "@/constants/categories";
 import navLinks from "@/constants/navLinks";
 import Logo from "./Logo";
 
-
 const Header = () => {
-  // const { user } = useAuth();
-  // const { totals, setDrawerOpen, pulse } = useCart();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileCatalogOpen, setMobileCatalogOpen] = useState(false);
   const [query, setQuery] = useState("");
+
   function submitSearch(e) {
     e.preventDefault();
     navigate(
@@ -30,9 +27,12 @@ const Header = () => {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-hairline bg-paper/90 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-hairline bg-paper/90 dark:bg-[#0e0f12]/90 dark:border-[#262932] backdrop-blur transition-colors duration-300">
       <div className="container-page flex h-16 items-center justify-between gap-4">
-        <Logo/>
+
+        <Logo />
+
+        {/* ── Desktop nav ── */}
         <nav className="hidden lg:flex items-center gap-7">
           {NavLinks.map((navLink) => {
             const isActive =
@@ -42,8 +42,10 @@ const Header = () => {
             return (
               <div
                 key={navLink.label}
-                className={`eyebrow transition-colors hover:text-ink ${
-                  isActive ? "text-ink" : "text-slate"
+                className={`eyebrow transition-colors hover:text-ink dark:hover:text-[#f0efe8] ${
+                  isActive
+                    ? "text-ink dark:text-[#f0efe8]"
+                    : "text-slate dark:text-[#8b8fa8]"
                 }`}
               >
                 <Link href={navLink.route}>
@@ -55,49 +57,40 @@ const Header = () => {
           <ProductsMenu />
         </nav>
 
+        {/* ── Search ── */}
         <form
           onSubmit={submitSearch}
-          className="hidden md:flex flex-1 max-w-sm items-center border border-hairline px-3 py-2 gap-2 focus-within:border-ink transition-colors"
+          className="hidden md:flex flex-1 max-w-sm items-center border border-hairline dark:border-[#262932] px-3 py-2 gap-2 focus-within:border-ink dark:focus-within:border-[#f0efe8] transition-colors bg-transparent"
         >
-          <Search size={15} className="text-slate" />
+          <Search size={15} className="text-slate dark:text-[#8b8fa8]" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search model, brand…"
-            className="w-full bg-transparent text-sm outline-none placeholder:text-slate-light"
+            className="w-full bg-transparent text-sm outline-none placeholder:text-slate-light dark:placeholder:text-[#5b5e72] text-ink dark:text-[#f0efe8]"
           />
         </form>
 
+        {/* ── Icon actions ── */}
         <div className="flex items-center gap-2">
           <Link
-            href={"/login"}
-            className="hidden sm:grid h-9 w-9 place-items-center border border-hairline hover:border-ink transition-colors"
-            title={"Sign in"}
+            href="/login"
+            className="hidden sm:grid h-9 w-9 place-items-center border border-hairline dark:border-[#262932] hover:border-ink dark:hover:border-[#f0efe8] text-ink dark:text-[#f0efe8] transition-colors"
+            title="Sign in"
           >
             <User size={16} />
           </Link>
 
           <button
-            onClick={() => setDrawerOpen(true)}
-            className="relative grid h-9 w-9 place-items-center border border-hairline hover:border-ink transition-colors"
+            className="relative grid h-9 w-9 place-items-center border border-hairline dark:border-[#262932] hover:border-ink dark:hover:border-[#f0efe8] text-ink dark:text-[#f0efe8] transition-colors"
             aria-label="Open cart"
           >
             <ShoppingCart size={16} />
-            {/* {totals.count > 0 && (
-              <motion.span
-                key={pulse}
-                initial={{ scale: 0.6 }}
-                animate={{ scale: 1 }}
-                className="absolute -top-2 -right-2 grid h-5 w-5 place-items-center rounded-full bg-signal font-mono text-[10px] text-paper"
-              >
-                {totals.count > 9 ? "9+" : totals.count}
-              </motion.span>
-            )} */}
           </button>
 
           <button
             onClick={() => setMobileOpen((o) => !o)}
-            className="grid h-9 w-9 place-items-center border border-hairline lg:hidden"
+            className="grid h-9 w-9 place-items-center border border-hairline dark:border-[#262932] text-ink dark:text-[#f0efe8] lg:hidden transition-colors"
             aria-label="Open menu"
           >
             {mobileOpen ? <X size={16} /> : <Menu size={16} />}
@@ -105,25 +98,27 @@ const Header = () => {
         </div>
       </div>
 
+      {/* ── Mobile drawer ── */}
       {mobileOpen && (
-        <div className="lg:hidden border-t border-hairline bg-paper px-5 py-4 space-y-4">
+        <div className="lg:hidden border-t border-hairline dark:border-[#262932] bg-paper dark:bg-[#0e0f12] px-5 py-4 space-y-4 transition-colors duration-300">
           <form
             onSubmit={submitSearch}
-            className="flex items-center border border-hairline px-3 py-2 gap-2"
+            className="flex items-center border border-hairline dark:border-[#262932] px-3 py-2 gap-2"
           >
-            <Search size={15} className="text-slate" />
+            <Search size={15} className="text-slate dark:text-[#8b8fa8]" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search model, brand…"
-              className="w-full bg-transparent text-sm outline-none"
+              className="w-full bg-transparent text-sm outline-none text-ink dark:text-[#f0efe8] placeholder:text-slate-light dark:placeholder:text-[#5b5e72]"
             />
           </form>
 
           <div className="flex flex-col gap-1">
+            {/* Products accordion */}
             <button
               onClick={() => setMobileCatalogOpen((o) => !o)}
-              className="flex items-center justify-between py-2 eyebrow text-ink"
+              className="flex items-center justify-between py-2 eyebrow text-ink dark:text-[#f0efe8]"
             >
               Products
               <motion.span
@@ -133,6 +128,7 @@ const Header = () => {
                 <ChevronDown size={14} />
               </motion.span>
             </button>
+
             <AnimatePresence>
               {mobileCatalogOpen && (
                 <motion.div
@@ -150,7 +146,7 @@ const Header = () => {
                           setMobileOpen(false);
                           setMobileCatalogOpen(false);
                         }}
-                        className="flex items-center gap-2 border border-hairline px-2.5 py-2 text-xs"
+                        className="flex items-center gap-2 border border-hairline dark:border-[#262932] px-2.5 py-2 text-xs text-ink dark:text-[#f0efe8] hover:border-signal transition-colors"
                       >
                         <c.icon size={14} className="text-signal shrink-0" />
                         {c.label}
@@ -160,7 +156,7 @@ const Header = () => {
                   <Link
                     href="/products"
                     onClick={() => setMobileOpen(false)}
-                    className="block py-2 font-mono text-xs text-slate underline"
+                    className="block py-2 font-mono text-xs text-slate dark:text-[#8b8fa8] underline"
                   >
                     View All Products
                   </Link>
@@ -168,20 +164,22 @@ const Header = () => {
               )}
             </AnimatePresence>
 
+            {/* Nav links */}
             {navLinks.map((l) => (
               <Link
                 key={l.label}
                 href={l.route}
                 onClick={() => setMobileOpen(false)}
-                className="eyebrow text-ink py-2"
+                className="eyebrow text-ink dark:text-[#f0efe8] py-2 hover:text-signal dark:hover:text-signal transition-colors"
               >
                 {l.label}
               </Link>
             ))}
+
             <Link
-              href={"/login"}
+              href="/login"
               onClick={() => setMobileOpen(false)}
-              className="eyebrow text-ink py-2"
+              className="eyebrow text-ink dark:text-[#f0efe8] py-2 hover:text-signal dark:hover:text-signal transition-colors"
             >
               Sign in
             </Link>

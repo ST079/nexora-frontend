@@ -1,42 +1,54 @@
 @import "tailwindcss";
 
-@theme {
-  --color-ink: #14151a;
-  --color-paper: #fafaf7;
-  --color-panel: #ffffff;
-  --color-signal: #ff6a1a;
-  --color-slate: #64748b;
-  --color-slate-light: #94a3b8;
-  --color-hairline: #e5e7eb;
-}
+/* ─── Enable class-based dark mode (add class="dark" on <html>) ─── */
+@variant dark (&:where(.dark, .dark *));
 
 @theme {
+  /* ── Light tokens ── */
+  --color-ink:         #14151a;
+  --color-paper:       #fafaf7;
+  --color-panel:       #ffffff;
+  --color-signal:      #ff6a1a;
+  --color-signal-dim:  #e2570f;
+  --color-signal-tint: #ffe9da;
+  --color-slate:       #64748b;
+  --color-slate-light: #94a3b8;
+  --color-hairline:    #e5e7eb;
+  --color-ok:          #1f8a5f;
+  --color-danger:      #d8392b;
+
+  /* ── Animation ── */
   --animate-marquee: marquee 20s linear infinite;
 }
 
 @keyframes marquee {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
 }
 
 @layer base {
   * {
-    @apply border-hairline;
+    @apply border-hairline dark:border-[#262932];
   }
 
   html {
-    data-scroll-behavior: smooth;
+    scroll-behavior: smooth;
   }
 
   body {
+    @apply bg-paper text-ink dark:bg-[#0e0f12] dark:text-[#f0efe8];
     background-image:
       linear-gradient(90deg, rgba(20, 21, 26, 0.025) 1px, transparent 1px),
       linear-gradient(rgba(20, 21, 26, 0.025) 1px, transparent 1px);
     background-size: 28px 28px;
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+
+  /* Dark mode — swap grid overlay opacity */
+  .dark body {
+    background-image:
+      linear-gradient(90deg, rgba(240, 239, 232, 0.03) 1px, transparent 1px),
+      linear-gradient(rgba(240, 239, 232, 0.03) 1px, transparent 1px);
   }
 
   ::selection {
@@ -52,31 +64,46 @@
 
 @layer components {
   .eyebrow {
-    @apply font-mono text-[11px] uppercase tracking-widest text-slate;
+    @apply font-mono text-[11px] uppercase tracking-widest text-slate dark:text-[#8b8fa8];
   }
 
   .spec-row {
-    @apply flex items-baseline justify-between border-b border-hairline py-2 font-mono text-sm;
+    @apply flex items-baseline justify-between border-b border-hairline py-2 font-mono text-sm
+           dark:border-[#262932] dark:text-[#f0efe8];
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 bg-ink text-paper px-5 py-3 font-medium text-sm tracking-wide transition-all hover:bg-signal active:scale-[0.98];
+    @apply inline-flex items-center justify-center gap-2
+           bg-ink text-paper px-5 py-3 font-medium text-sm tracking-wide
+           transition-all hover:bg-signal active:scale-[0.98]
+           dark:bg-[#f0efe8] dark:text-[#0e0f12]
+           dark:hover:bg-signal dark:hover:text-paper;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 border border-ink px-5 py-3 font-medium text-sm tracking-wide transition-all hover:border-signal hover:text-signal active:scale-[0.98];
+    @apply inline-flex items-center justify-center gap-2
+           border border-ink px-5 py-3 font-medium text-sm tracking-wide
+           transition-all hover:border-signal hover:text-signal active:scale-[0.98]
+           dark:border-[#f0efe8] dark:text-[#f0efe8]
+           dark:hover:border-signal dark:hover:text-signal;
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2 font-medium text-sm transition-colors hover:text-signal;
+    @apply inline-flex items-center justify-center gap-2
+           px-4 py-2 font-medium text-sm transition-colors
+           hover:text-signal dark:text-[#f0efe8] dark:hover:text-signal;
   }
 
   .field {
-    @apply w-full border border-hairline bg-paper px-4 px-4 py-3 text-sm outline-none transition-colors focus:border-ink placeholder:text-slate-light;
+    @apply w-full border border-hairline bg-paper px-4 py-3 text-sm outline-none
+           transition-colors focus:border-ink placeholder:text-slate-light
+           dark:border-[#262932] dark:bg-[#16181f] dark:text-[#f0efe8]
+           dark:focus:border-[#f0efe8] dark:placeholder:text-[#5b5e72];
   }
 
   .card-frame {
-    @apply relative border border-hairline bg-panel overflow-hidden;
+    @apply relative border border-hairline bg-panel overflow-hidden
+           dark:border-[#262932] dark:bg-[#16181f];
   }
 
   .container-page {
@@ -85,12 +112,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
-    scroll-behavior: auto !important;
+  *, *::before, *::after {
+    animation-duration:        0.001ms !important;
+    animation-iteration-count: 1       !important;
+    transition-duration:       0.001ms !important;
+    scroll-behavior:           auto    !important;
   }
 }

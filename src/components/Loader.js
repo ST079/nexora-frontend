@@ -7,12 +7,12 @@ const Loader = ({ label = "Loading" }) => {
         {[0, 1, 2].map((i) => (
           <span
             key={i}
-            className="h-2 w-2 bg-ink animate-blink"
+            className="h-2 w-2 bg-ink dark:bg-[#f0efe8] animate-blink"
             style={{ animationDelay: `${i * 0.18}s` }}
           />
         ))}
       </div>
-      <p className="eyebrow">{label}…</p>
+      <p className="eyebrow dark:text-[#8b8fa8]">{label}…</p>
     </div>
   );
 };

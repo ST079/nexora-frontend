@@ -13,15 +13,15 @@ const ProductsPage = async ({ searchParams }) => {
   const products = await getProducts(searchParams);
 
   return (
-    <section className="container-page py-16">
+    <section className="container-page py-16 bg-paper dark:bg-[#0e0f12] transition-colors duration-300">
       <div className="grid lg:grid-cols-[250px_1fr] gap-8">
         <ProductFilter />
 
-        {products.length == 0 ? (
+        {products.length === 0 ? (
           <EmptyState
             title="No matches"
             description="Nothing fits those filters yet. Try widening the price range or clearing a filter."
-            action={<button className="btn-secondary">Opps!!!!!</button>}
+            action={<button className="btn-secondary">Oops!</button>}
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">

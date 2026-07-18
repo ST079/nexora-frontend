@@ -9,7 +9,7 @@ const Logo = () => {
         <span className="grid h-8 w-8 place-items-center bg-ink font-mono text-sm text-signal">
           N
         </span>
-        <span className="font-display text-lg font-semibold tracking-tight">
+        <span className="font-display text-lg font-semibold tracking-tight dark:text-white">
           NEXORA
         </span>
       </Link>

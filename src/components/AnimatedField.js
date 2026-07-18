@@ -20,7 +20,7 @@ const AnimatedField = forwardRef(
 
     return (
       <div>
-        <label className="font-mono text-xs text-slate mb-1 block">
+        <label className="font-mono text-xs text-slate dark:text-[#8b8fa8] mb-1 block">
           {label}
         </label>
 
@@ -36,7 +36,7 @@ const AnimatedField = forwardRef(
               setFocused(false);
               props.onBlur?.(e);
             }}
-            className={`w-full border border-hairline bg-paper px-4 py-3 text-sm outline-none transition-colors placeholder:text-slate-light ${
+            className={`w-full border border-hairline dark:border-[#262932] bg-paper dark:bg-[#16181f] text-ink dark:text-[#f0efe8] px-4 py-3 text-sm outline-none transition-colors placeholder:text-slate-light dark:placeholder:text-[#5b5e72] ${
               right ? "pr-11" : ""
             }`}
             {...props}

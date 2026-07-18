@@ -4,7 +4,7 @@ import { Thermometer } from "lucide-react";
 const userPreferencesSlice = createSlice({
   name: "userPreferences",
   initialState: {
-    theme: "light",
+    theme: "dark",
     showCart: true,
   },
   reducers: {},
