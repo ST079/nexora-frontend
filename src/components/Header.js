@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import NavLinks from "@/constants/navLinks";
-import { Search, ShoppingCart, User, Menu, X, ChevronDown } from "lucide-react";
+import { Search, ShoppingCart, User, Menu, X, ChevronDown, Sun, MoonIcon } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
@@ -9,6 +9,7 @@ import ProductsMenu from "@/app/(client)/_components/ProductsMenu";
 import { categories } from "@/constants/categories";
 import navLinks from "@/constants/navLinks";
 import Logo from "./Logo";
+import ThemeToggler from "./ThemeToggler";
 
 const Header = () => {
   const pathname = usePathname();
@@ -29,7 +30,6 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-40 border-b border-hairline bg-paper/90 dark:bg-[#0e0f12]/90 dark:border-[#262932] backdrop-blur transition-colors duration-300">
       <div className="container-page flex h-16 items-center justify-between gap-4">
-
         <Logo />
 
         {/* ── Desktop nav ── */}
@@ -73,6 +73,7 @@ const Header = () => {
 
         {/* ── Icon actions ── */}
         <div className="flex items-center gap-2">
+
           <Link
             href="/login"
             className="hidden sm:grid h-9 w-9 place-items-center border border-hairline dark:border-[#262932] hover:border-ink dark:hover:border-[#f0efe8] text-ink dark:text-[#f0efe8] transition-colors"
@@ -81,9 +82,12 @@ const Header = () => {
             <User size={16} />
           </Link>
 
+          <ThemeToggler/>
+          
           <button
             className="relative grid h-9 w-9 place-items-center border border-hairline dark:border-[#262932] hover:border-ink dark:hover:border-[#f0efe8] text-ink dark:text-[#f0efe8] transition-colors"
             aria-label="Open cart"
+            title="Cart"
           >
             <ShoppingCart size={16} />
           </button>

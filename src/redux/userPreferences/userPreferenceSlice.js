@@ -7,7 +7,12 @@ const userPreferencesSlice = createSlice({
     theme: "dark",
     showCart: true,
   },
-  reducers: {},
+  reducers: {
+    toggleTheme: (state) => {
+      state.theme = state.theme == "dark" ? "light" : "dark";
+    },
+  },
 });
 
+export const { toggleTheme } = userPreferencesSlice.actions;
 export default userPreferencesSlice.reducer;
