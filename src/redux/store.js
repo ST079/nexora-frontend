@@ -1,10 +1,21 @@
 import { configureStore } from "@reduxjs/toolkit";
-import userPreferenceReducer from "./userPreferences/userPreferenceSlice";
+import storage from "redux-persist/lib/storage"; // defaults to localStorage for web
+import rootReducer from "./rootReducer";
+import { persistReducer, persistStore } from "redux-persist";
+
+const persistConfig = {
+  key: "root",
+  storage,
+};
+
+const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 const store = configureStore({
   reducer: {
-    userPreferences: userPreferenceReducer,
+    userPreferences: persistedReducer,
   },
 });
 
-export { store };
+const persistor = persistStore(store);
+
+export { store, persistor };

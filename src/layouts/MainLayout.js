@@ -4,9 +4,8 @@ import { useSelector } from "react-redux";
 
 const MainLayout = ({ children }) => {
   const state = useSelector((state) => state.userPreferences);
-  console.log(state);
   return (
-    <div className={`min-h-screen flex flex-col ${state.theme} `}>
+    <div className={`min-h-screen flex flex-col ${state.userPreferences.theme} `}>
       {children}
     </div>
   );
