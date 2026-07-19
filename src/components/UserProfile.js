@@ -3,7 +3,6 @@
 import { User, LogOut, Settings } from "lucide-react";
 import Link from "next/link";
 import { useDispatch, useSelector } from "react-redux";
-
 import { logout } from "@/redux/auth/authSlice";
 import ThemeToggler from "./ThemeToggler";
 
@@ -34,7 +33,9 @@ const UserProfile = () => {
             <div className=" px-4 py-3 border-b border-hairline dark:border-[#262932] ">
               <p className="font-medium truncate">{user.name}</p>
 
-              <p className="text-sm opacity-60 truncate">{user.email}</p>
+              <p className="text-sm text-blue-700 opacity-60 truncate dark:text-amber-100">
+                {user.email}
+              </p>
             </div>
 
             {/* Settings */}
