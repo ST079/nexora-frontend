@@ -32,7 +32,7 @@
   }
 
   html {
-    data-scroll-behavior: smooth;
+    scroll-behavior: smooth;
   }
 
   body {

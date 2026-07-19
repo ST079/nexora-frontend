@@ -71,7 +71,7 @@ const ProductFilter = () => {
       </div>
 
       <aside className={`${filtersOpen ? "block" : "hidden"} lg:block`}>
-        <div className="card-frame p-5 space-y-5 lg:sticky lg:top-24">
+        <div className="card-frame p-5 space-y-5 lg:sticky lg:top-24 items-start">
 
           {/* Header + sort */}
           <div className="flex flex-wrap items-end justify-between gap-4 mb-6">

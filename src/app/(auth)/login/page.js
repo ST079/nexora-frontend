@@ -1,49 +1,33 @@
 "use client";
+
 import Link from "next/link";
-import {
-  AlertTriangle,
-  ArrowRight,
-  Check,
-  Eye,
-  EyeOff,
-  Loader2,
-} from "lucide-react";
+import { AlertTriangle, ArrowRight, Check, Eye, EyeOff, Loader2 } from "lucide-react";
 import AnimatedField from "@/components/AnimatedField";
 import AuthVisualPanel from "@/components/AuthVisualPanel";
 import { useForm } from "react-hook-form";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
-import { login } from "@/api/auth";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import { loginUser } from "@/redux/auth/authActions";
 
 const LoginPage = () => {
   const { register, handleSubmit } = useForm();
-  const [status, setStatus] = useState("idle");
   const [showPassword, setShowPassword] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
   const router = useRouter();
+  const dispatch = useDispatch();
+
+  // Drive the UI entirely from Redux state
+  const { loading, error, user } = useSelector((state) => state.auth);
+
+  const status = loading ? "loading" : error ? "error" : user ? "success" : "idle";
 
   const loginCredentials = async (data) => {
-    setStatus("loading");
-    setErrorMessage("");
-    try {
-      const response = await login(data);
-      localStorage.setItem("authToken", response.token);
-      setStatus("success");
+    const result = await dispatch(loginUser(data));
+
+    if (loginUser.fulfilled.match(result)) {
       toast.success("Welcome back.");
-      router.replace("/");
-    } catch (err) {
-      console.error("Login failed:", err);
-      setStatus("error");
-      setErrorMessage(
-        err?.response?.data?.message || err?.message || "Invalid Credentials",
-      );
-    } finally {
-      setTimeout(() => {
-        setStatus("idle");
-        setErrorMessage("");
-      }, 2000);
     }
   };
 
@@ -61,42 +45,48 @@ const LoginPage = () => {
       />
 
       <div className="flex flex-1 items-center justify-center p-6 sm:p-10">
-        <div
+        <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
           className="w-full max-w-sm"
         >
-          <p className="eyebrow mb-2">Account</p>
-          <h1 className="font-display text-3xl font-semibold mb-1">Sign in</h1>
-          <p className="text-sm text-slate mb-8">
+          <p className="eyebrow dark:text-[#8b8fa8] mb-2">Account</p>
+          <h1 className="font-display text-3xl font-semibold mb-1 text-ink dark:text-[#f0efe8]">
+            Sign in
+          </h1>
+          <p className="text-sm text-slate dark:text-[#8b8fa8] mb-8">
             Pick up your cart and order history where you left off.
           </p>
 
+          {/* Error banner — driven by Redux error state */}
           <AnimatePresence>
             {status === "error" && (
               <motion.div
                 initial={{ opacity: 0, height: 0, marginBottom: 0 }}
                 animate={{ opacity: 1, height: "auto", marginBottom: 16 }}
                 exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                className="flex items-start gap-2 border border-danger/40 bg-danger/5 px-3 py-2.5 text-sm text-danger"
+                className="flex items-start gap-2 border border-danger/40 bg-danger/5 dark:bg-danger/10 px-3 py-2.5 text-sm text-danger"
               >
                 <AlertTriangle size={15} className="mt-0.5 shrink-0" />
-                <span>{errorMessage}</span>
+                <span>{error?.message || error}</span>
               </motion.div>
             )}
           </AnimatePresence>
 
-          <form className="space-y-4" onSubmit={handleSubmit(loginCredentials)}>
+          {/* Form — shakes on error */}
+          <motion.form
+            className="space-y-4"
+            onSubmit={handleSubmit(loginCredentials)}
+            animate={status === "error" ? { x: [0, -8, 8, -5, 5, 0] } : {}}
+            transition={{ duration: 0.4 }}
+          >
             <AnimatedField
               label="Email"
               type="email"
-              name="email"
               autoComplete="email"
               placeholder="you@example.com"
-              {...register("email", {
-                required: "Email is required",
-              })}
+              {...register("email", { required: "Email is required" })}
             />
 
             <AnimatedField
@@ -104,15 +94,13 @@ const LoginPage = () => {
               type={showPassword ? "text" : "password"}
               autoComplete="current-password"
               placeholder="••••••••"
-              {...register("password", {
-                required: "Password is required",
-              })}
+              {...register("password", { required: "Password is required" })}
               right={
                 <button
                   type="button"
                   tabIndex={-1}
                   onClick={() => setShowPassword((s) => !s)}
-                  className="text-slate hover:text-ink"
+                  className="text-slate dark:text-[#8b8fa8] hover:text-ink dark:hover:text-[#f0efe8]"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -123,12 +111,13 @@ const LoginPage = () => {
             <div className="flex justify-end">
               <Link
                 href="/forgot-password"
-                className="font-mono text-xs text-slate hover:text-signal"
+                className="font-mono text-xs text-slate dark:text-[#8b8fa8] hover:text-signal dark:hover:text-signal"
               >
                 Forgot password?
               </Link>
             </div>
 
+            {/* Submit — morphs between idle / loading / success / error */}
             <motion.button
               type="submit"
               disabled={status === "loading" || status === "success"}
@@ -138,7 +127,7 @@ const LoginPage = () => {
                   ? "bg-ok"
                   : status === "error"
                     ? "bg-danger"
-                    : "bg-ink hover:bg-signal"
+                    : "bg-ink hover:bg-signal dark:bg-[#f0efe8] dark:text-[#0e0f12] dark:hover:bg-signal dark:hover:text-paper"
               }`}
             >
               <AnimatePresence mode="wait" initial={false}>
@@ -176,18 +165,18 @@ const LoginPage = () => {
                 )}
               </AnimatePresence>
             </motion.button>
-          </form>
+          </motion.form>
 
-          <p className="mt-6 text-sm text-slate">
+          <p className="mt-6 text-sm text-slate dark:text-[#8b8fa8]">
             New to Nexora?{" "}
             <Link
               href="/register"
-              className="text-ink underline hover:text-signal"
+              className="text-ink dark:text-[#f0efe8] underline hover:text-signal dark:hover:text-signal"
             >
               Create an account
             </Link>
           </p>
-        </div>
+        </motion.div>
       </div>
     </div>
   );
