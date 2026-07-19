@@ -74,8 +74,6 @@ const Header = () => {
 
         {/* ── Icon actions ── */}
         <div className="flex items-center gap-2">
-          <ThemeToggler />
-
           <button
             className="relative grid h-9 w-9 place-items-center border border-hairline dark:border-[#262932] hover:border-ink dark:hover:border-[#f0efe8] text-ink dark:text-[#f0efe8] transition-colors"
             aria-label="Open cart"

@@ -2,18 +2,19 @@
 
 import { toggleTheme } from "@/redux/userPreferences/userPreferenceSlice";
 import { MoonIcon, SunIcon } from "lucide-react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 const ThemeToggler = () => {
   const dispatch = useDispatch();
+  const { theme } = useSelector((state) => state.userPreferences);
   return (
     <button
-      className="cursor-pointer relative grid h-9 w-9 place-items-center border border-hairline dark:border-[#262932] hover:border-ink dark:hover:border-[#f0efe8] text-ink dark:text-[#f0efe8] transition-colors"
-      title="Theme"
       onClick={() => dispatch(toggleTheme())}
+      className=" flex items-center gap-3 w-full px-4 py-3 hover:bg-gray-100 dark:hover:bg-[#1c1e24] transition"
     >
-      <MoonIcon size={16} className="hidden dark:block" />
-      <SunIcon size={16} className="dark:hidden" />
+      {theme === "dark" ? <SunIcon size={16} /> : <MoonIcon size={16} />}
+
+      {theme === "dark" ? "Light Mode" : "Dark Mode"}
     </button>
   );
 };
