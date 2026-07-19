@@ -1,7 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, Check, Eye, EyeOff, Loader2 } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  Check,
+  Eye,
+  EyeOff,
+  Loader2,
+} from "lucide-react";
 import AnimatedField from "@/components/AnimatedField";
 import AuthVisualPanel from "@/components/AuthVisualPanel";
 import { useForm } from "react-hook-form";
@@ -18,21 +25,25 @@ const LoginPage = () => {
   const router = useRouter();
   const dispatch = useDispatch();
 
-  // Drive the UI entirely from Redux state
   const { loading, error, user } = useSelector((state) => state.auth);
-
-  const status = loading ? "loading" : error ? "error" : user ? "success" : "idle";
+  const status = loading
+    ? "loading"
+    : error
+      ? "error"
+      : user
+        ? "success"
+        : "idle";
 
   const loginCredentials = async (data) => {
     const result = await dispatch(loginUser(data));
-
     if (loginUser.fulfilled.match(result)) {
       toast.success("Welcome back.");
+      router.replace("/");
     }
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-64px)]">
+    <div className="flex min-h-[calc(100vh-64px)] bg-paper dark:bg-[#0e0f12] transition-colors duration-300">
       <AuthVisualPanel
         eyebrow="Secure access"
         title="Every session starts with a verified handshake."
@@ -59,7 +70,7 @@ const LoginPage = () => {
             Pick up your cart and order history where you left off.
           </p>
 
-          {/* Error banner — driven by Redux error state */}
+          {/* Error banner */}
           <AnimatePresence>
             {status === "error" && (
               <motion.div
@@ -74,7 +85,7 @@ const LoginPage = () => {
             )}
           </AnimatePresence>
 
-          {/* Form — shakes on error */}
+          {/* Form */}
           <motion.form
             className="space-y-4"
             onSubmit={handleSubmit(loginCredentials)}
@@ -117,7 +128,6 @@ const LoginPage = () => {
               </Link>
             </div>
 
-            {/* Submit — morphs between idle / loading / success / error */}
             <motion.button
               type="submit"
               disabled={status === "loading" || status === "success"}

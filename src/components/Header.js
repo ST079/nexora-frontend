@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import NavLinks from "@/constants/navLinks";
-import { Search, ShoppingCart, User, Menu, X, ChevronDown, Sun, MoonIcon } from "lucide-react";
+import { Search, ShoppingCart, User, Menu, X, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
@@ -10,6 +10,7 @@ import { categories } from "@/constants/categories";
 import navLinks from "@/constants/navLinks";
 import Logo from "./Logo";
 import ThemeToggler from "./ThemeToggler";
+import UserProfile from "./UserProfile";
 
 const Header = () => {
   const pathname = usePathname();
@@ -73,17 +74,8 @@ const Header = () => {
 
         {/* ── Icon actions ── */}
         <div className="flex items-center gap-2">
+          <ThemeToggler />
 
-          <Link
-            href="/login"
-            className="hidden sm:grid h-9 w-9 place-items-center border border-hairline dark:border-[#262932] hover:border-ink dark:hover:border-[#f0efe8] text-ink dark:text-[#f0efe8] transition-colors"
-            title="Sign in"
-          >
-            <User size={16} />
-          </Link>
-
-          <ThemeToggler/>
-          
           <button
             className="relative grid h-9 w-9 place-items-center border border-hairline dark:border-[#262932] hover:border-ink dark:hover:border-[#f0efe8] text-ink dark:text-[#f0efe8] transition-colors"
             aria-label="Open cart"
@@ -91,6 +83,8 @@ const Header = () => {
           >
             <ShoppingCart size={16} />
           </button>
+
+          <UserProfile />
 
           <button
             onClick={() => setMobileOpen((o) => !o)}

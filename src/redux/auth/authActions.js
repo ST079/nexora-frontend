@@ -1,4 +1,4 @@
-import { login } from "@/api/auth";
+import { login, signUp } from "@/api/auth";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 
 export const loginUser = createAsyncThunk(
@@ -14,6 +14,30 @@ export const loginUser = createAsyncThunk(
           error.message ||
           "Invalid credentials",
       );
+    }
+  },
+);
+
+export const registerUser = createAsyncThunk(
+  "auth/register",
+  async (data, { rejectWithValue }) => {
+    try {
+      const response = await signUp(data);
+      localStorage.setItem("authToken", response.token);
+      return response;
+    } catch (error) {
+      const errorData = error.response?.data;
+      let message = errorData?.message;
+      if (errorData?.properties) {
+        const firstError = Object.values(errorData.properties)
+          .flatMap((field) => field.errors)
+          .find(Boolean);
+
+        if (firstError) {
+          message = firstError;
+        }
+      }
+      return rejectWithValue(message);
     }
   },
 );
