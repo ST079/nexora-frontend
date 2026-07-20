@@ -1,6 +1,6 @@
 import React from "react";
-import ProductCard from "../_components/ProductCard";
-import ProductFilter from "../_components/ProductFilter";
+import ProductCard from "../../components/ProductCard";
+import ProductFilter from "../../components/ProductFilter";
 import { getProducts } from "@/api/product";
 import EmptyState from "@/components/EmptyState";
 

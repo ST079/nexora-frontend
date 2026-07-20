@@ -5,7 +5,7 @@ import { useSelector } from "react-redux";
 const MainLayout = ({ children }) => {
   const state = useSelector((state) => state.userPreferences);
   return (
-    <div className={`min-h-screen flex flex-col ${state.theme} `}>
+    <div className={`min-h-screen flex flex-col bg-paper dark:bg-[#0e0f12] transition-colors duration-300 ${state.theme} `}>
       {children}
     </div>
   );
