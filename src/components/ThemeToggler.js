@@ -10,9 +10,9 @@ const ThemeToggler = () => {
   return (
     <button
       onClick={() => dispatch(toggleTheme())}
-      className=" flex items-center gap-3 w-full px-4 py-3 hover:bg-gray-100 dark:hover:bg-[#1c1e24] transition"
+      className=" flex items-center gap-3 w-full px-4 py-3 hover:bg-gray-100 dark:hover:bg-[#1c1e24] dark:text-paper transition"
     >
-      {theme === "dark" ? <SunIcon size={16} /> : <MoonIcon size={16} />}
+      {theme === "dark" ? <SunIcon size={14} /> : <MoonIcon size={14} />}
 
       {theme === "dark" ? "Light Mode" : "Dark Mode"}
     </button>
