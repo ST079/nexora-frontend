@@ -7,6 +7,7 @@ import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useDropzone } from "react-dropzone";
 import Image from "next/image";
+import { categories } from "@/constants/categories";
 
 const ProductModal = ({ product, onClose, onSave }) => {
   const isEdit = !!product?._id;
@@ -18,7 +19,7 @@ const ProductModal = ({ product, onClose, onSave }) => {
   const onDrop = useCallback((acceptedFiles) => {
     setImages((prev) => [...prev, ...acceptedFiles]);
   }, []);
-  console.log(images)
+  console.log(images);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -108,12 +109,20 @@ const ProductModal = ({ product, onClose, onSave }) => {
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4">
-            <AnimatedField
-              label="Category"
-              placeholder="Smartphones"
-              required
-              {...register("category")}
-            />
+            <div>
+              <AnimatedField
+                label="Category"
+                placeholder="e.g. Smartphones"
+                list="product-categories"
+                {...register("category")}
+              />
+              <datalist id="product-categories">
+                {categories.map((category, index) => (
+                  <option key={index} value={category.label} />
+                ))}
+              </datalist>
+            </div>
+
             <AnimatedField
               label="Price (Rs.)"
               placeholder="197000"
