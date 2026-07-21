@@ -1,9 +1,14 @@
-import React from 'react'
+import React from "react";
+import ProductDashboard from "./_components/ProductDashboard";
+import { getProducts } from "@/api/product";
 
-const ProductManagementPage = () => {
+const ProductManagementPage = async () => {
+  const products = await getProducts();
   return (
-    <div>ProductManagementPage</div>
-  )
-}
+    <>
+      <ProductDashboard allProducts={products} />
+    </>
+  );
+};
 
-export default ProductManagementPage
+export default ProductManagementPage;
