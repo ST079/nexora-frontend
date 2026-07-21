@@ -5,25 +5,29 @@
 
 @theme {
   /* ── Light tokens ── */
-  --color-ink:         #14151a;
-  --color-paper:       #fafaf7;
-  --color-panel:       #ffffff;
-  --color-signal:      #ff6a1a;
-  --color-signal-dim:  #e2570f;
+  --color-ink: #14151a;
+  --color-paper: #fafaf7;
+  --color-panel: #ffffff;
+  --color-signal: #ff6a1a;
+  --color-signal-dim: #e2570f;
   --color-signal-tint: #ffe9da;
-  --color-slate:       #64748b;
+  --color-slate: #64748b;
   --color-slate-light: #94a3b8;
-  --color-hairline:    #e5e7eb;
-  --color-ok:          #1f8a5f;
-  --color-danger:      #d8392b;
+  --color-hairline: #e5e7eb;
+  --color-ok: #1f8a5f;
+  --color-danger: #d8392b;
 
   /* ── Animation ── */
   --animate-marquee: marquee 20s linear infinite;
 }
 
 @keyframes marquee {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }
 
 @layer base {
@@ -41,7 +45,9 @@
       linear-gradient(90deg, rgba(20, 21, 26, 0.025) 1px, transparent 1px),
       linear-gradient(rgba(20, 21, 26, 0.025) 1px, transparent 1px);
     background-size: 28px 28px;
-    transition: background-color 0.25s ease, color 0.25s ease;
+    transition:
+      background-color 0.25s ease,
+      color 0.25s ease;
   }
 
   /* Dark mode — swap grid overlay opacity */
@@ -109,13 +115,52 @@
   .container-page {
     @apply mx-auto w-full max-w-[1280px] px-5 md:px-8;
   }
+
+  /* Custom modal scrollbar */
+  .custom-scrollbar {
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: #9ca3af transparent;
+  }
+
+  /* Chrome, Edge, Safari */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #9ca3af;
+    border-radius: 999px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #6b7280;
+  }
+
+  /* Dark mode */
+  .dark .custom-scrollbar {
+    scrollbar-color: #4b5563 transparent;
+  }
+
+  .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #4b5563;
+  }
+
+  .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #6b7280;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration:        0.001ms !important;
-    animation-iteration-count: 1       !important;
-    transition-duration:       0.001ms !important;
-    scroll-behavior:           auto    !important;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
 }

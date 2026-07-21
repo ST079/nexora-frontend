@@ -1,3 +1,5 @@
+import { FALLBACK_IMG } from "@/constants/defaults";
+
 export const productImage = (product, index = 0) => {
   const images = product?.imageUrls;
   if (Array.isArray(images) && images.length > index && images[index])

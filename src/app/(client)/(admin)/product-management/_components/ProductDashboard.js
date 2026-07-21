@@ -35,7 +35,7 @@ const fadeUp = (delay = 0) => ({
 });
 
 const ProductDashboard = ({ allProducts }) => {
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState(allProducts ?? []);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState("createdAt");
@@ -44,18 +44,9 @@ const ProductDashboard = ({ allProducts }) => {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [successMsg, setSuccessMsg] = useState("");
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      setProducts(allProducts);
-    };
-    fetchProducts();
-  }, [products, allProducts]);
-
-  const handleSave = () => {
+  const handleSave = (newProduct) => {
+    setProducts((prev) => [newProduct, ...prev]);
     setEditProduct(null);
-    setSuccessMsg("Product saved successfully.");
-    setTimeout(() => setSuccessMsg(""), 3000);
-    fetchProducts();
   };
 
   const handleDeleted = () => {
@@ -190,7 +181,7 @@ const ProductDashboard = ({ allProducts }) => {
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-20 text-slate dark:text-[#8b8fa8]">
             <Loader2 size={16} className="animate-spin" />
-            <span className="font-mono text-sm">Loading catalog…</span>
+            <span className="font-mono text-sm">Loading Products...</span>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">

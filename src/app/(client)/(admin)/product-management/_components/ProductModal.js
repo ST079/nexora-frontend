@@ -8,6 +8,8 @@ import { useForm } from "react-hook-form";
 import { useDropzone } from "react-dropzone";
 import Image from "next/image";
 import { categories } from "@/constants/categories";
+import { createProduct } from "@/api/product";
+import toast from "react-hot-toast";
 
 const ProductModal = ({ product, onClose, onSave }) => {
   const isEdit = !!product?._id;
@@ -19,7 +21,6 @@ const ProductModal = ({ product, onClose, onSave }) => {
   const onDrop = useCallback((acceptedFiles) => {
     setImages((prev) => [...prev, ...acceptedFiles]);
   }, []);
-  console.log(images);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -43,25 +44,41 @@ const ProductModal = ({ product, onClose, onSave }) => {
   const formatExt = (name) => name.split(".").pop().toUpperCase();
 
   const productDetails = async (data) => {
-    console.log(data);
-    const formData = new FormData();
-    formData.append("name", data.name);
-    formData.append("category", data.category);
-    formData.append("brand", data.brand);
-    formData.append("stock", data.stock ?? 1);
-    formData.append("price", data.price);
+    setError("");
+    try {
+      const formData = new FormData();
+      setSaving(true);
+      console.log(saving);
+      formData.append("name", data.name);
+      formData.append("category", data.category);
+      formData.append("brand", data.brand);
+      formData.append("stock", data.stock ?? 1);
+      formData.append("price", data.price);
 
-    if (data.description) {
-      formData.append("description", data.description);
+      if (data.description) {
+        formData.append("description", data.description);
+      }
+
+      if (images.length > 0) {
+        images.map((image) => {
+          formData.append("images", image);
+        });
+      }
+
+      const response = await createProduct(formData);
+      onSave(response);
+      // await new Promise((resolve) => setTimeout(resolve, 3000));
+      onClose();
+      toast.success("Product Added Successfully!");
+    } catch (error) {
+      setError(
+        error?.response?.data?.message ||
+          err.message ||
+          "Something went wrong.",
+      );
+    } finally {
+      setSaving(false);
     }
-
-    if (images.length > 0) {
-      images.map((image) => {
-        formData.append("images", image);
-      });
-    }
-
-    console.log([...formData.entries()]);
   };
 
   return (
@@ -81,7 +98,7 @@ const ProductModal = ({ product, onClose, onSave }) => {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 12 }}
         transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-        className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto bg-paper dark:bg-[#16181f] border border-hairline dark:border-[#262932] shadow-lift"
+        className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto custom-scrollbar bg-paper dark:bg-[#16181f] border border-hairline dark:border-[#262932] shadow-lift"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-hairline dark:border-[#262932]">
@@ -90,7 +107,7 @@ const ProductModal = ({ product, onClose, onSave }) => {
               {isEdit ? "Edit product" : "New product"}
             </p>
             <h2 className="font-display text-lg font-semibold text-ink dark:text-[#f0efe8]">
-              {isEdit ? product.name || "Untitled" : "Add to catalog"}
+              {isEdit ? product.name || "Untitled" : "Add to Products"}
             </h2>
           </div>
           <button
