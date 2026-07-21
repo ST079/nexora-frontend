@@ -45,8 +45,11 @@ const ProductDashboard = ({ allProducts }) => {
   const [successMsg, setSuccessMsg] = useState("");
 
   useEffect(() => {
-    setProducts(allProducts);
-  }, [allProducts]);
+    const fetchProducts = async () => {
+      setProducts(allProducts);
+    };
+    fetchProducts();
+  }, [products, allProducts]);
 
   const handleSave = () => {
     setEditProduct(null);

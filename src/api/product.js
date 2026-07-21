@@ -8,16 +8,23 @@ import {
 } from "@/constants/defaults";
 import axios from "axios";
 
+const apiUrl = config.apiUrl;
+
 export const getProducts = async (searchParams) => {
   const sort = (await searchParams)?.sort ?? DEFAULT_SORT;
   const min = (await searchParams)?.min ?? DEFAULT_MIN_Price;
   const max = (await searchParams)?.max ?? DEFAULT_MAX_Price;
   const category = (await searchParams)?.category ?? DEFAULT_CATEGORY;
-  const brand =(await searchParams)?.brands ?? DEFAULT_BRAND;
+  const brand = (await searchParams)?.brands ?? DEFAULT_BRAND;
 
   const response = await axios.get(
-    `${config.apiUrl}/api/v1/products?sort=${sort}&min=${min}&max=${max}&category=${category}&brands=${brand}`,
+    `${apiUrl}/api/v1/products?sort=${sort}&min=${min}&max=${max}&category=${category}&brands=${brand}`,
   );
 
+  return response.data;
+};
+
+export const createProduct = async (data) => {
+  const response = axios.post(`${apiUrl}/api/v1/products`, data);
   return response.data;
 };

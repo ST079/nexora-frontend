@@ -44,6 +44,24 @@ const ProductModal = ({ product, onClose, onSave }) => {
 
   const productDetails = async (data) => {
     console.log(data);
+    const formData = new FormData();
+    formData.append("name", data.name);
+    formData.append("category", data.category);
+    formData.append("brand", data.brand);
+    formData.append("stock", data.stock ?? 1);
+    formData.append("price", data.price);
+
+    if (data.description) {
+      formData.append("description", data.description);
+    }
+
+    if (images.length > 0) {
+      images.map((image) => {
+        formData.append("images", image);
+      });
+    }
+
+    console.log([...formData.entries()]);
   };
 
   return (
