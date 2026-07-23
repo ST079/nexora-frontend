@@ -67,7 +67,6 @@ const ProductModal = ({ product, onClose, onSave }) => {
 
       const response = await createProduct(formData);
       onSave(response);
-      // await new Promise((resolve) => setTimeout(resolve, 3000));
       onClose();
       toast.success("Product Added Successfully!");
     } catch (error) {

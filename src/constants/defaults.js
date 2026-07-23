@@ -21,3 +21,12 @@ export const FALLBACK_IMG =
       <text x="300" y="308" font-family="monospace" font-size="13" fill="#6B7280" text-anchor="middle">NO IMAGE</text>
     </svg>`,
   );
+
+export const EMPTY_FORM = {
+  name: "",
+  brand: "",
+  category: "",
+  price: "",
+  stock: "",
+  description: "",
+};

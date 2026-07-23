@@ -1,16 +1,14 @@
 "use client";
 import React, { useState } from "react";
-import NavLinks from "@/constants/navLinks";
 import { Search, ShoppingCart, User, Menu, X, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
 import ProductsMenu from "@/components/ProductsMenu";
 import { categories } from "@/constants/categories";
-import navLinks from "@/constants/navLinks";
 import Logo from "./Logo";
-import ThemeToggler from "./ThemeToggler";
 import UserProfile from "./UserProfile";
+import { navLinks } from "@/constants/navLinks";
 
 const Header = () => {
   const pathname = usePathname();
@@ -35,7 +33,7 @@ const Header = () => {
 
         {/* ── Desktop nav ── */}
         <nav className="hidden lg:flex items-center gap-7">
-          {NavLinks.map((navLink) => {
+          {navLinks.map((navLink) => {
             const isActive =
               pathname === navLink.route ||
               (navLink.route !== "/" && pathname.startsWith(navLink.route));

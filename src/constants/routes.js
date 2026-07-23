@@ -6,3 +6,9 @@ export const LOGIN_ROUTE = "/login"
 export const REGISTER_ROUTE = "/register"
 export const FORGOT_PASSWORD_ROUTE = "/forgot-password"
 export const REST_PASSWORD_ROUTE = "/reset-password"
+
+//admin routes
+export const DASHBOARD_ROUTE = "/dashboard"
+export const PRODUCT_MANAGEMENT_ROUTE = "/product-management"
+export const ORDER_MANAGEMENT_ROUTE = "/order-management"
+export const USER_MANAGEMENT_ROUTE = "/user-management"

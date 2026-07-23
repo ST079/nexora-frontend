@@ -2,6 +2,7 @@
 import { Loader2, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { deleteProduct } from "@/api/product";
 
 const DeleteModal = ({ product, onClose, onConfirm }) => {
   const [deleting, setDeleting] = useState(false);
@@ -9,9 +10,9 @@ const DeleteModal = ({ product, onClose, onConfirm }) => {
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      // await deleteProduct(product._id);
-      await new Promise((r) => setTimeout(r, 600)); // ← remove when wired up
-      onConfirm();
+      await deleteProduct(product._id);
+      await new Promise((r) => setTimeout(r, 600));
+      onConfirm(product._id);
     } finally {
       setDeleting(false);
     }

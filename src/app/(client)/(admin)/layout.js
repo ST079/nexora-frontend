@@ -1,7 +1,30 @@
-import React from "react";
+"use client";
+
+import Loader from "@/components/Loader";
+import { LOGIN_ROUTE } from "@/constants/routes";
+import { useRouter } from "next/navigation";
+import React, { useEffect } from "react";
+import toast from "react-hot-toast";
+import { useSelector } from "react-redux";
 
 const AdminLayout = ({ children }) => {
-  return <div>{children}</div>;
+  const { user } = useSelector((state) => state.auth);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!user) {
+      router.push(LOGIN_ROUTE);
+      toast.error("You are not authenticated!");
+    }
+  }, [user]);
+
+  if (!user) return <Loader label="Checking access" />;
+
+  return (
+    <div className="flex bg-paper dark:bg-[#0e0f12]">
+      {children}
+    </div>
+  );
 };
 
 export default AdminLayout;

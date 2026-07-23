@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus,
@@ -18,15 +18,12 @@ import Image from "next/image";
 import StatusBadge from "./StockStatusBadge";
 import ProductModal from "./ProductModal";
 import DeleteModal from "./DeleteModal";
+import Pagination from "@/components/Pagination";
+import { deleteProduct } from "@/api/product";
+import toast from "react-hot-toast";
+import { EMPTY_FORM } from "@/constants/defaults";
 
-const EMPTY_FORM = {
-  name: "",
-  brand: "",
-  category: "",
-  price: "",
-  stock: "",
-  description: "",
-};
+const PAGE_SIZE = 8;
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 12 },
@@ -42,18 +39,18 @@ const ProductDashboard = ({ allProducts }) => {
   const [sortDir, setSortDir] = useState("desc");
   const [editProduct, setEditProduct] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [successMsg, setSuccessMsg] = useState("");
+  const [page, setPage] = useState(1);
 
   const handleSave = (newProduct) => {
     setProducts((prev) => [newProduct, ...prev]);
     setEditProduct(null);
+    setPage(1);
   };
 
-  const handleDeleted = () => {
+  const handleDeleted = async (deletedId) => {
+    setProducts((prev) => prev.filter((product) => product._id !== deletedId));
     setDeleteTarget(null);
-    setSuccessMsg("Product deleted.");
-    setTimeout(() => setSuccessMsg(""), 3000);
-    fetchProducts();
+    toast.success("Product deleted.");
   };
 
   const toggleSort = (field) => {
@@ -62,6 +59,13 @@ const ProductDashboard = ({ allProducts }) => {
       setSortField(field);
       setSortDir("asc");
     }
+    setPage(1);
+  };
+
+  // Reset page when search changes
+  const handleSearch = (val) => {
+    setSearch(val);
+    setPage(1);
   };
 
   const SortIcon = ({ field }) => {
@@ -73,6 +77,7 @@ const ProductDashboard = ({ allProducts }) => {
     );
   };
 
+  // Filter + sort
   const filtered = products
     .filter((p) =>
       [p.name, p.brand, p.category].some((v) =>
@@ -86,9 +91,17 @@ const ProductDashboard = ({ allProducts }) => {
       return String(a[sortField]).localeCompare(String(b[sortField])) * dir;
     });
 
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const paginated = filtered.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE,
+  );
+
   return (
     <div className="container-page py-10 bg-paper dark:bg-[#0e0f12] min-h-screen transition-colors duration-300">
-      {/* ── Header ── */}
+      {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <motion.div {...fadeUp()}>
           <p className="eyebrow dark:text-[#8b8fa8] mb-2">Admin · Products</p>
@@ -105,21 +118,7 @@ const ProductDashboard = ({ allProducts }) => {
         </motion.button>
       </div>
 
-      {/* ── Success toast ── */}
-      <AnimatePresence>
-        {successMsg && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            className="flex items-center gap-2 border border-ok/40 bg-ok/5 dark:bg-ok/10 px-4 py-3 text-sm text-ok mb-6"
-          >
-            <Check size={14} /> {successMsg}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ── Stats strip ── */}
+      {/* Stats strip */}
       <motion.div
         {...fadeUp(0.07)}
         className="grid grid-cols-2 sm:grid-cols-4 border border-hairline dark:border-[#262932] mb-6"
@@ -151,7 +150,7 @@ const ProductDashboard = ({ allProducts }) => {
         ))}
       </motion.div>
 
-      {/* ── Search ── */}
+      {/* Search */}
       <motion.div
         {...fadeUp(0.1)}
         className="flex items-center border border-hairline dark:border-[#262932] px-3 py-2.5 gap-2 mb-4 max-w-sm focus-within:border-ink dark:focus-within:border-[#f0efe8] transition-colors"
@@ -159,13 +158,13 @@ const ProductDashboard = ({ allProducts }) => {
         <Search size={14} className="text-slate dark:text-[#8b8fa8] shrink-0" />
         <input
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => handleSearch(e.target.value)}
           placeholder="Search name, brand, category…"
           className="w-full bg-transparent text-sm outline-none text-ink dark:text-[#f0efe8] placeholder:text-slate-light dark:placeholder:text-[#5b5e72]"
         />
         {search && (
           <button
-            onClick={() => setSearch("")}
+            onClick={() => handleSearch("")}
             className="text-slate dark:text-[#8b8fa8] hover:text-ink dark:hover:text-[#f0efe8]"
           >
             <X size={13} />
@@ -173,7 +172,7 @@ const ProductDashboard = ({ allProducts }) => {
         )}
       </motion.div>
 
-      {/* ── Table ── */}
+      {/* Table */}
       <motion.div
         {...fadeUp(0.12)}
         className="border border-hairline dark:border-[#262932] overflow-x-auto"
@@ -219,7 +218,7 @@ const ProductDashboard = ({ allProducts }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-hairline dark:divide-[#262932]">
-              {filtered.map((product, i) => (
+              {paginated.map((product, i) => (
                 <motion.tr
                   key={product._id}
                   initial={{ opacity: 0 }}
@@ -227,13 +226,12 @@ const ProductDashboard = ({ allProducts }) => {
                   transition={{ delay: i * 0.03 }}
                   className="hover:bg-hairline/20 dark:hover:bg-[#262932]/40 transition-colors"
                 >
-                  {/* Product */}
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 shrink-0 border border-hairline dark:border-[#262932] bg-paper dark:bg-[#0e0f12] overflow-hidden">
-                        {product.images?.[0] ? (
+                        {product.imageUrls?.[0] ? (
                           <Image
-                            src={product.images[0]}
+                            src={product.imageUrls[0]}
                             alt={product.name}
                             width={40}
                             height={40}
@@ -293,12 +291,16 @@ const ProductDashboard = ({ allProducts }) => {
         )}
       </motion.div>
 
-      <p className="font-mono text-xs text-slate dark:text-[#8b8fa8] mt-3">
-        {filtered.length} of {products.length} product
-        {products.length === 1 ? "" : "s"}
-      </p>
+      {/* ── Pagination ── */}
+      <Pagination
+        page={safePage}
+        totalPages={totalPages}
+        total={filtered.length}
+        pageSize={PAGE_SIZE}
+        onPageChange={setPage}
+      />
 
-      {/* ── Modals ── */}
+      {/* Modals */}
       <AnimatePresence>
         {editProduct !== null && (
           <ProductModal

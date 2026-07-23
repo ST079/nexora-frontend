@@ -14,11 +14,16 @@ export const getProducts = async (searchParams) => {
   const max = (await searchParams)?.max ?? DEFAULT_MAX_Price;
   const category = (await searchParams)?.category ?? DEFAULT_CATEGORY;
   const brand = (await searchParams)?.brands ?? DEFAULT_BRAND;
-  
+
   const response = await axios.get(
     `${config.apiUrl}api/v1/products?sort=${sort}&min=${min}&max=${max}&category=${category}&brands=${brand}`,
   );
 
+  return response.data;
+};
+
+export const getProductById = async (product) => {
+  const response = await axios.get(`${config.apiUrl}api/v1/${product._id}`);
   return response.data;
 };
 
@@ -29,5 +34,31 @@ export const createProduct = async (data) => {
       Authorization: `Bearer ${authToken}`,
     },
   });
+  return response.data;
+};
+
+export const updateProduct = async (id, data) => {
+  const authToken = localStorage.getItem("authToken");
+  const response = await axios.put(
+    `${config.apiUrl}api/v1/products/${id}`,
+    data,
+    {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+    },
+  );
+  console.log(response);
+  return response.data;
+};
+
+export const deleteProduct = async (id) => {
+  const authToken = localStorage.getItem("authToken");
+  const response = await axios.delete(`${config.apiUrl}api/v1/products/${id}`, {
+    headers: {
+      Authorization: `Bearer ${authToken}`,
+    },
+  });
+  console.log(response);
   return response.data;
 };
