@@ -19,7 +19,6 @@ import StatusBadge from "./StockStatusBadge";
 import ProductModal from "./ProductModal";
 import DeleteModal from "./DeleteModal";
 import Pagination from "@/components/Pagination";
-import { deleteProduct } from "@/api/product";
 import toast from "react-hot-toast";
 import { EMPTY_FORM } from "@/constants/defaults";
 

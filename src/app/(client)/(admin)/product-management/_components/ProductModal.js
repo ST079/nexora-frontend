@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { useDropzone } from "react-dropzone";
 import Image from "next/image";
 import { categories } from "@/constants/categories";
-import { createProduct } from "@/api/product";
+import { createProduct, updateProduct } from "@/api/product";
 import toast from "react-hot-toast";
 
 const ProductModal = ({ product, onClose, onSave }) => {
@@ -16,7 +16,16 @@ const ProductModal = ({ product, onClose, onSave }) => {
   const [saving, setSaving] = useState(false);
   const [images, setImages] = useState([]);
   const [error, setError] = useState("");
-  const { register, handleSubmit } = useForm();
+  const { register, handleSubmit } = useForm({
+    values: {
+      name: isEdit ? product.name : "",
+      brand: isEdit ? product.brand : "",
+      category: isEdit ? product.category : "",
+      stock: isEdit ? product.stock : "",
+      price: isEdit ? product.price : "",
+      description: isEdit ? product.description : "",
+    },
+  });
 
   const onDrop = useCallback((acceptedFiles) => {
     setImages((prev) => [...prev, ...acceptedFiles]);
@@ -48,7 +57,7 @@ const ProductModal = ({ product, onClose, onSave }) => {
     try {
       const formData = new FormData();
       setSaving(true);
-      console.log(saving);
+
       formData.append("name", data.name);
       formData.append("category", data.category);
       formData.append("brand", data.brand);
@@ -65,14 +74,20 @@ const ProductModal = ({ product, onClose, onSave }) => {
         });
       }
 
-      const response = await createProduct(formData);
+      const response = isEdit
+        ? await updateProduct(product._id, formData)
+        : await createProduct(formData);
       onSave(response);
       onClose();
-      toast.success("Product Added Successfully!");
+      toast.success(
+        isEdit
+          ? "Product Updated Successfully!"
+          : "Product Added Successfully!",
+      );
     } catch (error) {
       setError(
         error?.response?.data?.message ||
-          err.message ||
+          error.message ||
           "Something went wrong.",
       );
     } finally {
@@ -304,7 +319,7 @@ const ProductModal = ({ product, onClose, onSave }) => {
               ) : (
                 <Check size={14} />
               )}
-              {saving ? "Saving…" : isEdit ? "Save changes" : "Add product"}
+              {saving ? "Saving…" : isEdit ? "Update Product" : "Add product"}
             </button>
             <button
               type="button"

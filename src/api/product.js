@@ -39,6 +39,7 @@ export const createProduct = async (data) => {
 
 export const updateProduct = async (id, data) => {
   const authToken = localStorage.getItem("authToken");
+  console.log([...data.entries()]);
   const response = await axios.put(
     `${config.apiUrl}api/v1/products/${id}`,
     data,
@@ -49,7 +50,7 @@ export const updateProduct = async (id, data) => {
     },
   );
   console.log(response);
-  return response.data;
+  return response;
 };
 
 export const deleteProduct = async (id) => {
