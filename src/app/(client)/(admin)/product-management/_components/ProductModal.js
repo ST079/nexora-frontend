@@ -68,7 +68,7 @@ const ProductModal = ({ product, onClose, onSave }) => {
       const response = isEdit
         ? await updateProduct(product._id, formData)
         : await createProduct(formData);
-      
+
       onSave(response, isEdit);
       onClose();
       toast.success(isEdit ? "Product updated!" : "Product added!");

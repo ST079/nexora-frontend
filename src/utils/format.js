@@ -1,4 +1,4 @@
-import { FALLBACK_IMG } from "@/constants/defaults";
+import { DEFAULT_SORT, FALLBACK_IMG } from "@/constants/defaults";
 
 export const productImage = (product, index = 0) => {
   const images = product?.imageUrls;
@@ -21,3 +21,17 @@ export const formatSize = (bytes) => {
 };
 
 export const formatExt = (name) => name.split(".").pop().toUpperCase();
+
+export const queryFormatter = (searchParams = {}) => {
+  const params = new URLSearchParams();
+
+  params.set("sort", searchParams.sort ?? DEFAULT_SORT);
+
+  if (searchParams.name) params.set("name", searchParams.name);
+  if (searchParams.brands) params.set("brands", searchParams.brands);
+  if (searchParams.category) params.set("category", searchParams.category);
+  if (searchParams.min) params.set("min", searchParams.min);
+  if (searchParams.max) params.set("max", searchParams.max);
+
+  return params.toString();
+};

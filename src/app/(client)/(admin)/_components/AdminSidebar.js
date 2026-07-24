@@ -1,26 +1,19 @@
 "use client";
 
 import Link from "next/link";
-
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
-import {
-  ChevronLeft,
-  ChevronRight,
-  LogOut,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, LogOut } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { adminNavLinks } from "@/constants/navLinks";
 import { usePathname, useRouter } from "next/navigation";
-// import { logoutUser } from "@/redux/auth/authActions";
-
-
+import { logout } from "@/redux/auth/authSlice";
 
 const AdminSidebar = () => {
-  const pathname   = usePathname();
-  const dispatch   = useDispatch();
-  const router     = useRouter();
-  const { user }   = useSelector((state) => state.auth);
+  const pathname = usePathname();
+  const dispatch = useDispatch();
+  const router = useRouter();
+  const { user } = useSelector((state) => state.auth);
   const [collapsed, setCollapsed] = useState(false);
 
   const handleLogout = () => {
@@ -78,7 +71,7 @@ const AdminSidebar = () => {
             <ul>
               {group.items.map((item) => {
                 const active = isActive(item.href);
-                const Icon   = item.icon;
+                const Icon = item.icon;
                 return (
                   <li key={item.href}>
                     <Link
@@ -119,7 +112,9 @@ const AdminSidebar = () => {
 
       {/* User + logout */}
       <div className="border-t border-hairline dark:border-[#262932] p-3 shrink-0">
-        <div className={`flex items-center gap-3 mb-2 ${collapsed ? "justify-center" : ""}`}>
+        <div
+          className={`flex items-center gap-3 mb-2 ${collapsed ? "justify-center" : ""}`}
+        >
           <div className="grid h-8 w-8 shrink-0 place-items-center bg-ink dark:bg-[#262932] font-display text-xs text-paper dark:text-[#f0efe8] uppercase">
             {user?.name?.charAt(0) ?? "A"}
           </div>
