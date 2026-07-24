@@ -49,8 +49,7 @@ export const updateProduct = async (id, data) => {
       },
     },
   );
-  console.log(response);
-  return response;
+  return response.data;
 };
 
 export const deleteProduct = async (id) => {

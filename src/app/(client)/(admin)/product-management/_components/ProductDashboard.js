@@ -40,8 +40,9 @@ const ProductDashboard = ({ allProducts }) => {
   const [editProduct, setEditProduct] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [page, setPage] = useState(1);
-
+  const router = useRouter();
   const handleSave = (savedProduct, isEdit) => {
+    router.refresh();
     setProducts((prev) =>
       isEdit
         ? prev.map((p) => (p._id === savedProduct._id ? savedProduct : p))

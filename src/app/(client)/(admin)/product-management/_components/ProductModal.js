@@ -10,18 +10,16 @@ import Image from "next/image";
 import { categories } from "@/constants/categories";
 import { createProduct, updateProduct } from "@/api/product";
 import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
 import { formatExt, formatSize } from "@/utils/format";
 
 const ProductModal = ({ product, onClose, onSave }) => {
   const isEdit = !!product?._id;
-  const router = useRouter();
   const [saving, setSaving] = useState(false);
-  const [error, setError]   = useState("");
+  const [error, setError] = useState("");
 
   // Separate state for existing URLs (from the server) vs new File objects
   const [existingUrls, setExistingUrls] = useState(product?.imageUrls ?? []);
-  const [newFiles, setNewFiles]         = useState([]);
+  const [newFiles, setNewFiles] = useState([]);
 
   const onDrop = useCallback((acceptedFiles) => {
     setNewFiles((prev) => [...prev, ...acceptedFiles]);
@@ -39,16 +37,13 @@ const ProductModal = ({ product, onClose, onSave }) => {
   const removeNew = (index) =>
     setNewFiles((prev) => prev.filter((_, i) => i !== index));
 
-
-
-
   const { register, handleSubmit } = useForm({
     values: {
-      name:        isEdit ? product.name        : "",
-      brand:       isEdit ? product.brand       : "",
-      category:    isEdit ? product.category    : "",
-      stock:       isEdit ? product.stock       : "",
-      price:       isEdit ? product.price       : "",
+      name: isEdit ? product.name : "",
+      brand: isEdit ? product.brand : "",
+      category: isEdit ? product.category : "",
+      stock: isEdit ? product.stock : "",
+      price: isEdit ? product.price : "",
       description: isEdit ? product.description : "",
     },
   });
@@ -58,11 +53,11 @@ const ProductModal = ({ product, onClose, onSave }) => {
     setError("");
     try {
       const formData = new FormData();
-      formData.append("name",     data.name);
-      formData.append("brand",    data.brand);
+      formData.append("name", data.name);
+      formData.append("brand", data.brand);
       formData.append("category", data.category);
-      formData.append("stock",    data.stock ?? 1);
-      formData.append("price",    data.price);
+      formData.append("stock", data.stock ?? 1);
+      formData.append("price", data.price);
       if (data.description) formData.append("description", data.description);
 
       // Send remaining existing URLs so the backend knows which to keep
@@ -73,9 +68,8 @@ const ProductModal = ({ product, onClose, onSave }) => {
       const response = isEdit
         ? await updateProduct(product._id, formData)
         : await createProduct(formData);
-
+      
       onSave(response, isEdit);
-      router.refresh()
       onClose();
       toast.success(isEdit ? "Product updated!" : "Product added!");
     } catch (err) {
@@ -91,15 +85,17 @@ const ProductModal = ({ product, onClose, onSave }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <motion.div
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
         className="absolute inset-0 bg-ink/50 dark:bg-black/70"
         onClick={onClose}
       />
 
       <motion.div
         initial={{ opacity: 0, scale: 0.96, y: 12 }}
-        animate={{ opacity: 1, scale: 1,    y: 0  }}
-        exit={{   opacity: 0, scale: 0.96,  y: 12 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 12 }}
         transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
         className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto bg-paper dark:bg-[#16181f] border border-hairline dark:border-[#262932] shadow-lift"
       >
@@ -113,7 +109,10 @@ const ProductModal = ({ product, onClose, onSave }) => {
               {isEdit ? product.name || "Untitled" : "Add to Products"}
             </h2>
           </div>
-          <button onClick={onClose} className="grid h-8 w-8 place-items-center text-slate dark:text-[#8b8fa8] hover:text-ink dark:hover:text-[#f0efe8] transition-colors">
+          <button
+            onClick={onClose}
+            className="grid h-8 w-8 place-items-center text-slate dark:text-[#8b8fa8] hover:text-ink dark:hover:text-[#f0efe8] transition-colors"
+          >
             <X size={16} />
           </button>
         </div>
@@ -128,21 +127,50 @@ const ProductModal = ({ product, onClose, onSave }) => {
           )}
 
           <div className="grid sm:grid-cols-2 gap-4">
-            <AnimatedField label="Product name" placeholder="iPhone 16 Pro" required {...register("name")} />
-            <AnimatedField label="Brand"        placeholder="Apple"         required {...register("brand")} />
+            <AnimatedField
+              label="Product name"
+              placeholder="iPhone 16 Pro"
+              required
+              {...register("name")}
+            />
+            <AnimatedField
+              label="Brand"
+              placeholder="Apple"
+              required
+              {...register("brand")}
+            />
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <AnimatedField label="Category" placeholder="e.g. Smartphones" list="product-categories" {...register("category")} />
+              <AnimatedField
+                label="Category"
+                placeholder="e.g. Smartphones"
+                list="product-categories"
+                {...register("category")}
+              />
               <datalist id="product-categories">
-                {categories.map((c, i) => <option key={i} value={c.label} />)}
+                {categories.map((c, i) => (
+                  <option key={i} value={c.label} />
+                ))}
               </datalist>
             </div>
-            <AnimatedField label="Price (Rs.)" placeholder="197000" required type="number" {...register("price")} />
+            <AnimatedField
+              label="Price (Rs.)"
+              placeholder="197000"
+              required
+              type="number"
+              {...register("price")}
+            />
           </div>
 
-          <AnimatedField label="Stock" placeholder="10" required type="number" {...register("stock")} />
+          <AnimatedField
+            label="Stock"
+            placeholder="10"
+            required
+            type="number"
+            {...register("stock")}
+          />
 
           {/* ── Images ── */}
           <div>
@@ -160,8 +188,20 @@ const ProductModal = ({ product, onClose, onSave }) => {
               }`}
             >
               <input {...getInputProps()} />
-              <svg className="w-8 h-8 mb-3 text-slate dark:text-[#8b8fa8]" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h3a3 3 0 0 0 0-6h-.025a5.56 5.56 0 0 0 .025-.5A5.5 5.5 0 0 0 7.207 9.021C7.137 9.017 7.071 9 7 9a4 4 0 1 0 0 8h2.167M12 19v-9m0 0-2 2m2-2 2 2" />
+              <svg
+                className="w-8 h-8 mb-3 text-slate dark:text-[#8b8fa8]"
+                aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M15 17h3a3 3 0 0 0 0-6h-.025a5.56 5.56 0 0 0 .025-.5A5.5 5.5 0 0 0 7.207 9.021C7.137 9.017 7.071 9 7 9a4 4 0 1 0 0 8h2.167M12 19v-9m0 0-2 2m2-2 2 2"
+                />
               </svg>
               <p className="text-sm text-ink dark:text-[#f0efe8]">
                 <span className="font-semibold">
@@ -197,10 +237,18 @@ const ProductModal = ({ product, onClose, onSave }) => {
                         className="flex items-center gap-3 border border-hairline dark:border-[#262932] p-2 bg-paper dark:bg-[#0e0f12]"
                       >
                         <div className="h-12 w-12 shrink-0 overflow-hidden border border-hairline dark:border-[#262932]">
-                          <Image src={url} alt={`Image ${i + 1}`} width={80} height={80} className="h-full w-full object-cover" />
+                          <Image
+                            src={url}
+                            alt={`Image ${i + 1}`}
+                            width={80}
+                            height={80}
+                            className="h-full w-full object-cover"
+                          />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-ink dark:text-[#f0efe8] truncate">{url.split("/").pop()}</p>
+                          <p className="text-sm font-medium text-ink dark:text-[#f0efe8] truncate">
+                            {url.split("/").pop()}
+                          </p>
                           <span className="font-mono text-[10px] uppercase tracking-widest px-1.5 py-0.5 bg-ok/10 text-ok">
                             Saved
                           </span>
@@ -245,10 +293,19 @@ const ProductModal = ({ product, onClose, onSave }) => {
                           className="flex items-center gap-3 border border-hairline dark:border-[#262932] p-2 bg-paper dark:bg-[#0e0f12]"
                         >
                           <div className="h-12 w-12 shrink-0 overflow-hidden border border-hairline dark:border-[#262932]">
-                            <Image src={url} alt={file.name} width={80} height={80} className="h-full w-full object-cover" onLoad={() => URL.revokeObjectURL(url)} />
+                            <Image
+                              src={url}
+                              alt={file.name}
+                              width={80}
+                              height={80}
+                              className="h-full w-full object-cover"
+                              onLoad={() => URL.revokeObjectURL(url)}
+                            />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-ink dark:text-[#f0efe8] truncate">{file.name}</p>
+                            <p className="text-sm font-medium text-ink dark:text-[#f0efe8] truncate">
+                              {file.name}
+                            </p>
                             <div className="flex items-center gap-2 mt-0.5">
                               <span className="font-mono text-[10px] uppercase tracking-widest px-1.5 py-0.5 bg-blueprint/10 dark:bg-blueprint/20 text-blueprint dark:text-[#5c78ff]">
                                 {formatExt(file.name)}
@@ -277,7 +334,9 @@ const ProductModal = ({ product, onClose, onSave }) => {
 
           {/* Description */}
           <div>
-            <label className="font-mono text-xs text-slate dark:text-[#8b8fa8] mb-1 block">Description</label>
+            <label className="font-mono text-xs text-slate dark:text-[#8b8fa8] mb-1 block">
+              Description
+            </label>
             <textarea
               rows={3}
               placeholder="Brief product description…"
@@ -288,11 +347,25 @@ const ProductModal = ({ product, onClose, onSave }) => {
 
           {/* Actions */}
           <div className="flex gap-3 pt-2">
-            <button type="submit" disabled={saving} className="btn-primary flex-1 disabled:opacity-60">
-              {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+            <button
+              type="submit"
+              disabled={saving}
+              className="btn-primary flex-1 disabled:opacity-60"
+            >
+              {saving ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <Check size={14} />
+              )}
               {saving ? "Saving…" : isEdit ? "Update product" : "Add product"}
             </button>
-            <button type="button" onClick={onClose} className="btn-secondary px-5">Cancel</button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="btn-secondary px-5"
+            >
+              Cancel
+            </button>
           </div>
         </form>
       </motion.div>
