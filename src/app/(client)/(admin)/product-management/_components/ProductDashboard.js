@@ -40,12 +40,18 @@ const ProductDashboard = ({ allProducts }) => {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [page, setPage] = useState(1);
 
-  const handleSave = (newProduct) => {
-    setProducts((prev) => [newProduct, ...prev]);
+  const handleSave = (savedProduct, isEdit) => {
+    setProducts((prev) =>
+      isEdit
+        ? prev.map((p) => (p._id === savedProduct._id ? savedProduct : p))
+        : [savedProduct, ...prev],
+    );
     setEditProduct(null);
     setPage(1);
+    setSuccessMsg(isEdit ? "Product updated." : "Product added.");
+    setTimeout(() => setSuccessMsg(""), 3000);
   };
-
+  
   const handleDeleted = async (deletedId) => {
     setProducts((prev) => prev.filter((product) => product._id !== deletedId));
     setDeleteTarget(null);
