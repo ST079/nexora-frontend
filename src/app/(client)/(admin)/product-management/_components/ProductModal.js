@@ -10,14 +10,15 @@ import Image from "next/image";
 import { categories } from "@/constants/categories";
 import { createProduct, updateProduct } from "@/api/product";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import { formatExt, formatSize } from "@/utils/format";
 
 const ProductModal = ({ product, onClose, onSave }) => {
   const isEdit = !!product?._id;
-
+  const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [error, setError]   = useState("");
 
-  // ── Images ──────────────────────────────────────────────────────────────
   // Separate state for existing URLs (from the server) vs new File objects
   const [existingUrls, setExistingUrls] = useState(product?.imageUrls ?? []);
   const [newFiles, setNewFiles]         = useState([]);
@@ -38,15 +39,9 @@ const ProductModal = ({ product, onClose, onSave }) => {
   const removeNew = (index) =>
     setNewFiles((prev) => prev.filter((_, i) => i !== index));
 
-  const formatSize = (bytes) => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
 
-  const formatExt = (name) => name.split(".").pop().toUpperCase();
 
-  // ── Form ─────────────────────────────────────────────────────────────────
+
   const { register, handleSubmit } = useForm({
     values: {
       name:        isEdit ? product.name        : "",
@@ -80,6 +75,7 @@ const ProductModal = ({ product, onClose, onSave }) => {
         : await createProduct(formData);
 
       onSave(response, isEdit);
+      router.refresh()
       onClose();
       toast.success(isEdit ? "Product updated!" : "Product added!");
     } catch (err) {

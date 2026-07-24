@@ -21,6 +21,7 @@ import DeleteModal from "./DeleteModal";
 import Pagination from "@/components/Pagination";
 import toast from "react-hot-toast";
 import { EMPTY_FORM } from "@/constants/defaults";
+import { useRouter } from "next/navigation";
 
 const PAGE_SIZE = 8;
 
@@ -51,7 +52,7 @@ const ProductDashboard = ({ allProducts }) => {
     setSuccessMsg(isEdit ? "Product updated." : "Product added.");
     setTimeout(() => setSuccessMsg(""), 3000);
   };
-  
+
   const handleDeleted = async (deletedId) => {
     setProducts((prev) => prev.filter((product) => product._id !== deletedId));
     setDeleteTarget(null);

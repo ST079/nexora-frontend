@@ -13,3 +13,11 @@ export const formatNPR = (amount) => {
   if (Number.isNaN(n)) return "Rs. —";
   return "Rs. " + n.toLocaleString("en-IN");
 };
+
+export const formatSize = (bytes) => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+export const formatExt = (name) => name.split(".").pop().toUpperCase();
