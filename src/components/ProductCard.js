@@ -7,10 +7,15 @@ import { ShoppingCart } from "lucide-react";
 import { formatNPR, productImage } from "@/utils/format";
 import Image from "next/image";
 import Link from "next/link";
+import { useDispatch } from "react-redux";
+import { addToCart } from "@/redux/cart/cartSlice";
+import { FALLBACK_IMG } from "@/constants/defaults";
+import toast from "react-hot-toast";
 
 const ProductCard = ({ product, index = 0 }) => {
   const [hover, setHover] = useState(false);
   const id = product._id || product.id;
+  const dispatch = useDispatch();
 
   return (
     <motion.div
@@ -48,6 +53,21 @@ const ProductCard = ({ product, index = 0 }) => {
 
           {/* Add to cart button */}
           <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              dispatch(
+                addToCart({
+                  id: product._id,
+                  name: product.name,
+                  price: product.price,
+                  imageUrls: product.imageUrls[0] ?? FALLBACK_IMG,
+                  stock: product.stock,
+                  quantity: 1,
+                }),
+              );
+              toast.success(`${product.name} added to cart successfully`);
+            }}
             className="absolute bottom-3 right-3 grid h-9 w-9 place-items-center bg-ink dark:bg-[#f0efe8] text-paper dark:text-[#0e0f12] opacity-0 transition-all duration-300 group-hover:opacity-100 hover:bg-signal dark:hover:bg-signal dark:hover:text-paper disabled:cursor-not-allowed disabled:opacity-0"
             aria-label="Add to cart"
           >

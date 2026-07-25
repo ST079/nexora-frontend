@@ -9,12 +9,16 @@ import { categories } from "@/constants/categories";
 import Logo from "./Logo";
 import UserProfile from "./UserProfile";
 import { navLinks } from "@/constants/navLinks";
+import { useDispatch, useSelector } from "react-redux";
+import { openCart } from "@/redux/cart/cartSlice";
 
 const Header = () => {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileCatalogOpen, setMobileCatalogOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const dispatch = useDispatch();
+  const { items } = useSelector((state) => state.cart);
 
   function submitSearch(e) {
     e.preventDefault();
@@ -73,11 +77,23 @@ const Header = () => {
         {/* ── Icon actions ── */}
         <div className="flex items-center gap-2">
           <button
+            onClick={() => {
+              dispatch(openCart());
+            }}
             className="relative grid h-9 w-9 place-items-center border border-hairline dark:border-[#262932] hover:border-ink dark:hover:border-[#f0efe8] text-ink dark:text-[#f0efe8] transition-colors"
             aria-label="Open cart"
             title="Cart"
           >
             <ShoppingCart size={16} />
+            {items.length > 0 && (
+              <motion.span
+                initial={{ scale: 0.6 }}
+                animate={{ scale: 1 }}
+                className="absolute -top-2 -right-2 grid h-5 w-5 place-items-center rounded-full bg-signal font-mono text-[10px] text-paper"
+              >
+                {items.length > 9 ? "9+" : items.length}
+              </motion.span>
+            )}
           </button>
 
           <UserProfile />

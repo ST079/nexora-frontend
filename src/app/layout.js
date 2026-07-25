@@ -6,6 +6,7 @@ import { Toaster } from "react-hot-toast";
 import { config } from "@/config/config";
 import AppProvider from "@/redux/provider";
 import MainLayout from "@/layouts/MainLayout";
+import CartDrawer from "@/components/CartDrawer";
 
 export const metadata = {
   title: config.appName,
@@ -19,6 +20,7 @@ const RootLayout = ({ children }) => {
         <AppProvider>
           <MainLayout>
             <Header />
+            <CartDrawer/>
             <main className="flex-1">{children}</main>
             <Toaster
               toastOptions={{
