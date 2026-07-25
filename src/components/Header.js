@@ -18,7 +18,7 @@ const Header = () => {
   const [mobileCatalogOpen, setMobileCatalogOpen] = useState(false);
   const [query, setQuery] = useState("");
   const dispatch = useDispatch();
-  const { items } = useSelector((state) => state.cart);
+  const { items, totalItems } = useSelector((state) => state.cart);
 
   function submitSearch(e) {
     e.preventDefault();
@@ -85,13 +85,13 @@ const Header = () => {
             title="Cart"
           >
             <ShoppingCart size={16} />
-            {items.length > 0 && (
+            {totalItems > 0 && (
               <motion.span
                 initial={{ scale: 0.6 }}
                 animate={{ scale: 1 }}
                 className="absolute -top-2 -right-2 grid h-5 w-5 place-items-center rounded-full bg-signal font-mono text-[10px] text-paper"
               >
-                {items.length > 9 ? "9+" : items.length}
+                {totalItems > 9 ? "9+" : items.length}
               </motion.span>
             )}
           </button>

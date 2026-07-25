@@ -12,6 +12,8 @@ import {
 } from "@/redux/cart/cartSlice";
 import Image from "next/image";
 import { formatNPR } from "@/utils/format";
+import { CART_ROUTE } from "@/constants/routes";
+import EmptyCart from "./EmptyCart";
 
 const CartDrawer = () => {
   const dispatch = useDispatch();
@@ -70,25 +72,7 @@ const CartDrawer = () => {
             {/* Items */}
             <div className="flex-1 overflow-y-auto px-5">
               {items.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full gap-4 py-20 text-center">
-                  <ShoppingBag
-                    size={32}
-                    className="text-slate dark:text-[#8b8fa8]"
-                  />
-                  <p className="font-display text-lg font-semibold text-ink dark:text-[#f0efe8]">
-                    Your cart is empty
-                  </p>
-                  <p className="text-sm text-slate dark:text-[#8b8fa8]">
-                    Add a product to see it here.
-                  </p>
-                  <Link
-                    href="/products"
-                    onClick={() => dispatch(closeCart())}
-                    className="btn-primary mt-2"
-                  >
-                    Browse products
-                  </Link>
-                </div>
+               <EmptyCart/>
               ) : (
                 <ul className="divide-y divide-hairline dark:divide-[#262932]">
                   {items.map((item) => (
@@ -181,7 +165,7 @@ const CartDrawer = () => {
                   Shipping calculated at checkout
                 </p>
                 <Link
-                  href="/checkout"
+                  href={CART_ROUTE}
                   onClick={() => dispatch(closeCart())}
                   className="btn-primary w-full"
                 >

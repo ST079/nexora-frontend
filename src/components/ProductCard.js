@@ -63,6 +63,7 @@ const ProductCard = ({ product, index = 0 }) => {
                   price: product.price,
                   imageUrls: product.imageUrls[0] ?? FALLBACK_IMG,
                   stock: product.stock,
+                  brand : product.brand,
                   quantity: 1,
                 }),
               );
