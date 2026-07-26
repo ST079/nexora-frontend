@@ -1,9 +1,7 @@
-import { config } from "@/config/config";
-import axios from "axios";
+import api from ".";
 
-const apiUrl = config.apiUrl;
 export const login = async ({ email, password }) => {
-  const response = await axios.post(`${apiUrl}api/v1/auth/login`, {
+  const response = await api.post(`api/v1/auth/login`, {
     email,
     password,
   });
@@ -20,7 +18,7 @@ export const signUp = async ({
   province,
   country,
 }) => {
-  const response = await axios.post(`${apiUrl}api/v1/auth/register`, {
+  const response = await api.post(`api/v1/auth/register`, {
     name,
     phone,
     email,
@@ -32,7 +30,5 @@ export const signUp = async ({
       country,
     },
   });
-
-  console.log("api response", response);
   return response.data;
 };

@@ -12,7 +12,11 @@ import {
   removeFromCart,
 } from "@/redux/cart/cartSlice";
 import Link from "next/link";
-import { PRODUCTS_ROUTE } from "@/constants/routes";
+import {
+  CHECKOUT_ROUTE,
+  LOGIN_ROUTE,
+  PRODUCTS_ROUTE,
+} from "@/constants/routes";
 import EmptyCart from "@/components/EmptyCart";
 import toast from "react-hot-toast";
 
@@ -24,10 +28,10 @@ const CartPage = () => {
 
   const goToCheckout = () => {
     if (!user) {
-      router.push("/login");
+      router.push(LOGIN_ROUTE);
       return;
     }
-    router.push("/checkout");
+    router.push(CHECKOUT_ROUTE);
   };
 
   const handleIncrease = (item) => {
@@ -48,12 +52,10 @@ const CartPage = () => {
       </h1>
 
       <div className="grid lg:grid-cols-[1fr_340px] gap-10 items-start">
-
         {/* ── Items ── */}
         <div className="card-frame divide-y divide-hairline dark:divide-[#262932]">
           {items.map((item) => (
             <div key={item.id} className="flex gap-4 p-5">
-
               {/* Image */}
               <div className="h-20 w-20 shrink-0 border border-hairline dark:border-[#262932] bg-paper dark:bg-[#16181f] overflow-hidden">
                 {item.imageUrls && (
@@ -74,7 +76,9 @@ const CartPage = () => {
                     <p className="font-display font-semibold leading-tight text-ink dark:text-[#f0efe8]">
                       {item.name}
                     </p>
-                    <p className="eyebrow dark:text-[#8b8fa8] mt-1">{item.brand}</p>
+                    <p className="eyebrow dark:text-[#8b8fa8] mt-1">
+                      {item.brand}
+                    </p>
                   </div>
                   <button
                     onClick={() => dispatch(removeFromCart(item.id))}
@@ -148,7 +152,9 @@ const CartPage = () => {
           </div>
 
           <div className="flex justify-between border-t border-hairline dark:border-[#262932] pt-4 mb-6 font-mono">
-            <span className="font-medium text-ink dark:text-[#f0efe8]">Total</span>
+            <span className="font-medium text-ink dark:text-[#f0efe8]">
+              Total
+            </span>
             <span className="text-lg font-medium text-ink dark:text-[#f0efe8]">
               {formatNPR(totalPrice)}
             </span>
