@@ -11,7 +11,7 @@ const OrderCard = ({ order, index }) => {
   return (
     <motion.div {...fadeUp(index * 0.04)}>
       <Link
-        href={`/orders/${id}`}
+        href={`/orders/${order._id}`}
         className="flex items-center justify-between gap-4 p-5 hover:bg-hairline/20 dark:hover:bg-[#262932]/40 transition-colors group"
       >
         {/* Icon */}

@@ -7,6 +7,15 @@ export const createOrder = async (data) => {
 
 export const getMyOrders = async () => {
   const response = await api.get(`api/v1/orders/my-orders`);
-  console.log(response)
+  return response.data;
+};
+
+export const getOrderById = async (id) => {
+  const response = await api.get(`api/v1/orders/${id}`);
+  return response.data;
+};
+
+export const cancelOrder = async (id) => {
+  const response = await api.put(`api/v1/orders/${id}/cancel`);
   return response.data;
 };

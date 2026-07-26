@@ -1,9 +1,10 @@
+/* eslint-disable react/no-unescaped-entities */
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { Wallet, Banknote, Loader2 } from "lucide-react";
+import { Wallet, Banknote, Loader2, CreditCard } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
 import AnimatedField from "@/components/AnimatedField";
@@ -90,42 +91,23 @@ const Checkout = () => {
           </div>
 
           <div className="card-frame p-6 dark:border-[#262932]">
-            <p className="eyebrow dark:text-[#8b8fa8] mb-4">Payment method</p>
-            <div className="grid sm:grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setMethod("khalti")}
-                className={`flex items-center gap-3 border p-4 text-left transition-colors ${
-                  method === "khalti"
-                    ? "border-ink bg-ink text-paper dark:border-[#f0efe8] dark:bg-[#f0efe8] dark:text-[#0e0f12]"
-                    : "border-hairline hover:border-ink dark:border-[#262932] dark:text-[#f0efe8] dark:hover:border-[#8b8fa8]"
-                }`}
-              >
-                <Wallet size={18} />
-                <div>
-                  <p className="font-medium text-sm">Khalti</p>
-                  <p className="text-xs opacity-70">
-                    Pay digitally, redirected securely
-                  </p>
-                </div>
-              </button>
-              <button
-                type="button"
-                onClick={() => setMethod("cash")}
-                className={`flex items-center gap-3 border p-4 text-left transition-colors ${
-                  method === "cash"
-                    ? "border-ink bg-ink text-paper dark:border-[#f0efe8] dark:bg-[#f0efe8] dark:text-[#0e0f12]"
-                    : "border-hairline hover:border-ink dark:border-[#262932] dark:text-[#f0efe8] dark:hover:border-[#8b8fa8]"
-                }`}
-              >
-                <Banknote size={18} />
-                <div>
-                  <p className="font-medium text-sm">Cash on delivery</p>
-                  <p className="text-xs opacity-70">
-                    Pay when the order arrives
-                  </p>
-                </div>
-              </button>
+            <p className="eyebrow dark:text-[#8b8fa8] mb-1">Payment</p>
+            <p className="text-sm text-ink dark:text-[#f0efe8]">
+              You'll choose how to pay after placing your order.
+            </p>
+            <p className="text-xs text-slate dark:text-[#8b8fa8] mt-1">
+              We support Khalti, card, and cash on delivery.
+            </p>
+            <div className="flex items-center gap-4 mt-3 text-xs font-medium">
+              <span className="flex items-center gap-1.5 text-slate dark:text-[#8b8fa8]">
+                <Wallet size={14} /> Khalti
+              </span>
+              <span className="flex items-center gap-1.5 text-slate dark:text-[#8b8fa8]">
+                <CreditCard size={14} /> Card
+              </span>
+              <span className="flex items-center gap-1.5 text-slate dark:text-[#8b8fa8]">
+                <Banknote size={14} /> Cash
+              </span>
             </div>
           </div>
         </div>
