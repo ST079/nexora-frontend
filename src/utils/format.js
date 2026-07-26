@@ -35,3 +35,30 @@ export const queryFormatter = (searchParams = {}) => {
 
   return params.toString();
 };
+
+export const formatDate = (value) => {
+  if (!value) return "—";
+  return new Date(value).toLocaleDateString("en-US", {
+    day: "2-digit", month: "short", year: "numeric",
+  });
+};
+
+export function slugStatus(status = "") {
+  return String(status).trim().toUpperCase();
+}
+
+export const STATUS_STYLES = {
+  PENDING: "bg-signal-tint text-signal-dim",
+  PROCESSING: "bg-blueprint-tint text-blueprint-dim",
+  SHIPPED: "bg-blueprint-tint text-blueprint-dim",
+  DELIVERED: "bg-ok/10 text-ok",
+  COMPLETED: "bg-ok/10 text-ok",
+  CANCELLED: "bg-danger/10 text-danger",
+  CANCELED: "bg-danger/10 text-danger",
+  UNPAID: "bg-signal-tint text-signal-dim",
+  PAID: "bg-ok/10 text-ok",
+};
+
+export function statusStyle(status) {
+  return STATUS_STYLES[slugStatus(status)] || "bg-hairline text-slate";
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { User, LogIn, LogOut, Settings, ChevronDown, Sun, Moon, LayoutDashboard } from "lucide-react";
+import { User, LogIn, LogOut, Settings, ChevronDown, Sun, Moon, LayoutDashboard, ListOrdered } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDispatch, useSelector } from "react-redux";
@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import ThemeToggler from "./ThemeToggler";
 import { logout } from "@/redux/auth/authSlice";
-import { DASHBOARD_ROUTE } from "@/constants/routes";
+import { DASHBOARD_ROUTE, ORDERS_ROUTE } from "@/constants/routes";
 
 const UserProfile = () => {
   const [open, setOpen]     = useState(false);
@@ -101,6 +101,15 @@ const UserProfile = () => {
                   >
                     <LayoutDashboard size={14} className="text-slate dark:text-[#8b8fa8]" />
                     Dashboard
+                  </Link>
+                   {/*Orders */}
+                  <Link
+                    href={ORDERS_ROUTE}
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink dark:text-[#f0efe8] hover:bg-hairline/50 dark:hover:bg-[#262932] transition-colors"
+                  >
+                    <ListOrdered size={14} className="text-slate dark:text-[#8b8fa8]" />
+                    Orders
                   </Link>
                   {/* Account settings */}
                   <Link

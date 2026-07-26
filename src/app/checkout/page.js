@@ -27,11 +27,6 @@ const Checkout = () => {
   const [method, setMethod] = useState("khalti");
   const [submitting, setSubmitting] = useState(false);
 
-  if (items.length === 0) {
-    router.push(CART_ROUTE);
-    return null;
-  }
-
   const checkoutCredentials = async (data) => {
     const orderItems = items.map((item) => ({
       product: item.id,
