@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import {
   ChevronLeft,
@@ -16,6 +16,7 @@ import {
   Ban,
   Package,
   CreditCard,
+  AlertTriangle,
 } from "lucide-react";
 import OrderStatusBadge from "@/components/OrderStatusBadge";
 import { formatDate, formatNPR } from "@/utils/format";
@@ -23,6 +24,7 @@ import { cancelOrder, getOrderById } from "@/api/order";
 import OrderTimeline from "@/components/OrderTimeline";
 import Loader from "@/components/Loader";
 import toast from "react-hot-toast";
+import OrderCancelConformationModal from "@/components/OrderCancelConformationModal";
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 12 },
@@ -38,6 +40,7 @@ const OrderDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [showCancel, setShowCancel] = useState(false); // ← modal state
 
   const fetchOrder = async () => {
     setLoading(true);
@@ -63,9 +66,14 @@ const OrderDetailPage = () => {
     try {
       await cancelOrder(id);
       setOrder((prev) => ({ ...prev, status: "CANCELLED" }));
-      toast.error("Order Cancelled Successfully.")
+      toast.error("Order cancelled successfully.");
+      setShowCancel(false);
     } catch (err) {
-      console.error(err);
+      toast.error(
+        err?.response?.data?.message ||
+          err.message ||
+          "Could not cancel order.",
+      );
     } finally {
       setBusy(false);
     }
@@ -78,7 +86,9 @@ const OrderDetailPage = () => {
       // const url = res?.payment_url || res?.paymentUrl || res?.data?.payment_url;
       // if (url) { sessionStorage.setItem("nexora_last_order_id", id); window.location.href = url; }
     } catch (err) {
-      console.error(err);
+      toast.error(
+        err?.response?.data?.message || "Could not initiate payment.",
+      );
     } finally {
       setBusy(false);
     }
@@ -90,16 +100,14 @@ const OrderDetailPage = () => {
       // await payViaCash(id);
       setOrder((prev) => ({ ...prev, isPaid: true }));
     } catch (err) {
-      console.error(err);
+      toast.error(err?.response?.data?.message || "Could not update payment.");
     } finally {
       setBusy(false);
     }
   };
 
-  /* ── Loading ── */
   if (loading) return <Loader label="Fetching your order details" />;
 
-  /* ── Error ── */
   if (error || !order)
     return (
       <div className="container-page py-16 text-center">
@@ -120,18 +128,27 @@ const OrderDetailPage = () => {
     );
 
   const status = order.status?.toUpperCase();
-
   const cancellable = ![
     "SHIPPED",
     "DELIVERED",
     "COMPLETED",
     "CANCELLED",
   ].includes(status);
-
   const isPaid = order.isPaid || order.paymentStatus?.toLowerCase() === "paid";
 
   return (
     <div className="container-page py-10 bg-paper dark:bg-[#0e0f12] min-h-screen transition-colors duration-300">
+      {/* Cancel confirm modal */}
+      <AnimatePresence>
+        {showCancel && (
+          <OrderCancelConformationModal
+            busy={busy}
+            onConfirm={handleCancel}
+            onClose={() => !busy && setShowCancel(false)}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Back */}
       <Link href="/orders" className="btn-ghost mb-6 -ml-4 inline-flex">
         <ChevronLeft size={15} /> Back to orders
@@ -144,7 +161,7 @@ const OrderDetailPage = () => {
       >
         <div>
           <p className="eyebrow dark:text-[#8b8fa8] mb-1">
-            Order #{order.orderNumber.toUpperCase()}
+            Order #{order.orderNumber?.toUpperCase()}
           </p>
           <h1 className="font-display text-3xl font-semibold text-ink dark:text-[#f0efe8]">
             {formatNPR(order.totalPrice)}
@@ -164,7 +181,7 @@ const OrderDetailPage = () => {
       )}
 
       <div className="grid lg:grid-cols-[1fr_300px] gap-6 items-start">
-        {/* ── Items ── */}
+        {/* Items */}
         <motion.div
           {...fadeUp(0.08)}
           className="card-frame divide-y divide-hairline dark:divide-[#262932]"
@@ -213,8 +230,6 @@ const OrderDetailPage = () => {
               </div>
             );
           })}
-
-          {/* Total */}
           <div className="flex items-baseline justify-between px-5 py-4 font-mono">
             <span className="text-slate dark:text-[#8b8fa8] text-sm">
               Total
@@ -225,7 +240,7 @@ const OrderDetailPage = () => {
           </div>
         </motion.div>
 
-        {/* ── Sidebar ── */}
+        {/* Sidebar */}
         <div className="space-y-4">
           {/* Shipping */}
           <motion.div {...fadeUp(0.1)} className="card-frame p-5">
@@ -260,13 +275,12 @@ const OrderDetailPage = () => {
               </span>
             </div>
 
-            {/* Pay buttons — only if unpaid and not cancelled */}
             {!isPaid && !["CANCELLED", "CANCELED"].includes(status) && (
               <div className="mt-4 space-y-2">
                 <button
                   onClick={handlePayKhalti}
                   disabled={busy}
-                  className="flex w-full items-center justify-center gap-2 rounded px-4 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-60 bg-[#5C2D91]"
+                  className="flex w-full items-center justify-center gap-2 rounded px-4 py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-60 transition-opacity bg-[#5C2D91]"
                 >
                   {busy ? (
                     <Loader2 size={14} className="animate-spin" />
@@ -275,10 +289,9 @@ const OrderDetailPage = () => {
                   )}
                   Pay with Khalti
                 </button>
-
                 <button
                   disabled={busy}
-                  className="flex w-full items-center justify-center gap-2 rounded px-4 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-60 bg-[#635BFF]"
+                  className="flex w-full items-center justify-center gap-2 rounded px-4 py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-60 transition-opacity bg-[#635BFF]"
                 >
                   {busy ? (
                     <Loader2 size={14} className="animate-spin" />
@@ -287,11 +300,10 @@ const OrderDetailPage = () => {
                   )}
                   Pay with Stripe
                 </button>
-
                 <button
                   onClick={handlePayCash}
                   disabled={busy}
-                  className="flex w-full items-center justify-center gap-2 rounded px-4 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-60 bg-[#1B7340]"
+                  className="flex w-full items-center justify-center gap-2 rounded px-4 py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-60 transition-opacity bg-[#1B7340]"
                 >
                   {busy ? (
                     <Loader2 size={14} className="animate-spin" />
@@ -304,19 +316,15 @@ const OrderDetailPage = () => {
             )}
           </motion.div>
 
-          {/* Cancel */}
+          {/* Cancel — now opens modal instead of cancelling directly */}
           {cancellable && (
             <motion.div {...fadeUp(0.14)}>
               <button
-                onClick={handleCancel}
+                onClick={() => setShowCancel(true)}
                 disabled={busy}
                 className="flex w-full items-center justify-center gap-2 border border-danger text-danger px-5 py-3 text-sm font-medium hover:bg-danger hover:text-paper transition-colors disabled:opacity-50"
               >
-                {busy ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : (
-                  <Ban size={14} />
-                )}
+                <Ban size={14} />
                 Cancel order
               </button>
             </motion.div>
