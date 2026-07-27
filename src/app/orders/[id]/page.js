@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
@@ -16,7 +16,6 @@ import {
   Ban,
   Package,
   CreditCard,
-  AlertTriangle,
 } from "lucide-react";
 import OrderStatusBadge from "@/components/OrderStatusBadge";
 import { formatDate, formatNPR } from "@/utils/format";
@@ -30,6 +29,7 @@ import OrderTimeline from "@/components/OrderTimeline";
 import Loader from "@/components/Loader";
 import toast from "react-hot-toast";
 import OrderCancelConformationModal from "@/components/OrderCancelConformationModal";
+import CashConfirmModal from "@/components/CashConfirmModal";
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 12 },
@@ -44,7 +44,7 @@ const OrderDetailPage = () => {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [showCancel, setShowCancel] = useState(false);
-  const router = useRouter();
+  const [showCash, setShowCash] = useState(false);
 
   const fetchOrder = async () => {
     setLoading(true);
@@ -106,9 +106,9 @@ const OrderDetailPage = () => {
     setBusy(true);
     try {
       await payViaCash(id);
-      // setOrder((prev) => ({ ...prev, isPaid: true }));
-      router.refresh();
-      toast.success("Order Confirmed Successfully.");
+      setOrder((prev) => ({ ...prev, isPaid: true }));
+      toast.success("Order confirmed for cash on delivery.");
+      setShowCash(false);
     } catch (err) {
       toast.error(err?.response?.data?.message || "Could not update payment.");
     } finally {
@@ -150,6 +150,16 @@ const OrderDetailPage = () => {
             busy={busy}
             onConfirm={handleCancel}
             onClose={() => !busy && setShowCancel(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showCash && (
+          <CashConfirmModal
+            busy={busy}
+            onConfirm={handlePayCash}
+            onClose={() => !busy && setShowCash(false)}
           />
         )}
       </AnimatePresence>
@@ -316,7 +326,7 @@ const OrderDetailPage = () => {
                   Pay with Stripe
                 </button>
                 <button
-                  onClick={handlePayCash}
+                  onClick={() => setShowCash(true)}
                   disabled={busy}
                   className="flex w-full items-center justify-center gap-2 rounded px-4 py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-60 transition-opacity bg-[#1B7340]"
                 >

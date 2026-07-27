@@ -5,11 +5,7 @@ import { useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import {
-  RefreshCw,
-  ShoppingBag,
-  XCircle,
-} from "lucide-react";
+import { RefreshCw, ShoppingBag, XCircle } from "lucide-react";
 import OrderCard from "@/components/OrderCard";
 import { LOGIN_ROUTE, PRODUCTS_ROUTE } from "@/constants/routes";
 import { getMyOrders } from "@/api/order";
@@ -129,7 +125,7 @@ const OrdersPage = () => {
 
       {/* Content */}
       {loading ? (
-        <Loader label="Loading your orders"/>
+        <Loader label="Loading your orders" />
       ) : error ? (
         <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
           <XCircle size={28} className="text-danger" />
