@@ -25,6 +25,12 @@ export const payViaKhalti = async (id) => {
   return response.data;
 };
 
+export const payViaStripe = async (id) => {
+  const response = await api.post(`api/v1/orders/${id}/payment/stripe`);
+  return response.data;
+};
+
+
 export const confirmPayment = async (id, status) => {
   const response = await api.put(`api/v1/orders/${id}/confirm-payment`, {
     status,

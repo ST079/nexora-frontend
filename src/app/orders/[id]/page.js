@@ -24,12 +24,14 @@ import {
   getOrderById,
   payViaCash,
   payViaKhalti,
+  payViaStripe,
 } from "@/api/order";
 import OrderTimeline from "@/components/OrderTimeline";
 import Loader from "@/components/Loader";
 import toast from "react-hot-toast";
 import OrderCancelConformationModal from "@/components/OrderCancelConformationModal";
 import CashConfirmModal from "@/components/CashConfirmModal";
+import StripePaymentModal from "@/components/StripePaymentModal";
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 12 },
@@ -45,6 +47,8 @@ const OrderDetailPage = () => {
   const [busy, setBusy] = useState(false);
   const [showCancel, setShowCancel] = useState(false);
   const [showCash, setShowCash] = useState(false);
+  const [showStripe, setShowStripe] = useState(false);
+  const [stripeSecret, setStripeSecret] = useState("");
 
   const fetchOrder = async () => {
     setLoading(true);
@@ -96,6 +100,21 @@ const OrderDetailPage = () => {
     } catch (err) {
       toast.error(
         err?.response?.data?.message || "Could not initiate payment.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handlePayStripe = async () => {
+    setBusy(true);
+    try {
+      const response = await payViaStripe(id);
+      setStripeSecret(response.client_secret);
+      setShowStripe(true);
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.message || "Could not initiate Stripe payment.",
       );
     } finally {
       setBusy(false);
@@ -160,6 +179,21 @@ const OrderDetailPage = () => {
             busy={busy}
             onConfirm={handlePayCash}
             onClose={() => !busy && setShowCash(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showStripe && stripeSecret && (
+          <StripePaymentModal
+            clientSecret={stripeSecret}
+            orderId={id}
+            onClose={() => setShowStripe(false)}
+            onSuccess={() => {
+              setShowStripe(false);
+              setOrder((prev) => ({ ...prev, isPaid: true }));
+              toast.success("Payment successful!");
+            }}
           />
         )}
       </AnimatePresence>
@@ -314,7 +348,9 @@ const OrderDetailPage = () => {
                   )}
                   Pay with Khalti
                 </button>
+
                 <button
+                  onClick={handlePayStripe}
                   disabled={busy}
                   className="flex w-full items-center justify-center gap-2 rounded px-4 py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-60 transition-opacity bg-[#635BFF]"
                 >
@@ -325,6 +361,7 @@ const OrderDetailPage = () => {
                   )}
                   Pay with Stripe
                 </button>
+                
                 <button
                   onClick={() => setShowCash(true)}
                   disabled={busy}
