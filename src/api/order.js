@@ -19,3 +19,20 @@ export const cancelOrder = async (id) => {
   const response = await api.put(`api/v1/orders/${id}/cancel`);
   return response.data;
 };
+
+export const payViaKhalti = async (id) => {
+  const response = await api.post(`api/v1/orders/${id}/payment/khalti`);
+  return response.data;
+};
+
+export const confirmPayment = async (id, status) => {
+  const response = await api.put(`api/v1/orders/${id}/confirm-payment`, {
+    status,
+  });
+  return response.data;
+};
+
+export const payViaCash = async (id) => {
+  const response = await api.post(`api/v1/orders/${id}/payment/cash`);
+  return response.data;
+};

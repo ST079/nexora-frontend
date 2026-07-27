@@ -1,7 +1,7 @@
-import { CheckCircle2, Clock, Loader2, Truck } from "lucide-react";
+import { CheckCircle2, Clock, DollarSign, Loader2, Truck, Verified } from "lucide-react";
 
 const OrderTimeline = ({ status }) => {
-  const TIMELINE = ["PENDING", "PROCESSING", "SHIPPED", "DELIVERED"];
+  const TIMELINE = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED"];
   const current = TIMELINE.indexOf(status?.toUpperCase());
   if (current === -1) return null;
 
@@ -12,7 +12,7 @@ const OrderTimeline = ({ status }) => {
         {TIMELINE.map((step, i) => {
           const done = i <= current;
           const active = i === current;
-          const icons = [Clock, Loader2, Truck, CheckCircle2];
+          const icons = [Clock, DollarSign, Truck, CheckCircle2];
           const Icon = icons[i];
           return (
             <div key={step} className="flex-1 flex flex-col items-center">

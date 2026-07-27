@@ -20,7 +20,12 @@ import {
 } from "lucide-react";
 import OrderStatusBadge from "@/components/OrderStatusBadge";
 import { formatDate, formatNPR } from "@/utils/format";
-import { cancelOrder, getOrderById } from "@/api/order";
+import {
+  cancelOrder,
+  getOrderById,
+  payViaCash,
+  payViaKhalti,
+} from "@/api/order";
 import OrderTimeline from "@/components/OrderTimeline";
 import Loader from "@/components/Loader";
 import toast from "react-hot-toast";
@@ -34,13 +39,12 @@ const fadeUp = (delay = 0) => ({
 
 const OrderDetailPage = () => {
   const { id } = useParams();
-  const router = useRouter();
-
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [showCancel, setShowCancel] = useState(false); // ← modal state
+  const [showCancel, setShowCancel] = useState(false);
+  const router = useRouter();
 
   const fetchOrder = async () => {
     setLoading(true);
@@ -79,12 +83,16 @@ const OrderDetailPage = () => {
     }
   };
 
-  const handlePayKhalti = async () => {
+  const handlePayKhalti = async (id) => {
     setBusy(true);
     try {
-      // const res = await payViaKhalti(id);
-      // const url = res?.payment_url || res?.paymentUrl || res?.data?.payment_url;
-      // if (url) { sessionStorage.setItem("nexora_last_order_id", id); window.location.href = url; }
+      const response = await payViaKhalti(id);
+      console.log(response);
+      const url = response.payment_url;
+      if (url) {
+        sessionStorage.setItem("nexora_last_order_id", id);
+        window.location.href = url;
+      }
     } catch (err) {
       toast.error(
         err?.response?.data?.message || "Could not initiate payment.",
@@ -97,8 +105,10 @@ const OrderDetailPage = () => {
   const handlePayCash = async () => {
     setBusy(true);
     try {
-      // await payViaCash(id);
-      setOrder((prev) => ({ ...prev, isPaid: true }));
+      await payViaCash(id);
+      // setOrder((prev) => ({ ...prev, isPaid: true }));
+      router.refresh();
+      toast.success("Order Confirmed Successfully.");
     } catch (err) {
       toast.error(err?.response?.data?.message || "Could not update payment.");
     } finally {
@@ -128,13 +138,8 @@ const OrderDetailPage = () => {
     );
 
   const status = order.status?.toUpperCase();
-  const cancellable = ![
-    "SHIPPED",
-    "DELIVERED",
-    "COMPLETED",
-    "CANCELLED",
-  ].includes(status);
-  const isPaid = order.isPaid || order.paymentStatus?.toLowerCase() === "paid";
+  const cancellable = ["PENDING"].includes(status);
+  const isPaid = order.status?.toLowerCase() === "confirmed";
 
   return (
     <div className="container-page py-10 bg-paper dark:bg-[#0e0f12] min-h-screen transition-colors duration-300">
@@ -230,13 +235,23 @@ const OrderDetailPage = () => {
               </div>
             );
           })}
-          <div className="flex items-baseline justify-between px-5 py-4 font-mono">
-            <span className="text-slate dark:text-[#8b8fa8] text-sm">
-              Total
-            </span>
-            <span className="text-base font-medium text-ink dark:text-[#f0efe8]">
-              {formatNPR(order.totalPrice)}
-            </span>
+          <div className="flex-col px-5 py-4 ">
+            <div className="flex items-baseline justify-between font-mono">
+              <span className="text-slate dark:text-[#8b8fa8] text-sm">
+                Delivery Charge
+              </span>
+              <span className="text-base font-medium text-ink dark:text-[#f0efe8]">
+                {formatNPR(200)}
+              </span>
+            </div>
+            <div className="flex items-baseline justify-between font-mono">
+              <span className="text-slate dark:text-[#8b8fa8] text-sm">
+                Total
+              </span>
+              <span className="text-base font-medium text-ink dark:text-[#f0efe8]">
+                {formatNPR(order.totalPrice)}
+              </span>
+            </div>
           </div>
         </motion.div>
 
@@ -278,7 +293,7 @@ const OrderDetailPage = () => {
             {!isPaid && !["CANCELLED", "CANCELED"].includes(status) && (
               <div className="mt-4 space-y-2">
                 <button
-                  onClick={handlePayKhalti}
+                  onClick={() => handlePayKhalti(id)}
                   disabled={busy}
                   className="flex w-full items-center justify-center gap-2 rounded px-4 py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-60 transition-opacity bg-[#5C2D91]"
                 >
