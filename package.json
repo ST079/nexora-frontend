@@ -22,6 +22,7 @@
     "react-dropzone": "^19.1.1",
     "react-hook-form": "^7.81.0",
     "react-hot-toast": "^2.6.0",
+    "react-markdown": "^10.1.0",
     "react-redux": "^9.3.0",
     "react-router-dom": "^7.18.1",
     "redux-persist": "^6.0.0"

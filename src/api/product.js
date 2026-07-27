@@ -2,6 +2,7 @@ import { queryFormatter } from "@/utils/format";
 import api from ".";
 import axios from "axios";
 import { config } from "@/config/config";
+import { ConstructionIcon } from "lucide-react";
 
 export const getProducts = async (searchParams) => {
   const query = queryFormatter(await searchParams);
@@ -9,9 +10,9 @@ export const getProducts = async (searchParams) => {
   return response.data;
 };
 
-export const getProductById = async (product) => {
-  const response = await api.get(`api/v1/${product._id}`);
-  return response.data;
+export const getProductById = async (id) => {
+  const response = await axios.get(`${config.apiUrl}api/v1/products/${id}`);
+  return response.data.productDetails;
 };
 
 export const createProduct = async (data) => {

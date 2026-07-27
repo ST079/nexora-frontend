@@ -18,12 +18,16 @@ const cartSlice = createSlice({
 
     addToCart: (state, action) => {
       const incoming = action.payload;
+      const qtyToAdd = incoming.quantity ?? 1;
       const existing = state.items.find((item) => item.id === incoming.id);
 
       if (existing) {
-        existing.quantity += 1;
+        existing.quantity = Math.min(
+          existing.quantity + qtyToAdd,
+          existing.stock,
+        );
       } else {
-        state.items.push({ ...incoming, quantity: 1 });
+        state.items.push({ ...incoming, quantity: qtyToAdd });
       }
 
       state.totalPrice = calcTotalPrice(state.items);

@@ -5,7 +5,9 @@ import { motion } from "framer-motion";
 import { X, Loader2, CreditCard, Lock } from "lucide-react";
 import {
   Elements,
-  PaymentElement,
+  CardNumberElement,
+  CardExpiryElement,
+  CardCvcElement,
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
@@ -15,12 +17,49 @@ const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
 );
 
+const elementStyle = {
+  base: {
+    fontSize: "14px",
+    fontFamily: '"IBM Plex Mono", monospace',
+    color: "#14151A",
+    "::placeholder": { color: "#9CA3AF" },
+  },
+  invalid: { color: "#D8392B" },
+};
 
-const StripeForm = ({ onClose, onSuccess, orderId }) => {
+const elementStyleDark = {
+  base: {
+    fontSize: "14px",
+    fontFamily: '"IBM Plex Mono", monospace',
+    color: "#f0efe8",
+    "::placeholder": { color: "#5b5e72" },
+    backgroundColor: "transparent",
+  },
+  invalid: { color: "#F04F3F" },
+};
+
+const StripeField = ({ label, children }) => (
+  <div>
+    <label className="font-mono text-xs text-slate dark:text-[#8b8fa8] mb-1 block">
+      {label}
+    </label>
+    <div className="border border-hairline dark:border-[#262932] bg-white dark:bg-[#16181f] px-3 py-3 transition-colors focus-within:border-ink dark:focus-within:border-[#f0efe8]">
+      {children}
+    </div>
+  </div>
+);
+
+const StripeForm = ({ onClose, onSuccess }) => {
   const stripe = useStripe();
   const elements = useElements();
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState("");
+
+  // Detect dark mode
+  const isDark =
+    typeof window !== "undefined" &&
+    document.documentElement.classList.contains("dark");
+  const style = isDark ? elementStyleDark : elementStyle;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,13 +68,12 @@ const StripeForm = ({ onClose, onSuccess, orderId }) => {
     setPaying(true);
     setError("");
 
-    const { error: stripeError, paymentIntent } = await stripe.confirmPayment({
-      elements,
-      redirect: "if_required", // stay on page if no redirect needed
-      confirmParams: {
-        return_url: `${window.location.origin}/orders/payment-callback`,
-      },
-    });
+    const cardNumber = elements.getElement(CardNumberElement);
+
+    const { error: stripeError, paymentIntent } =
+      await stripe.confirmCardPayment(undefined, {
+        payment_method: { card: cardNumber },
+      });
 
     if (stripeError) {
       setError(stripeError.message || "Payment failed. Please try again.");
@@ -46,21 +84,27 @@ const StripeForm = ({ onClose, onSuccess, orderId }) => {
     if (paymentIntent?.status === "succeeded") {
       onSuccess();
     } else {
-      setError(`Unexpected payment status: ${paymentIntent?.status}`);
+      setError(`Unexpected status: ${paymentIntent?.status}`);
+      setPaying(false);
     }
-
-    setPaying(false);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      {/* Stripe's built-in card UI */}
-      <PaymentElement
-        options={{
-          layout: "tabs",
-          fields: { billingDetails: { name: "auto" } },
-        }}
-      />
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Card number — full width */}
+      <StripeField label="Card number">
+        <CardNumberElement options={{ style, showIcon: true }} />
+      </StripeField>
+
+      {/* Expiry + CVC — two columns */}
+      <div className="grid grid-cols-2 gap-3">
+        <StripeField label="Expiry date">
+          <CardExpiryElement options={{ style }} />
+        </StripeField>
+        <StripeField label="CVC">
+          <CardCvcElement options={{ style }} />
+        </StripeField>
+      </div>
 
       {/* Error */}
       {error && (
@@ -100,27 +144,16 @@ const StripeForm = ({ onClose, onSuccess, orderId }) => {
   );
 };
 
-/* ── Modal wrapper ───────────────────────────────────────────────────────── */
-
 const StripePaymentModal = ({ clientSecret, orderId, onClose, onSuccess }) => {
   const stripeOptions = {
     clientSecret,
     appearance: {
-      theme: "stripe",
-      variables: {
-        colorPrimary: "#635BFF",
-        colorBackground: "#ffffff",
-        colorText: "#14151A",
-        colorDanger: "#D8392B",
-        fontFamily: '"IBM Plex Sans", sans-serif',
-        borderRadius: "0px",
-      },
+      theme: "none", // we style fields ourselves
     },
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -129,21 +162,20 @@ const StripePaymentModal = ({ clientSecret, orderId, onClose, onSuccess }) => {
         onClick={onClose}
       />
 
-      {/* Panel */}
       <motion.div
         initial={{ opacity: 0, scale: 0.96, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 12 }}
         transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-        className="relative w-full max-w-md bg-paper dark:bg-[#16181f] border border-hairline dark:border-[#262932] shadow-lift"
+        className="relative w-full max-w-sm bg-paper dark:bg-[#16181f] border border-hairline dark:border-[#262932] shadow-lift"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-hairline dark:border-[#262932]">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-hairline dark:border-[#262932]">
+          <div className="flex items-center gap-2.5">
             <CreditCard size={16} className="text-[#635BFF]" />
             <div>
               <p className="eyebrow dark:text-[#8b8fa8]">Secure payment</p>
-              <h3 className="font-display text-base font-semibold text-ink dark:text-[#f0efe8]">
+              <h3 className="font-display text-sm font-semibold text-ink dark:text-[#f0efe8]">
                 Pay with Stripe
               </h3>
             </div>
@@ -156,8 +188,7 @@ const StripePaymentModal = ({ clientSecret, orderId, onClose, onSuccess }) => {
           </button>
         </div>
 
-        {/* Stripe Elements */}
-        <div className="p-6">
+        <div className="p-5">
           <Elements stripe={stripePromise} options={stripeOptions}>
             <StripeForm
               onClose={onClose}
