@@ -17,8 +17,6 @@ const ProductDetailPage = async ({ params }) => {
   const id = (await params).id;
   const product = await getProductById(id);
 
-  console.log(product);
-
   if (!product) {
     return (
       <section className="container-page py-16 bg-paper dark:bg-[#0e0f12] min-h-screen transition-colors duration-300">

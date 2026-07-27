@@ -28,3 +28,12 @@ export const STATUS_MAP = {
     color: "bg-danger/10 text-danger",
   },
 };
+
+export const ORDER_STATUS_CONFIRMED = "CONFIRMED";
+export const ORDER_STATUS_PENDING = "PENDING";
+export const ORDER_STATUS_PROCESSING = "PROCESSING";
+export const ORDER_STATUS_SHIPPED = "SHIPPED";
+export const ORDER_STATUS_DELIVERED = "DELIVERED";
+export const ORDER_STATUS_CANCELLED = "CANCELLED";
+export const ORDER_STATUS_RETURNED = "RETURNED";
+export const ORDER_STATUS_REFUNDED = "REFUNDED";

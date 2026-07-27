@@ -32,6 +32,11 @@ import toast from "react-hot-toast";
 import OrderCancelConformationModal from "@/components/OrderCancelConformationModal";
 import CashConfirmModal from "@/components/CashConfirmModal";
 import StripePaymentModal from "@/components/StripePaymentModal";
+import {
+  ORDER_STATUS_CANCELLED,
+  ORDER_STATUS_CONFIRMED,
+  ORDER_STATUS_PENDING,
+} from "@/constants/orders";
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 12 },
@@ -73,7 +78,7 @@ const OrderDetailPage = () => {
     setBusy(true);
     try {
       await cancelOrder(id);
-      setOrder((prev) => ({ ...prev, status: "CANCELLED" }));
+      setOrder((prev) => ({ ...prev, status: ORDER_STATUS_CANCELLED }));
       toast.error("Order cancelled successfully.");
       setShowCancel(false);
     } catch (err) {
@@ -94,7 +99,6 @@ const OrderDetailPage = () => {
       console.log(response);
       const url = response.payment_url;
       if (url) {
-        sessionStorage.setItem("nexora_last_order_id", id);
         window.location.href = url;
       }
     } catch (err) {
@@ -157,8 +161,8 @@ const OrderDetailPage = () => {
     );
 
   const status = order.status?.toUpperCase();
-  const cancellable = ["PENDING"].includes(status);
-  const isPaid = order.status?.toLowerCase() === "confirmed";
+  const cancellable = [ORDER_STATUS_PENDING].includes(status);
+  const isPaid = order.status?.toUpperCase() === ORDER_STATUS_CONFIRMED;
 
   return (
     <div className="container-page py-10 bg-paper dark:bg-[#0e0f12] min-h-screen transition-colors duration-300">
@@ -223,7 +227,7 @@ const OrderDetailPage = () => {
       </motion.div>
 
       {/* Timeline */}
-      {!["CANCELLED"].includes(status) && (
+      {![ORDER_STATUS_CANCELLED].includes(status) && (
         <motion.div {...fadeUp(0.05)} className="mb-6">
           <OrderTimeline status={order.status} />
         </motion.div>
@@ -361,7 +365,7 @@ const OrderDetailPage = () => {
                   )}
                   Pay with Stripe
                 </button>
-                
+
                 <button
                   onClick={() => setShowCash(true)}
                   disabled={busy}

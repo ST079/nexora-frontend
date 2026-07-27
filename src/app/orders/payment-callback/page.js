@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { confirmPayment } from "@/api/order";
+import { PAYMENT_STATUS_COMPLETED } from "@/constants/payment";
 
 const PaymentCallbackPage = () => {
   const searchParams = useSearchParams();
@@ -22,13 +23,16 @@ const PaymentCallbackPage = () => {
           return;
         }
 
-        if (khaltiStatus && khaltiStatus.toLowerCase() !== "completed") {
+        if (
+          khaltiStatus &&
+          khaltiStatus.toUpperCase() !== PAYMENT_STATUS_COMPLETED
+        ) {
           setState("failed");
           setMessage(`Khalti reported status: ${khaltiStatus}`);
           return;
         }
 
-        await confirmPayment(orderId, "Completed");
+        await confirmPayment(orderId, PAYMENT_STATUS_COMPLETED);
         setState("success");
       } catch (err) {
         setState("failed");
