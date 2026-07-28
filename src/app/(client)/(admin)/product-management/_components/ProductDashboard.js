@@ -23,7 +23,7 @@ import toast from "react-hot-toast";
 import { EMPTY_FORM } from "@/constants/defaults";
 import { useRouter } from "next/navigation";
 
-const PAGE_SIZE = 8;
+
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 12 },
@@ -99,11 +99,11 @@ const ProductDashboard = ({ allProducts }) => {
     });
 
   // Pagination
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PRODUCT_MANAGEMENT_PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
   const paginated = filtered.slice(
-    (safePage - 1) * PAGE_SIZE,
-    safePage * PAGE_SIZE,
+    (safePage - 1) * PRODUCT_MANAGEMENT_PAGE_SIZE,
+    safePage * PRODUCT_MANAGEMENT_PAGE_SIZE,
   );
 
   return (
@@ -303,7 +303,7 @@ const ProductDashboard = ({ allProducts }) => {
         page={safePage}
         totalPages={totalPages}
         total={filtered.length}
-        pageSize={PAGE_SIZE}
+        pageSize={PRODUCT_MANAGEMENT_PAGE_SIZE}
         onPageChange={setPage}
       />
 

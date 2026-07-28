@@ -7,9 +7,19 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { RefreshCw, ShoppingBag, XCircle } from "lucide-react";
 import OrderCard from "@/components/OrderCard";
+import Pagination from "@/components/Pagination";
 import { LOGIN_ROUTE, PRODUCTS_ROUTE } from "@/constants/routes";
 import { getMyOrders } from "@/api/order";
 import Loader from "@/components/Loader";
+import {
+  ORDER_STATUS_CANCELLED,
+  ORDER_STATUS_CONFIRMED,
+  ORDER_STATUS_DELIVERED,
+  ORDER_STATUS_PENDING,
+  ORDER_STATUS_PROCESSING,
+  ORDER_STATUS_SHIPPED,
+} from "@/constants/orders";
+import { ORDERS_PAGE_SIZE } from "@/constants/pagination";
 
 export const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 12 },
@@ -25,18 +35,35 @@ const OrdersPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
+  const [page, setPage] = useState(1);
 
-  // Stats derived from orders
   const stats = {
     total: orders.length,
     pending: orders.filter((o) =>
-      ["PENDING", "PROCESSING"].includes(o.status?.toUpperCase()),
+      [ORDER_STATUS_PENDING, ORDER_STATUS_PROCESSING].includes(
+        o.status?.toUpperCase(),
+      ),
     ).length,
-    shipped: orders.filter((o) => o.status?.toUpperCase() === "SHIPPED").length,
+    confirmed: orders.filter((o) =>
+      [ORDER_STATUS_CONFIRMED].includes(o.status?.toUpperCase()),
+    ).length,
+    shipped: orders.filter(
+      (o) => o.status?.toUpperCase() === ORDER_STATUS_SHIPPED,
+    ).length,
     completed: orders.filter((o) =>
-      ["DELIVERED", "COMPLETED"].includes(o.status?.toUpperCase()),
+      [ORDER_STATUS_DELIVERED].includes(o.status?.toUpperCase()),
+    ).length,
+    cancelled: orders.filter((o) =>
+      [ORDER_STATUS_CANCELLED].includes(o.status?.toUpperCase()),
     ).length,
   };
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(orders.length / ORDERS_PAGE_SIZE));
+  const paginated = orders.slice(
+    (page - 1) * ORDERS_PAGE_SIZE,
+    page * ORDERS_PAGE_SIZE,
+  );
 
   useEffect(() => {
     if (!user) {
@@ -60,6 +87,7 @@ const OrdersPage = () => {
               ? data.data
               : [];
         setOrders(list);
+        setPage(1); // reset to first page on reload
       } catch (err) {
         if (!active) return;
         setError(
@@ -103,13 +131,15 @@ const OrdersPage = () => {
       {/* Stats strip */}
       <motion.div
         {...fadeUp(0.07)}
-        className="grid grid-cols-2 sm:grid-cols-4 border border-hairline dark:border-[#262932] mb-8"
+        className="grid grid-cols-2 sm:grid-cols-6 border border-hairline dark:border-[#262932] mb-8"
       >
         {[
           { label: "Total orders", value: stats.total },
           { label: "In progress", value: stats.pending },
+          { label: "Confirmed", value: stats.confirmed },
           { label: "Shipped", value: stats.shipped },
           { label: "Completed", value: stats.completed },
+          { label: "Cancelled", value: stats.cancelled },
         ].map((s, i) => (
           <div
             key={s.label}
@@ -157,14 +187,27 @@ const OrdersPage = () => {
           </Link>
         </div>
       ) : (
-        <motion.div
-          {...fadeUp(0.1)}
-          className="border border-hairline dark:border-[#262932] divide-y divide-hairline dark:divide-[#262932]"
-        >
-          {orders.map((order, i) => (
-            <OrderCard key={order._id} order={order} index={i} />
-          ))}
-        </motion.div>
+        <>
+          <motion.div
+            {...fadeUp(0.1)}
+            className="border border-hairline dark:border-[#262932] divide-y divide-hairline dark:divide-[#262932]"
+          >
+            {paginated.map((order, i) => (
+              <OrderCard key={order._id} order={order} index={i} />
+            ))}
+          </motion.div>
+
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            total={orders.length}
+            pageSize={ORDERS_PAGE_SIZE}
+            onPageChange={(p) => {
+              setPage(p);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          />
+        </>
       )}
     </div>
   );

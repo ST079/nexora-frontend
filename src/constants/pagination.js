@@ -1,0 +1,2 @@
+export const ORDERS_PAGE_SIZE = 5;
+export const PRODUCT_MANAGEMENT_PAGE_SIZE = 8;

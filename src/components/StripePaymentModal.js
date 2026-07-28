@@ -2,9 +2,7 @@
 
 import { motion } from "framer-motion";
 import { X, Loader2, CreditCard, Lock } from "lucide-react";
-import {
-  Elements,
-} from "@stripe/react-stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import StripeForm from "./StripeForm";
 
