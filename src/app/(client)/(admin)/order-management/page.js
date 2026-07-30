@@ -22,6 +22,7 @@ import {
 } from "@/constants/orders";
 import { getAllOrders } from "@/api/order";
 import OrderViewModal from "./_components/OrderViewModal";
+import OrderStatusAction from "./_components/OrderStatusAction";
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 12 },
@@ -270,7 +271,7 @@ const OrderManagementPage = () => {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <OrderStatusBadge status={order.status} />
+                      <OrderStatusAction order={order} onUpdated={() => {}} />
                     </td>
                     <td className="px-4 py-3">
                       <button
