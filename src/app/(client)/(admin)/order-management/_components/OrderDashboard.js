@@ -13,12 +13,9 @@ import {
 import OrderStatusBadge from "@/components/OrderStatusBadge";
 import Pagination from "@/components/Pagination";
 import { ORDER_MANAGEMENT_PAGE_SIZE } from "@/constants/pagination";
-import { getAllOrders } from "@/api/order";
 import { formatDate, formatNPR } from "@/utils/format";
 import OrderViewModal from "./OrderViewModal";
 import {
-  PAYMENT_STATUS_FAILED,
-  PAYMENT_STATUS_PENDING,
   PAYMENT_STATUS_SUCCESS,
 } from "@/constants/payment";
 import {
@@ -126,15 +123,13 @@ const OrderDashboard = ({ allOrders }) => {
             label: "Confirmed",
             value: orders.filter(
               (o) =>
-                o.isPaid ||
-                o.payment?.status.toUpperCase() === ORDER_STATUS_CONFIRMED,
+                o.status.toUpperCase() === ORDER_STATUS_CONFIRMED,
             ).length,
           },
           {
             label: "Paid",
             value: orders.filter(
               (o) =>
-                o.isPaid ||
                 o.payment?.status.toUpperCase() === PAYMENT_STATUS_SUCCESS,
             ).length,
           },
