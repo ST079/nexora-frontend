@@ -1,2 +1,3 @@
-export const ORDERS_PAGE_SIZE = 5;
-export const PRODUCT_MANAGEMENT_PAGE_SIZE = 8;
+export const ORDERS_PAGE_SIZE = 6;
+export const PRODUCT_MANAGEMENT_PAGE_SIZE = 5;
+export const ORDER_MANAGEMENT_PAGE_SIZE = 6;

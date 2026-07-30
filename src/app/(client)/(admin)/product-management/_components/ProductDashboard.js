@@ -22,6 +22,7 @@ import Pagination from "@/components/Pagination";
 import toast from "react-hot-toast";
 import { EMPTY_FORM } from "@/constants/defaults";
 import { useRouter } from "next/navigation";
+import { PRODUCT_MANAGEMENT_PAGE_SIZE } from "@/constants/pagination";
 
 
 

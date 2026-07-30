@@ -1,9 +1,24 @@
-import React from 'react'
+"use client";
+import { getAllOrders } from "@/api/order";
+import OrderDashboard from "./_components/OrderDashboard";
+import { useEffect, useState } from "react";
 
 const OrderManagementPage = () => {
-  return (
-    <div>OrderManagementPage</div>
-  )
-}
+  const [orders, setOrders] = useState([]);
 
-export default OrderManagementPage
+  useEffect(() => {
+    getAllOrders()
+      .then((data) => {
+        setOrders(data);
+      })
+      .catch((error) => console.log(error));
+  }, []);
+
+  return (
+    <>
+      <OrderDashboard allOrders={orders} />;
+    </>
+  );
+};
+
+export default OrderManagementPage;
