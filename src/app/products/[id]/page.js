@@ -4,6 +4,7 @@ import { ChevronLeft, IdCard } from "lucide-react";
 import ProductDetailClient from "@/components/ProductDetailClient";
 import { getProductById } from "@/api/product";
 import { PRODUCTS_ROUTE } from "@/constants/routes";
+import SimilarProducts from "@/components/SimilarProducts";
 
 export const generateMetadata = async ({ params }) => {
   const id = (await params).id;
@@ -45,6 +46,10 @@ const ProductDetailPage = async ({ params }) => {
       </Link>
 
       <ProductDetailClient product={product} />
+      <SimilarProducts
+        category={product.category}
+        currentProductId={product._id}
+      />
     </section>
   );
 };
