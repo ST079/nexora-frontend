@@ -27,6 +27,19 @@ export const fadeUp = (delay = 0) => ({
   transition: { duration: 0.35, delay, ease: [0.22, 1, 0.36, 1] },
 });
 
+const TABS = [
+  { key: "ALL", label: "All", statuses: null },
+  {
+    key: "PENDING",
+    label: "Pending",
+    statuses: [ORDER_STATUS_PENDING],
+  },
+  { key: "CONFIRMED", label: "Confirmed", statuses: [ORDER_STATUS_CONFIRMED] },
+  { key: "SHIPPED", label: "Shipped", statuses: [ORDER_STATUS_SHIPPED] },
+  { key: "DELIVERED", label: "Completed", statuses: [ORDER_STATUS_DELIVERED] },
+  { key: "CANCELLED", label: "Cancelled", statuses: [ORDER_STATUS_CANCELLED] },
+];
+
 const OrdersPage = () => {
   const { user } = useSelector((state) => state.auth);
   const router = useRouter();
@@ -36,6 +49,7 @@ const OrdersPage = () => {
   const [error, setError] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
   const [page, setPage] = useState(1);
+  const [activeTab, setActiveTab] = useState("ALL");
 
   const stats = {
     total: orders.length,
@@ -58,12 +72,29 @@ const OrdersPage = () => {
     ).length,
   };
 
-  // Pagination
-  const totalPages = Math.max(1, Math.ceil(orders.length / ORDERS_PAGE_SIZE));
-  const paginated = orders.slice(
-    (page - 1) * ORDERS_PAGE_SIZE,
-    page * ORDERS_PAGE_SIZE,
+  // Filter by active tab
+  const activeTabDef = TABS.find((t) => t.key === activeTab);
+  const filteredOrders = activeTabDef?.statuses
+    ? orders.filter((o) =>
+        activeTabDef.statuses.includes(o.status?.toUpperCase()),
+      )
+    : orders;
+
+  // Pagination (now based on filtered list)
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredOrders.length / ORDERS_PAGE_SIZE),
   );
+  const safePage = Math.min(page, totalPages);
+  const paginated = filteredOrders.slice(
+    (safePage - 1) * ORDERS_PAGE_SIZE,
+    safePage * ORDERS_PAGE_SIZE,
+  );
+
+  const handleTabChange = (key) => {
+    setActiveTab(key);
+    setPage(1);
+  };
 
   useEffect(() => {
     if (!user) {
@@ -87,7 +118,7 @@ const OrdersPage = () => {
               ? data.data
               : [];
         setOrders(list);
-        setPage(1); // reset to first page on reload
+        setPage(1);
       } catch (err) {
         if (!active) return;
         setError(
@@ -131,7 +162,7 @@ const OrdersPage = () => {
       {/* Stats strip */}
       <motion.div
         {...fadeUp(0.07)}
-        className="grid grid-cols-2 sm:grid-cols-6 border border-hairline dark:border-[#262932] mb-8"
+        className="grid grid-cols-2 sm:grid-cols-6 border border-hairline dark:border-[#262932] mb-6"
       >
         {[
           { label: "Total orders", value: stats.total },
@@ -150,6 +181,33 @@ const OrdersPage = () => {
             </p>
             <p className="eyebrow dark:text-[#8b8fa8] mt-1">{s.label}</p>
           </div>
+        ))}
+      </motion.div>
+
+      {/* Status tabs */}
+      <motion.div
+        {...fadeUp(0.08)}
+        className="flex items-center gap-1 mb-8 border-b border-hairline dark:border-[#262932] overflow-x-auto"
+      >
+        {TABS.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => handleTabChange(tab.key)}
+            className={`relative px-4 py-2.5 font-mono text-xs uppercase tracking-widest whitespace-nowrap transition-colors ${
+              activeTab === tab.key
+                ? "text-ink dark:text-[#f0efe8]"
+                : "text-slate dark:text-[#8b8fa8] hover:text-ink dark:hover:text-[#f0efe8]"
+            }`}
+          >
+            {tab.label}
+            {activeTab === tab.key && (
+              <motion.div
+                layoutId="ordersTabIndicator"
+                className="absolute left-0 right-0 -bottom-px h-0.5 bg-ink dark:bg-[#f0efe8]"
+                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              />
+            )}
+          </button>
         ))}
       </motion.div>
 
@@ -186,6 +244,22 @@ const OrdersPage = () => {
             Browse Products
           </Link>
         </div>
+      ) : filteredOrders.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-24 gap-4 text-center border border-dashed border-hairline dark:border-[#262932]">
+          <ShoppingBag size={32} className="text-slate dark:text-[#8b8fa8]" />
+          <p className="font-display text-xl font-semibold text-ink dark:text-[#f0efe8]">
+            No {activeTabDef?.label.toLowerCase()} orders
+          </p>
+          <p className="text-sm text-slate dark:text-[#8b8fa8] max-w-sm">
+            Nothing matches this filter yet.
+          </p>
+          <button
+            onClick={() => handleTabChange("ALL")}
+            className="btn-secondary mt-2"
+          >
+            View all orders
+          </button>
+        </div>
       ) : (
         <>
           <motion.div
@@ -198,9 +272,9 @@ const OrdersPage = () => {
           </motion.div>
 
           <Pagination
-            page={page}
+            page={safePage}
             totalPages={totalPages}
-            total={orders.length}
+            total={filteredOrders.length}
             pageSize={ORDERS_PAGE_SIZE}
             onPageChange={(p) => {
               setPage(p);

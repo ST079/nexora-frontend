@@ -7,7 +7,7 @@ export const createOrder = async (data) => {
 
 export const getMyOrders = async () => {
   const response = await api.get(`api/v1/orders/my-orders`);
-  console.log("Api ",response)
+  console.log("Api ", response);
   return response.data;
 };
 
@@ -18,6 +18,13 @@ export const getAllOrders = async () => {
 
 export const getOrderById = async (id) => {
   const response = await api.get(`api/v1/orders/${id}`);
+  return response.data;
+};
+
+export const updateOrderStatus = async (id, status) => {
+  const response = await api.put(`api/v1/orders/${id}/status`, {
+    status,
+  });
   return response.data;
 };
 

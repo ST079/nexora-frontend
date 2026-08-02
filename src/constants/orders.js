@@ -2,10 +2,10 @@ import { CheckCircle2, Clock, Loader2, Truck, XCircle } from "lucide-react";
 
 export const STATUS_MAP = {
   PENDING: { label: "Pending", icon: Clock, color: "bg-signal/10 text-signal" },
-  PROCESSING: {
-    label: "Processing",
-    icon: Loader2,
-    color: "bg-blueprint/10 text-blueprint dark:text-[#5c78ff]",
+  CONFIRMED: {
+    label: "Confirmed",
+    icon: CheckCircle2,
+    color: "bg-ok/10 text-ok",
   },
   SHIPPED: {
     label: "Shipped",
@@ -17,11 +17,7 @@ export const STATUS_MAP = {
     icon: CheckCircle2,
     color: "bg-ok/10 text-ok",
   },
-  COMPLETED: {
-    label: "Completed",
-    icon: CheckCircle2,
-    color: "bg-ok/10 text-ok",
-  },
+
   CANCELLED: {
     label: "Cancelled",
     icon: XCircle,

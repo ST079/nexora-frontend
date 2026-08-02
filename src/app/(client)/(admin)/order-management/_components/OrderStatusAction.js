@@ -4,30 +4,30 @@ import { useState } from "react";
 import { Loader2, ChevronDown } from "lucide-react";
 import toast from "react-hot-toast";
 import { STATUS_MAP } from "@/constants/orders";
+import { updateOrderStatus } from "@/api/order";
 
 const OrderStatusAction = ({ order, onUpdated }) => {
   const [busy, setBusy] = useState(false);
   const currentStatus = order.status?.toUpperCase();
 
   const handleChange = async (e) => {
-    // const newStatus = e.target.value;
-    // if (newStatus === currentStatus) return;
+    const newStatus = e.target.value;
+    if (newStatus === currentStatus) return;
 
-    // setBusy(true);
-    // try {
-    //   const response = await updateOrderStatus(order._id, newStatus);
-    //   const updated = response?.order ?? response?.data ?? response;
-    //   onUpdated({ ...order, ...updated, status: newStatus });
-    //   toast.success(
-    //     `Order marked as ${STATUS_MAP[newStatus]?.label ?? newStatus}.`,
-    //   );
-    // } catch (err) {
-    //   toast.error(
-    //     err?.response?.data?.message || "Could not update order status.",
-    //   );
-    // } finally {
-    //   setBusy(false);
-    // }
+    setBusy(true);
+    try {
+      const updated = await updateOrderStatus(order._id, newStatus);
+      onUpdated({ ...order, ...updated, status: newStatus });
+      toast.success(
+        `Order marked as ${STATUS_MAP[newStatus]?.label ?? newStatus}.`,
+      );
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.message || "Could not update order status.",
+      );
+    } finally {
+      setBusy(false);
+    }
   };
 
   const entry = STATUS_MAP[currentStatus];

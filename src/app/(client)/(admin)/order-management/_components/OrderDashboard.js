@@ -14,16 +14,14 @@ import OrderStatusBadge from "@/components/OrderStatusBadge";
 import Pagination from "@/components/Pagination";
 import { ORDER_MANAGEMENT_PAGE_SIZE } from "@/constants/pagination";
 import { formatDate, formatNPR } from "@/utils/format";
+import OrderViewModal from "./OrderViewModal";
 import { PAYMENT_STATUS_SUCCESS } from "@/constants/payment";
 import {
   ORDER_STATUS_CANCELLED,
   ORDER_STATUS_CONFIRMED,
   ORDER_STATUS_PENDING,
 } from "@/constants/orders";
-import { getAllOrders } from "@/api/order";
-import OrderViewModal from "./_components/OrderViewModal";
-import OrderStatusAction from "./_components/OrderStatusAction";
-import Loader from "@/components/Loader";
+import OrderStatusAction from "./OrderStatusAction";
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 12 },
@@ -31,8 +29,8 @@ const fadeUp = (delay = 0) => ({
   transition: { duration: 0.35, delay, ease: [0.22, 1, 0.36, 1] },
 });
 
-const OrderManagementPage = () => {
-  const [orders, setOrders] = useState([]);
+const OrderDashboard = ({ allOrders }) => {
+  const orders = allOrders;
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState("createdAt");
@@ -40,14 +38,7 @@ const OrderManagementPage = () => {
   const [viewOrder, setViewOrder] = useState(null);
   const [page, setPage] = useState(1);
 
-  useEffect(() => {
-    setLoading(true);
-    getAllOrders()
-      .then((data) => setOrders(data))
-      .catch((error) => console.log(error))
-      .finally(() => setLoading(false));
-  }, []);
-
+  console.log("orders", orders[0]);
   const toggleSort = (field) => {
     if (sortField === field) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     else {
@@ -188,7 +179,10 @@ const OrderManagementPage = () => {
         className="border border-hairline dark:border-[#262932] overflow-x-auto"
       >
         {loading ? (
-          <Loader label="Loading Orders" />
+          <div className="flex items-center justify-center gap-2 py-20 text-slate dark:text-[#8b8fa8]">
+            <Loader2 size={16} className="animate-spin" />
+            <span className="font-mono text-sm">Loading orders…</span>
+          </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
             <PackageOpen size={28} className="text-slate dark:text-[#8b8fa8]" />
@@ -210,6 +204,7 @@ const OrderManagementPage = () => {
                   { label: "Total", field: "totalPrice" },
                   { label: "Payment", field: null },
                   { label: "Status", field: null },
+                  { label: "Update status", field: null },
                   { label: "", field: null },
                 ].map((col) => (
                   <th
@@ -271,7 +266,12 @@ const OrderManagementPage = () => {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <OrderStatusAction order={order} onUpdated={() => {}} />
+                      <OrderStatusBadge status={order.totalPrice} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <OrderStatusAction
+                        order={order}
+                      />
                     </td>
                     <td className="px-4 py-3">
                       <button
@@ -316,4 +316,4 @@ const OrderManagementPage = () => {
   );
 };
 
-export default OrderManagementPage;
+export default OrderDashboard;
