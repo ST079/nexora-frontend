@@ -16,7 +16,6 @@ const ProductsPage = async ({ searchParams }) => {
     <section className="container-page py-16 bg-paper dark:bg-[#0e0f12] transition-colors duration-300">
       <div className="grid lg:grid-cols-[250px_1fr] gap-8">
         <ProductFilter />
-
         {products.length === 0 ? (
           <EmptyState
             title="No matches"

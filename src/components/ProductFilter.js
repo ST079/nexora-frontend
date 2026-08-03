@@ -17,16 +17,17 @@ import React, { useState } from "react";
 const ProductFilter = () => {
   const router = useRouter();
 
-  const [minPrice, setMinPrice]         = useState(DEFAULT_MIN_Price);
-  const [maxPrice, setMaxPrice]         = useState(DEFAULT_MAX_Price);
-  const [sort, setSort]                 = useState(DEFAULT_SORT);
-  const [category, setCategory]         = useState(DEFAULT_CATEGORY);
+  const [minPrice, setMinPrice] = useState(DEFAULT_MIN_Price);
+  const [maxPrice, setMaxPrice] = useState(DEFAULT_MAX_Price);
+  const [sort, setSort] = useState(DEFAULT_SORT);
+  const [category, setCategory] = useState(DEFAULT_CATEGORY);
   const [selectedBrands, setSelectedBrands] = useState(DEFAULT_BRAND);
-  const [input, setInput]               = useState("");
-  const [filtersOpen, setFiltersOpen]   = useState(false);
+  const [input, setInput] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const addBrand = (brand) => {
-    if (!selectedBrands.includes(brand)) setSelectedBrands([...selectedBrands, brand]);
+    if (!selectedBrands.includes(brand))
+      setSelectedBrands([...selectedBrands, brand]);
     setInput("");
   };
 
@@ -72,13 +73,12 @@ const ProductFilter = () => {
 
       <aside className={`${filtersOpen ? "block" : "hidden"} lg:block`}>
         <div className="card-frame p-5 space-y-5 lg:sticky lg:top-24 items-start">
-
           {/* Header + sort */}
           <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
             <div>
               <p className="eyebrow dark:text-[#8b8fa8] mb-2">For You</p>
               <h1 className="font-display text-3xl font-semibold text-ink dark:text-[#f0efe8]">
-                All listings
+                {category != "" ? category : "All listings"}
               </h1>
             </div>
             <div className="flex items-center gap-3">
@@ -166,7 +166,9 @@ const ProductFilter = () => {
 
           {/* Price range */}
           <div>
-            <p className="eyebrow dark:text-[#8b8fa8] mb-2">Price range (Rs.)</p>
+            <p className="eyebrow dark:text-[#8b8fa8] mb-2">
+              Price range (Rs.)
+            </p>
             <div className="flex items-center gap-2">
               <input
                 value={minPrice}
@@ -190,7 +192,10 @@ const ProductFilter = () => {
           <button className="btn-primary w-full" onClick={applyFilter}>
             Apply filters
           </button>
-          <button onClick={clearFilters} className="btn-ghost w-full justify-center">
+          <button
+            onClick={clearFilters}
+            className="btn-ghost w-full justify-center"
+          >
             Reset
           </button>
         </div>
