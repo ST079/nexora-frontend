@@ -18,6 +18,7 @@ import {
   User,
   UserX,
   UserCheck,
+  Eye,
 } from "lucide-react";
 import Pagination from "@/components/Pagination";
 import RoleBadge from "./_components/RoleBadge";
@@ -27,13 +28,13 @@ import { ROLES } from "@/constants/user";
 import { USER_MANAGEMENT_PAGE_SIZE } from "@/constants/pagination";
 import DeleteModal from "./_components/DeleteModal";
 import RoleModal from "./_components/RoleModal";
+import UserViewModal from "./_components/UserViewModal";
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 12 },
   animate: { opacity: 1, y: 0 },
   transition: { duration: 0.35, delay, ease: [0.22, 1, 0.36, 1] },
 });
-
 
 const UserManagementPage = () => {
   const [users, setUsers] = useState([]);
@@ -46,6 +47,7 @@ const UserManagementPage = () => {
   const [page, setPage] = useState(1);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [roleTarget, setRoleTarget] = useState(null);
+  const [viewTarget, setViewTarget] = useState(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [statusTarget, setStatusTarget] = useState(null);
 
@@ -384,6 +386,7 @@ const UserManagementPage = () => {
                       >
                         <ShieldCheck size={13} />
                       </button>
+
                       <button
                         onClick={() => setDeleteTarget(user)}
                         className="grid h-8 w-8 place-items-center border border-hairline dark:border-[#262932] text-slate dark:text-[#8b8fa8] hover:border-danger hover:text-danger dark:hover:border-danger dark:hover:text-danger transition-colors"
@@ -392,6 +395,7 @@ const UserManagementPage = () => {
                       >
                         <Trash2 size={13} />
                       </button>
+
                       <button
                         onClick={() => setStatusTarget(user)}
                         className={`grid h-8 w-8 place-items-center border border-hairline dark:border-[#262932] transition-colors ${
@@ -412,6 +416,16 @@ const UserManagementPage = () => {
                           <UserCheck size={13} />
                         )}
                       </button>
+
+                      <button
+                        onClick={() => setViewTarget(user)}
+                        className="grid h-8 w-8 place-items-center border border-hairline dark:border-[#262932] text-slate dark:text-[#8b8fa8] hover:border-ink dark:hover:border-[#f0efe8] hover:text-ink dark:hover:text-[#f0efe8] transition-colors"
+                        aria-label="View user"
+                        title="View user"
+                      >
+                        <Eye size={13} />
+                      </button>
+                    
                     </div>
                   </td>
                 </motion.tr>
@@ -451,6 +465,13 @@ const UserManagementPage = () => {
             user={roleTarget}
             onClose={() => setRoleTarget(null)}
             onSave={handleRoleSaved}
+          />
+        )}
+        {viewTarget && (
+          <UserViewModal
+            key="view-modal"
+            user={viewTarget}
+            onClose={() => setViewTarget(null)}
           />
         )}
       </AnimatePresence>
