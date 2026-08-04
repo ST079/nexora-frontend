@@ -30,26 +30,6 @@ const AdminSidebar = () => {
       transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
       className="relative flex flex-col h-screen bg-paper dark:bg-[#0e0f12] border-r border-hairline dark:border-[#262932] shrink-0 overflow-hidden"
     >
-      {/* Logo */}
-      <div className="flex items-center gap-2.5 px-10 h-16 border-b border-hairline dark:border-[#262932] shrink-0">
-        <span className="grid h-7 w-7 shrink-0 place-items-center bg-ink dark:bg-[#f0efe8] font-mono text-xs font-bold text-signal dark:text-[#14151a]">
-          N
-        </span>
-        <AnimatePresence>
-          {!collapsed && (
-            <motion.span
-              initial={{ opacity: 0, x: -6 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -6 }}
-              transition={{ duration: 0.18 }}
-              className="font-display text-sm font-semibold text-ink dark:text-[#f0efe8] whitespace-nowrap"
-            >
-              NEXORA · Admin
-            </motion.span>
-          )}
-        </AnimatePresence>
-      </div>
-
       {/* adminNavLinks */}
       <nav className="flex-1 overflow-y-auto py-4 px-8 space-y-6">
         {adminNavLinks.map((group) => (
@@ -109,56 +89,6 @@ const AdminSidebar = () => {
           </div>
         ))}
       </nav>
-
-      {/* User + logout */}
-      <div className="border-t border-hairline dark:border-[#262932] p-3 shrink-0">
-        <div
-          className={`flex items-center gap-3 mb-2 ${collapsed ? "justify-center" : ""}`}
-        >
-          <div className="grid h-8 w-8 shrink-0 place-items-center bg-ink dark:bg-[#262932] font-display text-xs text-paper dark:text-[#f0efe8] uppercase">
-            {user?.name?.charAt(0) ?? "A"}
-          </div>
-          <AnimatePresence>
-            {!collapsed && (
-              <motion.div
-                initial={{ opacity: 0, x: -4 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -4 }}
-                transition={{ duration: 0.15 }}
-                className="min-w-0"
-              >
-                <p className="text-xs font-medium text-ink dark:text-[#f0efe8] truncate">
-                  {user?.name ?? "Admin"}
-                </p>
-                <p className="font-mono text-[10px] text-slate dark:text-[#8b8fa8] truncate">
-                  {user?.email ?? ""}
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        <button
-          onClick={handleLogout}
-          title={collapsed ? "Sign out" : undefined}
-          className={`flex items-center gap-2 w-full px-2 py-2 text-xs text-slate dark:text-[#8b8fa8] hover:text-danger dark:hover:text-danger transition-colors ${collapsed ? "justify-center" : ""}`}
-        >
-          <LogOut size={14} className="shrink-0" />
-          <AnimatePresence>
-            {!collapsed && (
-              <motion.span
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.15 }}
-              >
-                Sign out
-              </motion.span>
-            )}
-          </AnimatePresence>
-        </button>
-      </div>
-
       {/* Collapse toggle */}
       <button
         onClick={() => setCollapsed((c) => !c)}
