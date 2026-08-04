@@ -62,3 +62,12 @@ export const STATUS_STYLES = {
 export function statusStyle(status) {
   return STATUS_STYLES[slugStatus(status)] || "bg-hairline text-slate";
 }
+
+
+export const initials = (name = "") =>
+  name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase())
+    .join("");
