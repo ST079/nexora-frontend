@@ -11,8 +11,9 @@ import {
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { initials } from "@/utils/format";
-import { ROLE_ADMIN, ROLES } from "@/constants/user";
-// import { updateUser } from "@/api/users";
+import { ROLE_ADMIN, ROLE_MERCHANT, ROLE_USER, ROLES } from "@/constants/user";
+import { updateUserRoles } from "@/api/user";
+import toast from "react-hot-toast";
 
 const RoleModal = ({ user, onClose, onSave }) => {
   // initialise with all roles the user already has
@@ -20,7 +21,6 @@ const RoleModal = ({ user, onClose, onSave }) => {
     (user?.roles ?? ["USER"]).map((r) => r.toUpperCase()),
   );
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
 
   const toggleRole = (r) => {
     setSelectedRoles((prev) =>
@@ -40,24 +40,22 @@ const RoleModal = ({ user, onClose, onSave }) => {
 
   const handleSave = async () => {
     setSaving(true);
-    setError("");
     try {
-      // await updateUser(user._id, { roles: selectedRoles });
-      await new Promise((r) => setTimeout(r, 600));
+      await updateUserRoles(user._id, selectedRoles);
       onSave({ ...user, roles: selectedRoles });
+      toast.success("Roles updated successfully.");
     } catch (err) {
-      setError(
-        err?.response?.data?.message || err.message || "Could not update role.",
-      );
+      console.error("Failed to update roles:", err);
+      toast.error("Failed to update roles.");
     } finally {
       setSaving(false);
     }
   };
 
   const ROLE_META = {
-    ROLE_ADMIN: { icon: ShieldCheck, desc: "Full access to admin dashboard" },
-    ROLE_MERCHANT: { icon: User, desc: "Can list and manage products" },
-    ROLE_USER: { icon: Users, desc: "Standard customer account" },
+    [ROLE_ADMIN]: { icon: ShieldCheck, desc: "Full access to admin dashboard" },
+    [ROLE_MERCHANT]: { icon: User, desc: "Can list and manage products" },
+    [ROLE_USER]: { icon: Users, desc: "Standard customer account" },
   };
 
   return (
@@ -95,13 +93,6 @@ const RoleModal = ({ user, onClose, onSave }) => {
         <p className="text-xs text-slate dark:text-[#8b8fa8] mb-4">
           Select one or more roles. At least one must remain selected.
         </p>
-
-        {error && (
-          <div className="flex items-start gap-2 border border-danger/40 bg-danger/5 dark:bg-danger/10 px-3 py-2.5 text-sm text-danger mb-4">
-            <AlertTriangle size={14} className="mt-0.5 shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
 
         <div className="space-y-2 mb-6">
           {ROLES.map((r) => {

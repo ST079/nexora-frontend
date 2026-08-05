@@ -25,8 +25,7 @@ export const updateProfileImage = async (data) => {
 };
 
 export const updateUserRoles = async (id, roles) => {
-  const response = await api.put(`/api/v1/users/${id}/roles`, { roles });
-
+  const response = await api.patch(`/api/v1/users/${id}/roles`, { roles });
   return response.data;
 };
 
