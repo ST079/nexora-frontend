@@ -16,7 +16,6 @@ import { updateUserRoles } from "@/api/user";
 import toast from "react-hot-toast";
 
 const RoleModal = ({ user, onClose, onSave }) => {
-  // initialise with all roles the user already has
   const [selectedRoles, setSelectedRoles] = useState(() =>
     (user?.roles ?? ["USER"]).map((r) => r.toUpperCase()),
   );

@@ -32,6 +32,8 @@ export const queryFormatter = (searchParams = {}) => {
   if (searchParams.category) params.set("category", searchParams.category);
   if (searchParams.min) params.set("min", searchParams.min);
   if (searchParams.max) params.set("max", searchParams.max);
+  if (searchParams.limit) params.set("limit", searchParams.limit);
+  if (searchParams.offset) params.set("offset", searchParams.offset);
 
   return params.toString();
 };

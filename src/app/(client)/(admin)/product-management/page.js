@@ -1,12 +1,14 @@
 import React from "react";
 import ProductDashboard from "./_components/ProductDashboard";
-import { getProducts } from "@/api/product";
+import { getProducts, getTotalCount } from "@/api/product";
+import { PRODUCT_MANAGEMENT_PAGE_SIZE } from "@/constants/pagination";
 
 const ProductManagementPage = async () => {
-  const products = await getProducts();
+  const response = await getTotalCount();
+
   return (
     <>
-      <ProductDashboard allProducts={products} />
+      <ProductDashboard totalItems={response.totalCount} />
     </>
   );
 };

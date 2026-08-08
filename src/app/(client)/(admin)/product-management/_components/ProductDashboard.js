@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus,
@@ -12,7 +12,6 @@ import {
   PackageOpen,
   ChevronDown,
   ChevronUp,
-  Check,
 } from "lucide-react";
 import Image from "next/image";
 import StatusBadge from "./StockStatusBadge";
@@ -21,10 +20,10 @@ import DeleteModal from "./DeleteModal";
 import Pagination from "@/components/Pagination";
 import toast from "react-hot-toast";
 import { EMPTY_FORM } from "@/constants/defaults";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { PRODUCT_MANAGEMENT_PAGE_SIZE } from "@/constants/pagination";
-
-
+import Loader from "@/components/Loader";
+import { getProducts } from "@/api/product";
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 12 },
@@ -32,16 +31,41 @@ const fadeUp = (delay = 0) => ({
   transition: { duration: 0.35, delay, ease: [0.22, 1, 0.36, 1] },
 });
 
-const ProductDashboard = ({ allProducts }) => {
-  const [products, setProducts] = useState(allProducts ?? []);
+const ProductDashboard = ({ totalItems }) => {
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState("createdAt");
   const [sortDir, setSortDir] = useState("desc");
   const [editProduct, setEditProduct] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [page, setPage] = useState(1);
   const router = useRouter();
+  const totalCount = totalItems || 0;
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLoading(true);
+    const fetchProducts = async () => {
+      try {
+        const limit = PRODUCT_MANAGEMENT_PAGE_SIZE;
+        const page = Math.max(1, Number(searchParams.get("page")) || 1);
+        const offset = (page - 1) * limit;
+        const query = Object.fromEntries(searchParams.entries());
+
+        const products = await getProducts({
+          ...query,
+          limit,
+          offset,
+        });
+        setProducts(products);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      }
+    };
+    fetchProducts().finally(() => setLoading(false));
+  }, [searchParams]);
+  
   const handleSave = (savedProduct, isEdit) => {
     router.refresh();
     setProducts((prev) =>
@@ -50,9 +74,7 @@ const ProductDashboard = ({ allProducts }) => {
         : [savedProduct, ...prev],
     );
     setEditProduct(null);
-    setPage(1);
-    setSuccessMsg(isEdit ? "Product updated." : "Product added.");
-    setTimeout(() => setSuccessMsg(""), 3000);
+    toast.success(isEdit ? "Product updated." : "Product added.");
   };
 
   const handleDeleted = async (deletedId) => {
@@ -67,13 +89,10 @@ const ProductDashboard = ({ allProducts }) => {
       setSortField(field);
       setSortDir("asc");
     }
-    setPage(1);
   };
 
-  // Reset page when search changes
   const handleSearch = (val) => {
     setSearch(val);
-    setPage(1);
   };
 
   const SortIcon = ({ field }) => {
@@ -85,7 +104,9 @@ const ProductDashboard = ({ allProducts }) => {
     );
   };
 
-  // Filter + sort
+  // This filters/sorts only the current page's data client-side.
+  // (Search/sort here won't reach across pages unless the backend also
+  // supports search/sort query params — see note below.)
   const filtered = products
     .filter((p) =>
       [p.name, p.brand, p.category].some((v) =>
@@ -98,14 +119,6 @@ const ProductDashboard = ({ allProducts }) => {
         return (a[sortField] - b[sortField]) * dir;
       return String(a[sortField]).localeCompare(String(b[sortField])) * dir;
     });
-
-  // Pagination
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PRODUCT_MANAGEMENT_PAGE_SIZE));
-  const safePage = Math.min(page, totalPages);
-  const paginated = filtered.slice(
-    (safePage - 1) * PRODUCT_MANAGEMENT_PAGE_SIZE,
-    safePage * PRODUCT_MANAGEMENT_PAGE_SIZE,
-  );
 
   return (
     <div className="container-page py-10 bg-paper dark:bg-[#0e0f12] min-h-screen transition-colors duration-300">
@@ -132,7 +145,7 @@ const ProductDashboard = ({ allProducts }) => {
         className="grid grid-cols-2 sm:grid-cols-4 border border-hairline dark:border-[#262932] mb-6"
       >
         {[
-          { label: "Total products", value: products.length },
+          { label: "Total products", value: totalCount },
           {
             label: "In stock",
             value: products.filter((p) => p.stock > 0).length,
@@ -186,11 +199,8 @@ const ProductDashboard = ({ allProducts }) => {
         className="border border-hairline dark:border-[#262932] overflow-x-auto"
       >
         {loading ? (
-          <div className="flex items-center justify-center gap-2 py-20 text-slate dark:text-[#8b8fa8]">
-            <Loader2 size={16} className="animate-spin" />
-            <span className="font-mono text-sm">Loading Products...</span>
-          </div>
-        ) : filtered.length === 0 ? (
+          <Loader label="Loading products" />
+        ) : products.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
             <PackageOpen size={28} className="text-slate dark:text-[#8b8fa8]" />
             <p className="font-display font-semibold text-ink dark:text-[#f0efe8]">
@@ -226,7 +236,7 @@ const ProductDashboard = ({ allProducts }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-hairline dark:divide-[#262932]">
-              {paginated.map((product, i) => (
+              {filtered.map((product, i) => (
                 <motion.tr
                   key={product._id}
                   initial={{ opacity: 0 }}
@@ -299,14 +309,8 @@ const ProductDashboard = ({ allProducts }) => {
         )}
       </motion.div>
 
-      {/* ── Pagination ── */}
-      <Pagination
-        page={safePage}
-        totalPages={totalPages}
-        total={filtered.length}
-        pageSize={PRODUCT_MANAGEMENT_PAGE_SIZE}
-        onPageChange={setPage}
-      />
+      {/* Pagination — now only needs total + pageSize */}
+      <Pagination total={totalCount} pageSize={PRODUCT_MANAGEMENT_PAGE_SIZE} />
 
       {/* Modals */}
       <AnimatePresence>

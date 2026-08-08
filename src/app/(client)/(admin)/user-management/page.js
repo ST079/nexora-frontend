@@ -239,7 +239,7 @@ const UserManagementPage = () => {
             setRoleFilter(e.target.value);
             setPage(1);
           }}
-          className="field max-w-[140px] cursor-pointer dark:border-[#262932] dark:bg-[#16181f] dark:text-[#f0efe8]"
+          className="field max-w-[140px] px-2 cursor-pointer dark:border-[#262932] dark:bg-[#16181f] dark:text-[#f0efe8]"
         >
           <option value="ALL">All roles</option>
           {ROLES.map((r) => (
@@ -396,7 +396,7 @@ const UserManagementPage = () => {
                         <Trash2 size={13} />
                       </button>
 
-                      <button
+                      {/* <button
                         onClick={() => setStatusTarget(user)}
                         className={`grid h-8 w-8 place-items-center border border-hairline dark:border-[#262932] transition-colors ${
                           user.isActive !== false
@@ -415,7 +415,7 @@ const UserManagementPage = () => {
                         ) : (
                           <UserCheck size={13} />
                         )}
-                      </button>
+                      </button> */}
 
                       <button
                         onClick={() => setViewTarget(user)}

@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { PRODUCT_MANAGEMENT_PAGE_SIZE } from "@/constants/pagination";
 import {
   ChevronLeft,
   ChevronRight,
@@ -7,11 +9,24 @@ import {
   ChevronsRight,
 } from "lucide-react";
 
-const Pagination = ({ page, totalPages, total, pageSize, onPageChange }) => {
+const Pagination = ({ total, pageSize = PRODUCT_MANAGEMENT_PAGE_SIZE }) => {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const page = Math.max(1, Number(searchParams.get("page")) || 1);
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
   if (totalPages <= 1) return null;
 
   const startIndex = (page - 1) * pageSize + 1;
   const endIndex = Math.min(page * pageSize, total);
+
+  const goToPage = (p) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", String(p));
+    router.push(`${pathname}?${params.toString()}`);
+  };
 
   const pageRange = () => {
     const delta = 2;
@@ -30,7 +45,6 @@ const Pagination = ({ page, totalPages, total, pageSize, onPageChange }) => {
 
   return (
     <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-      {/* Count */}
       <p className="font-mono text-xs text-slate dark:text-[#8b8fa8]">
         Showing{" "}
         <span className="text-ink dark:text-[#f0efe8]">
@@ -40,11 +54,9 @@ const Pagination = ({ page, totalPages, total, pageSize, onPageChange }) => {
         {total === 1 ? "result" : "results"}
       </p>
 
-      {/* Controls */}
       <div className="flex items-center gap-1">
-        {/* First */}
         <button
-          onClick={() => onPageChange(1)}
+          onClick={() => goToPage(1)}
           disabled={page === 1}
           className={btnBase}
           aria-label="First page"
@@ -52,9 +64,8 @@ const Pagination = ({ page, totalPages, total, pageSize, onPageChange }) => {
           <ChevronsLeft size={13} />
         </button>
 
-        {/* Prev */}
         <button
-          onClick={() => onPageChange(page - 1)}
+          onClick={() => goToPage(page - 1)}
           disabled={page === 1}
           className={btnBase}
           aria-label="Previous page"
@@ -62,11 +73,10 @@ const Pagination = ({ page, totalPages, total, pageSize, onPageChange }) => {
           <ChevronLeft size={13} />
         </button>
 
-        {/* Page numbers */}
         {pageRange().map((p) => (
           <button
             key={p}
-            onClick={() => onPageChange(p)}
+            onClick={() => goToPage(p)}
             className={`h-8 min-w-[2rem] px-2 font-mono text-xs border transition-colors ${
               p === page
                 ? "border-ink dark:border-[#f0efe8] bg-ink dark:bg-[#f0efe8] text-paper dark:text-[#0e0f12]"
@@ -77,9 +87,8 @@ const Pagination = ({ page, totalPages, total, pageSize, onPageChange }) => {
           </button>
         ))}
 
-        {/* Next */}
         <button
-          onClick={() => onPageChange(page + 1)}
+          onClick={() => goToPage(page + 1)}
           disabled={page === totalPages}
           className={btnBase}
           aria-label="Next page"
@@ -87,9 +96,8 @@ const Pagination = ({ page, totalPages, total, pageSize, onPageChange }) => {
           <ChevronRight size={13} />
         </button>
 
-        {/* Last */}
         <button
-          onClick={() => onPageChange(totalPages)}
+          onClick={() => goToPage(totalPages)}
           disabled={page === totalPages}
           className={btnBase}
           aria-label="Last page"
