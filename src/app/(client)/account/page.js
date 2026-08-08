@@ -9,8 +9,6 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import {
   User,
-  Mail,
-  Phone,
   MapPin,
   Camera,
   Loader2,
@@ -19,11 +17,11 @@ import {
   LogOut,
 } from "lucide-react";
 import AnimatedField from "@/components/AnimatedField";
-// import { updateProfile, changePassword } from "@/api/user";
 import { logout } from "@/redux/auth/authSlice";
 import { LOGIN_ROUTE, ORDERS_ROUTE } from "@/constants/routes";
 import { initials } from "@/utils/format";
 import Link from "next/link";
+import { updateProfileImage, updateUser } from "@/api/user";
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 12 },
@@ -71,7 +69,7 @@ const AccountPage = () => {
   const onProfileSubmit = async (data) => {
     setSavingProfile(true);
     try {
-      await updateProfile({
+      await updateUser(user._id, {
         name: data.name,
         phone: data.phone,
         address: { city: data.city, street: data.street },
@@ -100,12 +98,13 @@ const AccountPage = () => {
     }
   };
 
-  const handleAvatarChange = (e) => {
+  const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setAvatarPreview(URL.createObjectURL(file));
     // TODO: wire this file into an actual upload call (e.g. updateProfile with FormData)
-    toast("Avatar upload not wired up yet — preview only.");
+    await updateProfileImage(file);
+    toast("Avatar Updated", { icon: "👏" });
   };
 
   const handleLogout = () => {

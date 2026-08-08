@@ -19,8 +19,7 @@ export const getMe = async () => {
 };
 
 export const updateProfileImage = async (data) => {
-  const response = await api.patch(`/api/v1/users/profile-image`, data);
-
+  const response = await api.put(`/api/v1/users/profile-image`, data);
   return response.data;
 };
 
