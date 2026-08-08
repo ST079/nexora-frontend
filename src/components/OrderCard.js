@@ -1,4 +1,4 @@
-import { fadeUp } from "@/app/orders/page";
+import { fadeUp } from "@/app/(storeFront)/orders/page";
 import { formatDate, formatNPR } from "@/utils/format";
 import { motion } from "framer-motion";
 import { ChevronRight, Package } from "lucide-react";

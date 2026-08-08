@@ -28,7 +28,7 @@ const AdminSidebar = () => {
     <motion.aside
       animate={{ width: collapsed ? 100 : 250 }}
       transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-      className="relative flex flex-col h-screen bg-paper dark:bg-[#0e0f12] border-r border-hairline dark:border-[#262932] shrink-0 overflow-hidden"
+      className="sticky top-0 flex flex-col h-screen bg-paper dark:bg-[#0e0f12] border-r border-hairline dark:border-[#262932] shrink-0 overflow-hidden"
     >
       {/* adminNavLinks */}
       <nav className="flex-1 overflow-y-auto py-4 px-8 space-y-6">

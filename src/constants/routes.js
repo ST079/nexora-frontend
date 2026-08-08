@@ -7,10 +7,14 @@ export const REGISTER_ROUTE = "/register";
 export const FORGOT_PASSWORD_ROUTE = "/forgot-password";
 export const REST_PASSWORD_ROUTE = "/reset-password";
 
+//user
+export const ACCOUNT_SETTING_ROUTE = "/account";
+
 //orders
 export const CART_ROUTE = "/cart";
 export const CHECKOUT_ROUTE = "/checkout";
 export const ORDERS_ROUTE = "/orders";
+
 //admin routes
 export const DASHBOARD_ROUTE = "/dashboard";
 export const PRODUCT_MANAGEMENT_ROUTE = "/product-management";

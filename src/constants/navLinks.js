@@ -1,11 +1,11 @@
 import {
   ABOUT_ROUTE,
+  ACCOUNT_SETTING_ROUTE,
   CONTACT_ROUTE,
   DASHBOARD_ROUTE,
   HOME_ROUTE,
   ORDER_MANAGEMENT_ROUTE,
   PRODUCT_MANAGEMENT_ROUTE,
-  PRODUCTS_ROUTE,
   USER_MANAGEMENT_ROUTE,
 } from "./routes";
 
@@ -52,7 +52,7 @@ export const adminNavLinks = [
     label: "People",
     items: [
       { label: "Users", href: USER_MANAGEMENT_ROUTE, icon: Users },
-      { label: "Settings", href: "/admin/settings", icon: Settings },
+      { label: "Account", href: ACCOUNT_SETTING_ROUTE, icon: Settings },
     ],
   },
 ];

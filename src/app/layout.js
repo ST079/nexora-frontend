@@ -1,12 +1,7 @@
-import Footer from "@/components/Footer";
 import "./globals.css";
-import React from "react";
-import Header from "@/components/Header";
 import { Toaster } from "react-hot-toast";
 import { config } from "@/config/config";
 import AppProvider from "@/redux/provider";
-import MainLayout from "@/layouts/MainLayout";
-import CartDrawer from "@/components/CartDrawer";
 
 export const metadata = {
   title: config.appName,
@@ -15,23 +10,16 @@ export const metadata = {
 
 const RootLayout = ({ children }) => {
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" className="h-full">
+      <body className="h-full">
         <AppProvider>
-          <MainLayout>
-            <Header />
-            <CartDrawer/>
-            <main className="flex-1">{children}</main>
-            <Toaster
-              toastOptions={{
-                duration: 3000,
-                style: {
-                  fontSize: "14px",
-                },
-              }}
-            />
-            <Footer />
-          </MainLayout>
+          {children}
+          <Toaster
+            toastOptions={{
+              duration: 3000,
+              style: { fontSize: "14px" },
+            }}
+          />
         </AppProvider>
       </body>
     </html>
