@@ -18,8 +18,6 @@ import EmptyCart from "./EmptyCart";
 const CartDrawer = () => {
   const dispatch = useDispatch();
   const { items, isOpen } = useSelector((state) => state.cart);
-  console.log("cartdrawer isOpen: ", isOpen);
-
   const subtotal = items.reduce(
     (sum, item) => sum + Number(item.price ?? 0) * item.quantity,
     0,

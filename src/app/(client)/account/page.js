@@ -143,6 +143,7 @@ const AccountPage = () => {
                     width={96}
                     height={96}
                     className="h-full w-full object-cover"
+                    loading="eager"
                   />
                 ) : (
                   <span className="font-display text-2xl text-paper dark:text-[#f0efe8]">

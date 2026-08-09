@@ -6,7 +6,6 @@ import { ConstructionIcon } from "lucide-react";
 
 export const getProducts = async (searchParams) => {
   const query = queryFormatter(await searchParams);
-  console.log("query", query);
   const response = await axios.get(`${config.apiUrl}api/v1/products?${query}`);
   return response.data;
 };
