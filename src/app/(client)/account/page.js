@@ -17,7 +17,7 @@ import {
   LogOut,
 } from "lucide-react";
 import AnimatedField from "@/components/AnimatedField";
-import { logout } from "@/redux/auth/authSlice";
+import { logout, setUser } from "@/redux/auth/authSlice";
 import { LOGIN_ROUTE, ORDERS_ROUTE } from "@/constants/routes";
 import { initials } from "@/utils/format";
 import Link from "next/link";
@@ -69,13 +69,15 @@ const AccountPage = () => {
   const onProfileSubmit = async (data) => {
     setSavingProfile(true);
     try {
-      await updateUser(user._id, {
+      const response = await updateUser(user._id, {
         name: data.name,
         phone: data.phone,
         address: { city: data.city, street: data.street },
       });
+      dispatch(setUser(response));
       toast.success("Profile updated.");
     } catch (err) {
+      console.log("err", err);
       toast.error(err?.response?.data?.message || "Could not update profile.");
     } finally {
       setSavingProfile(false);
@@ -99,12 +101,18 @@ const AccountPage = () => {
   };
 
   const handleAvatarChange = async (e) => {
-    const file = e.target.files?.[0];
     if (!file) return;
-    setAvatarPreview(URL.createObjectURL(file));
-    // TODO: wire this file into an actual upload call (e.g. updateProfile with FormData)
-    await updateProfileImage(file);
-    toast("Avatar Updated", { icon: "👏" });
+    try {
+      const file = e.target.files?.[0];
+      const formdata = new FormData();
+      formdata.append("image", file);
+
+      setAvatarPreview(URL.createObjectURL(file));
+      await updateProfileImage(formdata);
+      toast("Avatar Updated", { icon: "👏" });
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Could not update avatar.");
+    }
   };
 
   const handleLogout = () => {

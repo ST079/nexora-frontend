@@ -49,6 +49,9 @@ const UserProfile = () => {
             src={user.profileImageUrl}
             alt={user.name}
             className="h-5 w-5 rounded-full object-cover"
+            width={80}
+            height={80}
+            loading = "eager"
           />
         ) : (
           <User size={15} />

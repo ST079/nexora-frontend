@@ -1,8 +1,7 @@
 import api from ".";
 
 export const updateUser = async (id, data) => {
-  const response = await api.put(`/api/v1/users/${id}`, data);
-
+  const response = await api.put(`/api/v1/users/${id}/update-profile`, data);
   return response.data;
 };
 
@@ -19,7 +18,8 @@ export const getMe = async () => {
 };
 
 export const updateProfileImage = async (data) => {
-  const response = await api.put(`/api/v1/users/profile-image`, data);
+  console.log("data", data);
+  const response = await api.patch(`/api/v1/users/profile-image`, data);
   return response.data;
 };
 
