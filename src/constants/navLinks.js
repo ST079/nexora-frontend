@@ -16,6 +16,7 @@ import {
   Users,
   BarChart2,
   Settings,
+  Globe,
 } from "lucide-react";
 
 export const navLinks = [
@@ -37,8 +38,8 @@ export const adminNavLinks = [
   {
     label: "Overview",
     items: [
+      { label: "Website", href: HOME_ROUTE, icon: Globe },
       { label: "Dashboard", href: DASHBOARD_ROUTE, icon: LayoutDashboard },
-      { label: "Analytics", href: "/admin/analytics", icon: BarChart2 },
     ],
   },
   {

@@ -16,6 +16,7 @@ export const CHECKOUT_ROUTE = "/checkout";
 export const ORDERS_ROUTE = "/orders";
 
 //admin routes
+export const ADMIN_ROUTE = "/admin";
 export const DASHBOARD_ROUTE = "/dashboard";
 export const PRODUCT_MANAGEMENT_ROUTE = "/product-management";
 export const ORDER_MANAGEMENT_ROUTE = "/order-management";

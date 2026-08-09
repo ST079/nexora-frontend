@@ -8,6 +8,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { adminNavLinks } from "@/constants/navLinks";
 import { usePathname, useRouter } from "next/navigation";
 import { logout } from "@/redux/auth/authSlice";
+import { ADMIN_ROUTE, HOME_ROUTE, LOGIN_ROUTE } from "@/constants/routes";
 
 const AdminSidebar = () => {
   const pathname = usePathname();
@@ -18,11 +19,11 @@ const AdminSidebar = () => {
 
   const handleLogout = () => {
     dispatch(logout());
-    router.replace("/login");
+    router.replace(LOGIN_ROUTE);
   };
 
   const isActive = (href) =>
-    href === "/admin" ? pathname === href : pathname.startsWith(href);
+    href === ADMIN_ROUTE || href === HOME_ROUTE ? pathname === href : pathname.startsWith(href);
 
   return (
     <motion.aside
@@ -30,7 +31,7 @@ const AdminSidebar = () => {
       transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
       className="sticky top-0 flex flex-col h-screen bg-paper dark:bg-[#0e0f12] border-r border-hairline dark:border-[#262932] shrink-0 overflow-hidden"
     >
-      <div className="flex items-center gap-2.5 px-10 h-16 border-b border-hairline dark:border-[#262932] shrink-0">
+      <div className="flex items-center gap-2.5 px-8 h-16 border-b border-hairline dark:border-[#262932] shrink-0">
         <span className="grid h-7 w-7 shrink-0 place-items-center bg-ink dark:bg-[#f0efe8] font-mono text-xs font-bold text-signal dark:text-[#14151a]">
           N
         </span>
@@ -60,7 +61,7 @@ const AdminSidebar = () => {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.15 }}
-                  className="px-4 mb-1 font-mono text-[10px] uppercase tracking-widest text-slate dark:text-[#8b8fa8]"
+                  className="px-2 mb-1 font-mono text-[10px] uppercase tracking-widest text-slate dark:text-[#8b8fa8]"
                 >
                   {group.label}
                 </motion.p>
@@ -76,7 +77,7 @@ const AdminSidebar = () => {
                     <Link
                       href={item.href}
                       title={collapsed ? item.label : undefined}
-                      className={`relative flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors group ${
+                      className={`relative flex items-center gap-3 px-2 py-2.5 text-sm font-medium transition-colors group ${
                         active
                           ? "text-ink dark:text-[#f0efe8] bg-hairline/60 dark:bg-[#262932]"
                           : "text-slate dark:text-[#8b8fa8] hover:text-ink dark:hover:text-[#f0efe8] hover:bg-hairline/40 dark:hover:bg-[#262932]/60"
