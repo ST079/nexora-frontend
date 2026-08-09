@@ -43,7 +43,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-64px)] bg-paper dark:bg-[#0e0f12] transition-colors duration-300">
+    <div className="flex h-screen bg-paper dark:bg-[#0e0f12] transition-colors duration-300">
       <AuthVisualPanel
         eyebrow="Secure access"
         title="Every session starts with a verified handshake."

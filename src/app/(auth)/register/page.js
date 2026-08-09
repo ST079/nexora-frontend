@@ -28,7 +28,7 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-64px)] bg-paper dark:bg-[#0e0f12] transition-colors duration-300">
+    <div className="flex h-screen bg-paper dark:bg-[#0e0f12] transition-colors duration-300">
       <AuthVisualPanel
         eyebrow="New account"
         title="One profile. Every order, address and receipt in one place."
