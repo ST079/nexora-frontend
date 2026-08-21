@@ -35,4 +35,3 @@ your order from checkout to doorstep in real time.
 | HTTP        | Axios                                     |
 | Backend     | [Nexora Express API](https://nexora-express-api.vercel.app) |
 
-check
