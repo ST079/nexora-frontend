@@ -1,4 +1,7 @@
+import { queryFormatter } from "@/utils/format";
 import api from ".";
+import axios from "axios";
+import { config } from "@/config/config";
 
 export const createOrder = async (data) => {
   const response = await api.post(`api/v1/orders`, data);
@@ -11,8 +14,9 @@ export const getMyOrders = async () => {
   return response.data;
 };
 
-export const getAllOrders = async () => {
-  const response = await api.get(`api/v1/orders`);
+export const getAllOrders = async (searchParams) => {
+  const query = queryFormatter(await searchParams);
+  const response = await api.get(`api/v1/orders?${query}`);
   return response.data;
 };
 
@@ -52,5 +56,10 @@ export const confirmPayment = async (id, status) => {
 
 export const payViaCash = async (id) => {
   const response = await api.post(`api/v1/orders/${id}/payment/cash`);
+  return response.data;
+};
+
+export const getTotalCount = async () => {
+  const response = await api.get(`api/v1/orders/count`);
   return response.data;
 };

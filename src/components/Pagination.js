@@ -11,7 +11,7 @@ import {
 
 const Pagination = ({ total, pageSize = PRODUCT_MANAGEMENT_PAGE_SIZE }) => {
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = usePathname(); 
   const searchParams = useSearchParams();
 
   const page = Math.max(1, Number(searchParams.get("page")) || 1);

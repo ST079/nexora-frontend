@@ -4,14 +4,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
   X,
-  Loader2,
   PackageOpen,
   ChevronDown,
   ChevronUp,
   Eye,
 } from "lucide-react";
-import OrderStatusBadge from "@/components/OrderStatusBadge";
-import Pagination from "@/components/Pagination";
 import { ORDER_MANAGEMENT_PAGE_SIZE } from "@/constants/pagination";
 import { formatDate, formatNPR } from "@/utils/format";
 import { PAYMENT_STATUS_SUCCESS } from "@/constants/payment";
@@ -20,10 +17,13 @@ import {
   ORDER_STATUS_CONFIRMED,
   ORDER_STATUS_PENDING,
 } from "@/constants/orders";
-import { getAllOrders } from "@/api/order";
+import { getAllOrders, getTotalCount } from "@/api/order";
 import OrderViewModal from "./_components/OrderViewModal";
 import OrderStatusAction from "./_components/OrderStatusAction";
 import Loader from "@/components/Loader";
+import { useSearchParams } from "next/navigation";
+import Pagination from "@/components/Pagination";
+import OrderStats from "./_components/OrderStats";
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 12 },
@@ -39,14 +39,24 @@ const OrderManagementPage = () => {
   const [sortDir, setSortDir] = useState("desc");
   const [viewOrder, setViewOrder] = useState(null);
   const [page, setPage] = useState(1);
+  const searchParams = useSearchParams();
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     setLoading(true);
-    getAllOrders()
+    const limit = ORDER_MANAGEMENT_PAGE_SIZE;
+    const page = Math.max(1, Number(searchParams.get("page")) || 1);
+    const offset = (page - 1) * limit;
+    const query = Object.fromEntries(searchParams.entries());
+    getAllOrders({ limit, offset, ...query })
       .then((data) => setOrders(data))
       .catch((error) => console.log(error))
       .finally(() => setLoading(false));
-  }, []);
+
+    getTotalCount()
+      .then((data) => setTotalCount(data.totalCount))
+      .catch((error) => console.log(error));
+  }, [searchParams, totalCount]);
 
   const toggleSort = (field) => {
     if (sortField === field) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -115,50 +125,7 @@ const OrderManagementPage = () => {
       </motion.div>
 
       {/* Stats strip */}
-      <motion.div
-        {...fadeUp(0.07)}
-        className="grid grid-cols-2 sm:grid-cols-5 border border-hairline dark:border-[#262932] mb-6"
-      >
-        {[
-          { label: "Total orders", value: orders.length },
-          {
-            label: "Pending",
-            value: orders.filter(
-              (o) => o.status.toUpperCase() === ORDER_STATUS_PENDING,
-            ).length,
-          },
-          {
-            label: "Confirmed",
-            value: orders.filter(
-              (o) => o.status.toUpperCase() === ORDER_STATUS_CONFIRMED,
-            ).length,
-          },
-          {
-            label: "Paid",
-            value: orders.filter(
-              (o) => o.payment?.status.toUpperCase() === PAYMENT_STATUS_SUCCESS,
-            ).length,
-          },
-          {
-            label: "Cancelled",
-            value: orders.filter(
-              (o) => o.status.toUpperCase() === ORDER_STATUS_CANCELLED,
-            ).length,
-          },
-        ].map((s, i) => (
-          <div
-            key={s.label}
-            className={`px-5 py-4 ${
-              i < 3 ? "border-r border-hairline dark:border-[#262932]" : ""
-            }`}
-          >
-            <p className="font-display text-2xl font-semibold text-ink dark:text-[#f0efe8]">
-              {s.value}
-            </p>
-            <p className="eyebrow dark:text-[#8b8fa8] mt-1">{s.label}</p>
-          </div>
-        ))}
-      </motion.div>
+      <OrderStats/>
 
       {/* Search */}
       <motion.div
@@ -294,13 +261,7 @@ const OrderManagementPage = () => {
       </motion.div>
 
       {/* Pagination */}
-      <Pagination
-        page={safePage}
-        totalPages={totalPages}
-        total={filtered.length}
-        pageSize={ORDER_MANAGEMENT_PAGE_SIZE}
-        onPageChange={setPage}
-      />
+      <Pagination total={totalCount} pageSize={ORDER_MANAGEMENT_PAGE_SIZE} />
 
       {/* View modal */}
       <AnimatePresence>

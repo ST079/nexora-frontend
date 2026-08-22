@@ -22,13 +22,14 @@ import {
 } from "lucide-react";
 import Pagination from "@/components/Pagination";
 import RoleBadge from "./_components/RoleBadge";
-import { getAllUsers } from "@/api/user";
+import { getAllUsers, getTotalCount } from "@/api/user";
 import { formatDate, initials } from "@/utils/format";
 import { ROLES } from "@/constants/user";
 import { USER_MANAGEMENT_PAGE_SIZE } from "@/constants/pagination";
 import DeleteModal from "./_components/DeleteModal";
 import RoleModal from "./_components/RoleModal";
 import UserViewModal from "./_components/UserViewModal";
+import { useSearchParams } from "next/navigation";
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 12 },
@@ -50,6 +51,8 @@ const UserManagementPage = () => {
   const [viewTarget, setViewTarget] = useState(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [statusTarget, setStatusTarget] = useState(null);
+  const [totalCount, setTotalCount] = useState(0);
+  const searchParams = useSearchParams();
 
   const stats = {
     total: users.length,
@@ -67,9 +70,16 @@ const UserManagementPage = () => {
       setLoading(true);
       setError("");
       try {
-        const data = await getAllUsers();
-        const list = Array.isArray(data) ? data : [];
-        if (active) setUsers(list);
+        const limit = USER_MANAGEMENT_PAGE_SIZE;
+        const page = Math.max(1, Number(searchParams.get("page")) || 1);
+        const offset = (page - 1) * limit;
+        const query = Object.fromEntries(searchParams.entries());
+        const data = await getAllUsers({ ...query, limit, offset });
+        const res = await getTotalCount();
+        if (active) {
+          setUsers(data);
+          setTotalCount(res.totalCount);
+        }
       } catch (err) {
         if (active)
           setError(
@@ -425,7 +435,6 @@ const UserManagementPage = () => {
                       >
                         <Eye size={13} />
                       </button>
-                    
                     </div>
                   </td>
                 </motion.tr>
@@ -436,18 +445,7 @@ const UserManagementPage = () => {
       </motion.div>
 
       {/* Count + Pagination */}
-      {filtered.length > 0 && (
-        <Pagination
-          page={page}
-          totalPages={totalPages}
-          total={filtered.length}
-          pageSize={USER_MANAGEMENT_PAGE_SIZE}
-          onPageChange={(p) => {
-            setPage(p);
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          }}
-        />
-      )}
+      <Pagination total={totalCount} pageSize={USER_MANAGEMENT_PAGE_SIZE} />
 
       {/* Modals */}
       <AnimatePresence>

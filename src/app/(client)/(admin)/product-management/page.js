@@ -1,7 +1,6 @@
 import React from "react";
 import ProductDashboard from "./_components/ProductDashboard";
-import { getProducts, getTotalCount } from "@/api/product";
-import { PRODUCT_MANAGEMENT_PAGE_SIZE } from "@/constants/pagination";
+import { getTotalCount } from "@/api/product";
 
 const ProductManagementPage = async () => {
   const response = await getTotalCount();

@@ -1,3 +1,4 @@
+import { queryFormatter } from "@/utils/format";
 import api from ".";
 
 export const updateUser = async (id, data) => {
@@ -5,8 +6,9 @@ export const updateUser = async (id, data) => {
   return response.data;
 };
 
-export const getAllUsers = async () => {
-  const response = await api.get(`/api/v1/users`);
+export const getAllUsers = async (searchParams) => {
+  const query = queryFormatter(await searchParams);
+  const response = await api.get(`/api/v1/users?${query}`);
 
   return response.data;
 };
@@ -30,5 +32,10 @@ export const updateUserRoles = async (id, roles) => {
 
 export const deleteUser = async (id) => {
   const response = await api.delete(`/api/v1/users/${id}`);
+  return response.data;
+};
+
+export const getTotalCount = async () => {
+  const response = await api.get(`api/v1/users/count`);
   return response.data;
 };
