@@ -100,7 +100,7 @@ const UserProfile = () => {
                   <Link
                     href={DASHBOARD_ROUTE}
                     onClick={() => setOpen(false)}
-                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink dark:text-[#f0efe8] hover:bg-hairline/50 dark:hover:bg-[#262932] transition-colors"
+                    className={user.roles.includes("ADMIN") ? "flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink dark:text-[#f0efe8] hover:bg-hairline/50 dark:hover:bg-[#262932] transition-colors" : "hidden"}
                   >
                     <LayoutDashboard size={14} className="text-slate dark:text-[#8b8fa8]" />
                     Dashboard
