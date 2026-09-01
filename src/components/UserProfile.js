@@ -115,14 +115,14 @@ const UserProfile = () => {
                     Orders
                   </Link>
                   {/* Account settings */}
-                  <Link
+                  {/* <Link
                     href="/account"
                     onClick={() => setOpen(false)}
                     className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink dark:text-[#f0efe8] hover:bg-hairline/50 dark:hover:bg-[#262932] transition-colors"
                   >
                     <Settings size={14} className="text-slate dark:text-[#8b8fa8]" />
                     Account settings
-                  </Link>
+                  </Link> */}
 
                   {/* Divider */}
                   <div className="my-1 border-t border-hairline dark:border-[#262932]" />
