@@ -1,18 +1,59 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { X } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import ProductFilter from "@/components/ProductFilter";
 import Pagination from "@/components/Pagination";
 import EmptyState from "@/components/EmptyState";
 import { getProducts, getTotalCount } from "@/api/product";
+import { categories } from "@/constants/categories";
 import { PRODUCTS_PAGE_SIZE } from "@/constants/pagination";
 import { PRODUCTS_ROUTE } from "@/constants/routes";
+import { formatNPR } from "@/utils/format";
 
 const FILTER_KEYS = ["category", "brands", "min", "max", "name"];
 
 const headingFor = ({ category, name }) => {
   if (name) return `Results for “${name}”`;
   return category || "All products";
+};
+
+// A link to the listing with `changes` applied on top of the current filters.
+// Any page number is dropped because the result set changes.
+const hrefWith = (filters, changes) => {
+  const next = { ...filters, ...changes };
+  const params = new URLSearchParams(
+    Object.entries(next).filter(([, v]) => v !== undefined && v !== null && v !== "")
+  );
+  const query = params.toString();
+  return query ? `${PRODUCTS_ROUTE}?${query}` : PRODUCTS_ROUTE;
+};
+
+// One removable pill per active filter, so undoing a choice is a single tap.
+const activePills = (filters) => {
+  const pills = [];
+  if (filters.name) pills.push({ label: `“${filters.name}”`, href: hrefWith(filters, { name: undefined }) });
+  if (filters.category)
+    pills.push({ label: filters.category, href: hrefWith(filters, { category: undefined }) });
+  const brands = (filters.brands ?? "").split(",").map((b) => b.trim()).filter(Boolean);
+  brands.forEach((b) =>
+    pills.push({
+      label: b,
+      href: hrefWith(filters, { brands: brands.filter((x) => x !== b).join(",") || undefined }),
+    })
+  );
+  const min = Number(filters.min) > 0 ? Number(filters.min) : null;
+  const max = filters.max !== undefined && filters.max !== "" ? Number(filters.max) : null;
+  if (min !== null || max !== null) {
+    const label =
+      min !== null && max !== null
+        ? `${formatNPR(min)} – ${formatNPR(max)}`
+        : min !== null
+          ? `From ${formatNPR(min)}`
+          : `Up to ${formatNPR(max)}`;
+    pills.push({ label, href: hrefWith(filters, { min: undefined, max: undefined }) });
+  }
+  return pills;
 };
 
 export const generateMetadata = async ({ searchParams }) => {
@@ -60,33 +101,93 @@ const ProductsPage = async ({ searchParams }) => {
   const filtered = FILTER_KEYS.some((k) => params[k]);
   // Remount the filter panel whenever the query changes so it reflects the URL.
   const filterKey = new URLSearchParams(filters).toString();
+  const pills = activePills(filters);
+  // Keep a category from an old link visible as a chip even if it's not in the list.
+  const chipLabels = categories.map((c) => c.label);
+  if (filters.category && !chipLabels.includes(filters.category)) chipLabels.push(filters.category);
 
   return (
-    <section className="container-page py-12 bg-paper dark:bg-[#0e0f12] transition-colors duration-300">
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="eyebrow dark:text-[#8b8fa8] mb-2">Shop</p>
-          <h1 className="font-display text-3xl font-semibold text-ink dark:text-[#f0efe8]">
-            {headingFor(params)}
-          </h1>
+    <section className="container-page pb-16 pt-6 lg:pt-10">
+      <header className="relative mb-6 overflow-hidden rounded-4xl bg-signal-tint px-6 py-8 sm:px-10 sm:py-10">
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -right-10 -top-16 h-56 w-56 animate-drift rounded-full bg-marigold/40 blur-3xl"
+        />
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -bottom-20 right-1/3 h-48 w-48 animate-drift rounded-full bg-signal/25 blur-3xl"
+          style={{ animationDelay: "-6s" }}
+        />
+        <div className="relative flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="eyebrow mb-2 text-signal-dim">Shop</p>
+            <h1 className="font-display text-4xl font-bold tracking-tight text-ink sm:text-5xl">
+              {headingFor(params)}
+            </h1>
+          </div>
+          <p className="rounded-full bg-panel/80 px-3.5 py-1.5 font-mono text-xs text-slate-dim shadow-soft">
+            <span className="font-semibold text-ink">{total}</span>{" "}
+            {total === 1 ? "product" : "products"}
+          </p>
         </div>
-        <p className="font-mono text-xs text-slate dark:text-[#8b8fa8]">
-          {total} {total === 1 ? "product" : "products"}
-          {filtered && (
-            <>
-              {" · "}
-              <Link
-                href={PRODUCTS_ROUTE}
-                className="underline hover:text-ink dark:hover:text-[#f0efe8]"
-              >
-                Clear filters
-              </Link>
-            </>
-          )}
-        </p>
       </header>
 
-      <div className="grid lg:grid-cols-[250px_1fr] gap-8 items-start">
+      {/* Category chips: switch in one tap, other filters stay */}
+      <nav aria-label="Categories" className="-mx-4 mb-4 sm:-mx-5 md:mx-0">
+        <ul className="no-scrollbar flex gap-2 overflow-x-auto px-4 py-1 sm:px-5 md:flex-wrap md:px-0">
+          <li>
+            <Link
+              href={hrefWith(filters, { category: undefined })}
+              aria-current={!filters.category ? "page" : undefined}
+              className={`chip whitespace-nowrap py-2 ${!filters.category ? "chip-active" : ""}`}
+            >
+              All
+            </Link>
+          </li>
+          {chipLabels.map((label) => {
+            const active = filters.category === label;
+            const Icon = categories.find((c) => c.label === label)?.icon;
+            return (
+              <li key={label}>
+                <Link
+                  href={hrefWith(filters, { category: active ? undefined : label })}
+                  aria-current={active ? "page" : undefined}
+                  className={`chip whitespace-nowrap py-2 ${active ? "chip-active" : ""}`}
+                >
+                  {Icon && <Icon size={13} aria-hidden />}
+                  {label}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+
+      {pills.length > 0 && (
+        <div className="mb-6 flex flex-wrap items-center gap-2">
+          <span className="eyebrow mr-1">Active</span>
+          {pills.map((p) => (
+            <Link
+              key={p.label}
+              href={p.href}
+              className="group inline-flex items-center gap-1.5 rounded-full bg-ink py-1.5 pl-3 pr-2 text-xs font-medium text-paper transition-colors hover:bg-danger"
+              aria-label={`Remove filter ${p.label}`}
+            >
+              {p.label}
+              <span className="grid h-4 w-4 place-items-center rounded-full bg-paper/20 transition-transform group-hover:rotate-90">
+                <X size={10} strokeWidth={3} />
+              </span>
+            </Link>
+          ))}
+          {filtered && (
+            <Link href={PRODUCTS_ROUTE} className="btn-ghost px-3 py-1.5 text-xs text-slate">
+              Clear all
+            </Link>
+          )}
+        </div>
+      )}
+
+      <div className="grid items-start gap-6 lg:grid-cols-[264px_1fr] lg:gap-8">
         <Suspense>
           <ProductFilter key={filterKey} />
         </Suspense>
@@ -125,7 +226,7 @@ const ProductsPage = async ({ searchParams }) => {
             )
           ) : (
             <>
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
                 {products.map((product, i) => (
                   <ProductCard key={product._id} product={product} index={i} />
                 ))}

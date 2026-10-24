@@ -34,21 +34,34 @@ const OrderStatusAction = ({ order, onUpdated, readOnly = false }) => {
   };
 
   const entry = STATUS_MAP[currentStatus];
+  const Icon = entry?.icon;
 
+  // The native select sits invisibly on top, so the pill keeps the platform
+  // picker (and its keyboard support) on every device.
   return (
     <div
-      className={`relative inline-flex items-center gap-1 font-mono text-[11px] uppercase tracking-widest px-2 py-1 focus-within:ring-2 focus-within:ring-signal/50 ${
-        entry?.color || "bg-hairline text-slate-dim"
+      className={`group/status relative inline-flex items-center gap-1.5 whitespace-nowrap rounded-full py-1 pl-2.5 pr-2 text-xs font-semibold leading-none ring-1 ring-transparent transition-all hover:ring-current/30 focus-within:ring-2 focus-within:ring-signal/50 ${
+        entry?.color || "bg-mist text-slate-dim"
       } ${busy ? "opacity-60" : ""}`}
       onClick={(e) => e.stopPropagation()}
     >
-      {busy ? <Loader2 size={11} className="animate-spin" /> : <ChevronDown size={11} />}
+      {busy ? (
+        <Loader2 size={13} className="animate-spin" />
+      ) : (
+        Icon && <Icon size={13} strokeWidth={2.4} aria-hidden />
+      )}
+      <span className="pointer-events-none">{entry?.label ?? currentStatus}</span>
+      <ChevronDown
+        size={12}
+        aria-hidden
+        className="pointer-events-none opacity-60 transition-transform group-hover/status:translate-y-px"
+      />
       <select
         value={currentStatus}
         onChange={handleChange}
         disabled={busy}
         aria-label={`Status for order ${order.orderNumber ?? ""}`}
-        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+        className="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
       >
         {ORDER_STATUSES.map((key) => (
           <option key={key} value={key}>
@@ -56,7 +69,6 @@ const OrderStatusAction = ({ order, onUpdated, readOnly = false }) => {
           </option>
         ))}
       </select>
-      <span className="pointer-events-none">{entry?.label ?? currentStatus}</span>
     </div>
   );
 };

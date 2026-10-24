@@ -72,7 +72,7 @@ const ProductDetailPage = async ({ params }) => {
   };
 
   return (
-    <section className="container-page py-10 bg-paper dark:bg-[#0e0f12] min-h-screen transition-colors duration-300">
+    <section className="container-page min-h-screen pb-16 pt-6 lg:pt-10">
       <script
         type="application/ld+json"
         // Escape "<" so a product description can't close the script tag.
@@ -80,12 +80,32 @@ const ProductDetailPage = async ({ params }) => {
           __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
         }}
       />
-      <Link
-        href={PRODUCTS_ROUTE}
-        className="btn-ghost mb-6 -ml-4 inline-flex dark:text-[#8b8fa8] dark:hover:text-[#f0efe8]"
-      >
-        <ChevronLeft size={15} /> Back to products
-      </Link>
+      <nav aria-label="Breadcrumb" className="mb-6">
+        <ol className="flex min-w-0 items-center gap-1 text-sm text-slate">
+          <li>
+            <Link href={PRODUCTS_ROUTE} className="btn-ghost -ml-3 gap-1 px-3 py-1.5">
+              <ChevronLeft size={15} /> Shop
+            </Link>
+          </li>
+          {product.category && (
+            <>
+              <li aria-hidden className="text-slate-light">/</li>
+              <li className="min-w-0">
+                <Link
+                  href={`${PRODUCTS_ROUTE}?category=${encodeURIComponent(product.category)}`}
+                  className="btn-ghost block truncate px-3 py-1.5"
+                >
+                  {product.category}
+                </Link>
+              </li>
+            </>
+          )}
+          <li aria-hidden className="hidden text-slate-light sm:block">/</li>
+          <li aria-current="page" className="hidden min-w-0 truncate px-3 font-medium text-ink sm:block">
+            {product.name}
+          </li>
+        </ol>
+      </nav>
 
       <ProductDetailClient product={product} />
       <SimilarProducts category={product.category} currentProductId={product._id} />

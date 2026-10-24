@@ -18,10 +18,10 @@ export const ROLE_THEME = {
     text: "text-signal",
   },
   [ROLE_USER]: {
-    accent: "border-hairline dark:border-[#262932]",
-    bg: "bg-paper dark:bg-[#16181f]",
-    avatarBg: "bg-ink dark:bg-[#262932]",
-    text: "text-slate dark:text-[#8b8fa8]",
+    accent: "border-hairline",
+    bg: "bg-paper dark:bg-panel",
+    avatarBg: "bg-ink dark:bg-hairline",
+    text: "text-slate",
   },
 };
 

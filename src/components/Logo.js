@@ -11,27 +11,42 @@ const roleTag = (user) => {
   return null;
 };
 
-const Logo = () => {
+// The mark: a violet tile with a marigold "sun" that pops on hover.
+export const LogoMark = ({ className = "h-9 w-9" }) => (
+  <span
+    aria-hidden
+    className={`relative grid shrink-0 place-items-center rounded-[0.8rem] bg-signal text-on-signal transition-transform duration-500 ease-spring group-hover:-rotate-6 group-hover:scale-105 ${className}`}
+  >
+    <span className="font-display text-[1.05em] font-extrabold leading-none tracking-tighter">
+      n
+    </span>
+    <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-marigold ring-2 ring-paper transition-transform duration-500 ease-spring group-hover:scale-125" />
+  </span>
+);
+
+const Logo = ({ compact = false }) => {
   const { user } = useSelector((state) => state.auth);
   const tag = roleTag(user);
 
   return (
     <Link
       href={HOME_ROUTE}
-      className="flex items-center gap-2 shrink-0"
+      className="group flex shrink-0 items-center gap-2.5"
       aria-label="Nexora home"
     >
-      <span className="grid h-8 w-8 place-items-center bg-ink dark:bg-[#f0efe8] font-mono text-sm font-bold text-signal dark:text-ink">
-        N
-      </span>
-      <span className="font-display text-lg font-semibold tracking-tight text-ink dark:text-[#f0efe8]">
-        NEXORA
-        {tag && (
-          <span className="ml-1.5 font-mono text-[10px] uppercase tracking-widest text-slate dark:text-[#8b8fa8]">
-            {tag}
+      <LogoMark />
+      {!compact && (
+        <span className="flex items-center gap-2">
+          <span className="font-display text-xl font-bold tracking-tight text-ink">
+            nexora
           </span>
-        )}
-      </span>
+          {tag && (
+            <span className="rounded-full bg-marigold-tint px-2 py-0.5 font-mono text-[10px] font-medium uppercase tracking-widest text-marigold-dim">
+              {tag}
+            </span>
+          )}
+        </span>
+      )}
     </Link>
   );
 };

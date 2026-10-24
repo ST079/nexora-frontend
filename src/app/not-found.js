@@ -1,162 +1,151 @@
 "use client";
 
 import Link from "next/link";
+import Form from "next/form";
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowLeft, Home, Search } from "lucide-react";
+import { ArrowLeft, Home, Search, ShoppingBag, Sparkles, Tag, Package } from "lucide-react";
+import { LogoMark } from "@/components/Logo";
 import { HOME_ROUTE, PRODUCTS_ROUTE } from "@/constants/routes";
+import { bouncy, fadeUp } from "@/utils/motion";
 
-const LOG_LINES = [
-  "nexora.router · resolving path…",
-  "checking catalog index… miss",
-  "checking static routes… miss",
-  "checking dynamic segments… miss",
-  "result → 404 NOT_FOUND",
+// Decorative tiles that drift around the 404. Positions are percentages of
+// the stage so they stay put at every width.
+const DRIFTERS = [
+  { icon: Tag, tone: "bg-marigold text-on-marigold", pos: "left-[6%] top-[14%]", rotate: -12, delay: 0.3 },
+  { icon: Package, tone: "bg-blueprint text-paper", pos: "right-[8%] top-[10%]", rotate: 10, delay: 0.45 },
+  { icon: Sparkles, tone: "bg-ok text-paper", pos: "left-[12%] bottom-[8%]", rotate: 8, delay: 0.6 },
+  { icon: ShoppingBag, tone: "bg-signal-tint text-signal-dim", pos: "right-[14%] bottom-[12%]", rotate: -8, delay: 0.75 },
 ];
 
+const Digit = ({ children, delay, rotate }) => (
+  <motion.span
+    initial={{ opacity: 0, y: 40, rotate: 0 }}
+    animate={{ opacity: 1, y: 0, rotate }}
+    transition={{ ...bouncy, delay }}
+    whileHover={{ rotate: 0, scale: 1.05 }}
+    className="inline-block cursor-default"
+  >
+    {children}
+  </motion.span>
+);
+
 export default function NotFound() {
-  const [visibleLines, setVisibleLines] = useState(0);
-  const [glitch, setGlitch] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setVisibleLines((v) => {
-        if (v >= LOG_LINES.length) {
-          clearInterval(interval);
-          return v;
-        }
-        return v + 1;
-      });
-    }, 420);
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    let reset;
-    const pulse = setInterval(() => {
-      setGlitch(true);
-      reset = setTimeout(() => setGlitch(false), 120);
-    }, 3200);
-    return () => {
-      clearInterval(pulse);
-      clearTimeout(reset);
-    };
-  }, []);
-
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-paper dark:bg-[#0e0f12] transition-colors duration-300">
-      {/* Left dark panel */}
-      <div className="relative lg:w-[45%] bg-ink dark:bg-[#0a0b0e] text-paper flex flex-col justify-between overflow-hidden p-8 sm:p-10 min-h-72 lg:min-h-screen">
-        <div
-          className="absolute inset-0 opacity-[0.06] pointer-events-none"
-          style={{
-            backgroundImage:
-              "linear-gradient(90deg,#FAFAF7 1px,transparent 1px),linear-gradient(#FAFAF7 1px,transparent 1px)",
-            backgroundSize: "32px 32px",
-          }}
-        />
-        <motion.div
-          className="absolute left-0 top-0 h-40 w-full pointer-events-none bg-linear-to-b from-transparent via-signal/20 to-transparent"
-          animate={{ y: ["-15%", "115%"] }}
-          transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
-        />
-
-        <Link href={HOME_ROUTE} className="relative z-10 flex items-center gap-2 w-fit">
-          <span className="grid h-8 w-8 place-items-center bg-paper text-ink font-mono font-bold text-sm">
-            N
-          </span>
-          <span className="font-display font-bold text-lg tracking-tight">NEXORA</span>
+    <div className="flex min-h-dvh flex-col overflow-x-clip bg-paper">
+      <header className="container-page flex items-center justify-between py-5">
+        <Link href={HOME_ROUTE} className="group flex items-center gap-2.5" aria-label="Nexora home">
+          <LogoMark />
+          <span className="font-display text-xl font-bold tracking-tight text-ink">nexora</span>
         </Link>
+        <Link href={PRODUCTS_ROUTE} className="btn-ghost">
+          Browse products
+        </Link>
+      </header>
 
-        <div className="relative z-10 py-8">
-          <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-signal mb-3">
-            Error code
-          </p>
-          <h1
-            className={`font-display font-bold leading-none select-none text-[clamp(5rem,18vw,10rem)] ${
-              glitch ? "text-signal [text-shadow:3px_0_#ff6a1a,-3px_0_rgba(48,70,229,0.7)]" : "text-paper"
-            }`}
-          >
-            404
-          </h1>
-          <p className="text-sm mt-2 max-w-xs leading-relaxed text-paper/60">
-            The route you requested isn&apos;t in the catalog. It may have been
-            removed, renamed, or it never existed.
-          </p>
-        </div>
-
-        <div className="relative z-10 space-y-2" aria-hidden="true">
-          {LOG_LINES.map((line, i) => (
-            <motion.p
-              key={line}
-              initial={{ opacity: 0, x: -6 }}
-              animate={{
-                opacity: i < visibleLines ? 1 : 0,
-                x: i < visibleLines ? 0 : -6,
-              }}
-              transition={{ duration: 0.3 }}
-              className={`font-mono text-[11px] ${
-                i === LOG_LINES.length - 1 ? "text-signal" : "text-paper/50"
-              }`}
+      <main className="container-page flex flex-1 flex-col items-center justify-center pb-16 pt-4 text-center">
+        {/* Stage */}
+        <div className="relative w-full max-w-2xl py-6 sm:py-10">
+          {DRIFTERS.map(({ icon: Icon, tone, pos, rotate, delay }) => (
+            <motion.span
+              key={pos}
+              aria-hidden
+              initial={{ opacity: 0, scale: 0.4 }}
+              animate={{ opacity: 1, scale: 1, rotate }}
+              transition={{ ...bouncy, delay }}
+              className={`absolute hidden sm:block ${pos}`}
             >
-              <span className="text-signal mr-1">{">"}</span>
-              {line}
-            </motion.p>
+              <span
+                className={`grid h-12 w-12 animate-float place-items-center rounded-2xl shadow-soft ${tone}`}
+                style={{ animationDelay: `-${delay * 4}s` }}
+              >
+                <Icon size={20} />
+              </span>
+            </motion.span>
           ))}
-        </div>
-      </div>
 
-      {/* Right panel */}
-      <div className="flex flex-1 items-center justify-center p-8 sm:p-10">
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-          className="w-full max-w-sm"
-        >
-          <p className="eyebrow dark:text-[#8b8fa8] mb-2">Page not found</p>
-          <h2 className="font-display text-3xl font-semibold mb-3 tracking-tight text-ink dark:text-[#f0efe8]">
-            This page doesn&apos;t exist.
+          <h1 className="sr-only">Page not found (404)</h1>
+          <p
+            aria-hidden
+            className="flex select-none items-center justify-center gap-2 font-display text-[clamp(6rem,22vw,12rem)] font-extrabold leading-none tracking-tighter text-ink sm:gap-4"
+          >
+            <Digit delay={0.05} rotate={-6}>
+              4
+            </Digit>
+            {/* The "0" is an empty shopping bag. */}
+            <motion.span
+              initial={{ opacity: 0, scale: 0.3, rotate: -30 }}
+              animate={{ opacity: 1, scale: 1, rotate: 0 }}
+              transition={{ ...bouncy, delay: 0.18 }}
+              whileHover={{ rotate: [0, -8, 8, -4, 0], transition: { duration: 0.5 } }}
+              className="relative inline-grid"
+            >
+              <span className="grid h-[0.82em] w-[0.72em] animate-float place-items-center rounded-[0.18em] bg-signal text-on-signal shadow-glow">
+                <ShoppingBag className="h-[0.4em] w-[0.4em]" strokeWidth={2.2} />
+              </span>
+              <span className="sticker absolute right-[-0.18em] top-[-0.1em] text-[0.11em] tracking-normal">
+                empty!
+              </span>
+            </motion.span>
+            <Digit delay={0.3} rotate={5}>
+              4
+            </Digit>
+          </p>
+        </div>
+
+        <motion.div {...fadeUp(0.35)} className="w-full max-w-md">
+          <p className="eyebrow mb-3">Page not found</p>
+          <h2 className="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+            This aisle is <span className="whitespace-nowrap"><span className="marker">empty</span>.</span>
           </h2>
-          <p className="text-sm leading-relaxed mb-8 text-slate dark:text-[#8b8fa8]">
-            Double-check the URL, or use one of the options below to get back on
-            track.
+          <p className="mx-auto mt-3 max-w-sm text-[15px] leading-relaxed text-slate">
+            The page may have moved, or the link has a typo. Search the catalog instead.
           </p>
 
-          <dl className="mb-8 border border-hairline dark:border-[#262932] divide-y divide-hairline dark:divide-[#262932] font-mono text-[13px]">
-            {[
-              { label: "Requested path", value: pathname || "/" },
-              { label: "HTTP status", value: "404 Not Found" },
-              { label: "Suggestion", value: "Check the URL or go home" },
-            ].map((row) => (
-              <div key={row.label} className="flex items-baseline justify-between gap-4 px-4 py-2.5">
-                <dt className="shrink-0 text-slate dark:text-[#8b8fa8]">{row.label}</dt>
-                <dd className="truncate text-right max-w-44 text-ink dark:text-[#f0efe8]">
-                  {row.value}
-                </dd>
-              </div>
-            ))}
-          </dl>
+          <p className="mx-auto mt-5 inline-flex max-w-full items-center gap-2 rounded-full border border-hairline bg-panel px-3 py-1.5 font-mono text-xs text-slate">
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-danger" aria-hidden />
+            <span className="truncate">{pathname || "/"}</span>
+          </p>
 
-          <div className="flex flex-col gap-3">
-            <Link href={HOME_ROUTE} className="btn-primary justify-center">
+          {/* GET /products?name=… — the same query key the catalog search uses. */}
+          <Form action={PRODUCTS_ROUTE} className="group relative mt-6" role="search">
+            <label htmlFor="notfound-search" className="sr-only">
+              Search products
+            </label>
+            <Search
+              size={18}
+              aria-hidden
+              className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-slate transition-colors group-focus-within:text-signal"
+            />
+            <input
+              id="notfound-search"
+              name="name"
+              type="search"
+              placeholder="Search for headphones, shoes, lamps…"
+              autoComplete="off"
+              className="h-14 w-full rounded-full border border-hairline bg-panel pl-12 pr-30 text-sm text-ink shadow-soft outline-none transition-all placeholder:text-slate-light focus:border-signal focus:ring-4 focus:ring-signal/15"
+            />
+            <button
+              type="submit"
+              className="absolute right-1.5 top-1.5 h-11 rounded-full bg-ink px-5 text-sm font-semibold text-paper transition-transform hover:scale-[1.03] active:scale-95"
+            >
+              Search
+            </button>
+          </Form>
+
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+            <Link href={HOME_ROUTE} className="btn-primary">
               <Home size={15} /> Go home
             </Link>
-            <Link href={PRODUCTS_ROUTE} className="btn-secondary justify-center">
-              <Search size={15} /> Browse catalog
-            </Link>
-            <button
-              onClick={() => router.back()}
-              className="btn-ghost justify-center text-slate dark:text-[#8b8fa8] hover:text-signal"
-            >
-              <ArrowLeft size={15} /> Go back
+            <button type="button" onClick={() => router.back()} className="btn-secondary group">
+              <ArrowLeft size={15} className="transition-transform group-hover:-translate-x-0.5" /> Go back
             </button>
           </div>
         </motion.div>
-      </div>
+      </main>
     </div>
   );
 }

@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { AlertTriangle, Home, RefreshCw } from "lucide-react";
 import { HOME_ROUTE } from "@/constants/routes";
+import { bouncy, fadeUp } from "@/utils/motion";
 
 // Shared body for error.js boundaries. `retry` should be Next's
 // `unstable_retry`, which refetches; `reset` only re-renders.
@@ -30,20 +32,30 @@ const ErrorView = ({
   };
 
   return (
-    <div
-      role="alert"
-      className="container-page min-h-[60vh] py-20 flex items-center justify-center"
-    >
-      <div className="card-frame dark:border-[#262932] max-w-md w-full p-8 text-center">
-        <div className="mx-auto mb-5 grid h-12 w-12 place-items-center border border-danger/30 bg-danger/5">
-          <AlertTriangle size={20} className="text-danger" />
-        </div>
-        <h1 className="font-display text-2xl font-semibold text-ink dark:text-[#f0efe8]">
-          {title}
-        </h1>
-        <p className="mt-2 text-sm text-slate dark:text-[#8b8fa8]">{description}</p>
+    <div role="alert" className="container-page flex min-h-[60vh] items-center justify-center py-20">
+      <motion.div
+        {...fadeUp()}
+        className="relative w-full max-w-md overflow-hidden rounded-4xl border border-hairline bg-panel p-8 text-center shadow-soft"
+      >
+        <span
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 top-0 h-40 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full bg-danger/15 blur-3xl"
+        />
+        <motion.span
+          initial={{ scale: 0.3, rotate: -25 }}
+          animate={{ scale: 1, rotate: -6 }}
+          transition={{ ...bouncy, delay: 0.1 }}
+          className="relative mx-auto mb-6 grid h-16 w-16 place-items-center"
+        >
+          <span aria-hidden className="absolute inset-0 animate-pulse-ring rounded-3xl bg-danger/25" />
+          <span className="relative grid h-16 w-16 place-items-center rounded-3xl bg-danger text-paper">
+            <AlertTriangle size={26} aria-hidden />
+          </span>
+        </motion.span>
+        <h1 className="relative font-display text-2xl font-bold tracking-tight text-ink">{title}</h1>
+        <p className="relative mx-auto mt-2 max-w-xs text-sm leading-relaxed text-slate">{description}</p>
 
-        <div className="mt-6 flex flex-wrap justify-center gap-3">
+        <div className="relative mt-7 flex flex-wrap justify-center gap-3">
           {retry && (
             <button
               type="button"
@@ -62,11 +74,11 @@ const ErrorView = ({
 
         {/* Server errors only carry a digest in production; it matches the server log. */}
         {error?.digest && (
-          <p className="mt-6 font-mono text-[11px] text-slate dark:text-[#8b8fa8]">
+          <p className="relative mx-auto mt-6 w-fit rounded-full bg-mist px-3 py-1 font-mono text-[11px] text-slate">
             Reference: {error.digest}
           </p>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 };

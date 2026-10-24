@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Minus, Plus, Trash2, ArrowRight } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Minus, Plus, Trash2, ArrowRight, X, Wallet, CreditCard, Banknote } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import Image from "next/image";
@@ -21,7 +22,13 @@ import {
   PRODUCTS_ROUTE,
 } from "@/constants/routes";
 import EmptyCart from "@/components/EmptyCart";
+import CheckoutSteps from "@/components/CheckoutSteps";
+import { RollingValue } from "@/components/CartDrawer";
 import { config } from "@/config/config";
+import { EASE_OUT, fadeUp } from "@/utils/motion";
+
+const STEP_BTN =
+  "grid h-9 w-9 place-items-center rounded-full text-ink transition-colors hover:bg-mist";
 
 const CartPage = () => {
   const dispatch = useDispatch();
@@ -52,182 +59,230 @@ const CartPage = () => {
   const delivery = config.deliveryCharge;
 
   return (
-    <div className="container-page py-10 bg-paper dark:bg-[#0e0f12] min-h-screen transition-colors duration-300">
-      <p className="eyebrow dark:text-[#8b8fa8] mb-2">Checkout · step 1 of 2</p>
-      <h1 className="font-display text-3xl font-semibold mb-8 text-ink dark:text-[#f0efe8]">
-        Your cart
-      </h1>
+    <div className="container-page min-h-screen pb-16 pt-6 lg:pt-10">
+      <motion.header {...fadeUp()} className="mb-8 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <CheckoutSteps current={0} className="mb-5" />
+          <h1 className="font-display text-4xl font-bold tracking-tight text-ink sm:text-5xl">
+            Your <span className="marker">bag</span>
+          </h1>
+          <p className="mt-2 text-sm text-slate">
+            <RollingValue value={totalItems} className="font-semibold text-ink" />{" "}
+            {totalItems === 1 ? "item" : "items"}, ready when you are.
+          </p>
+        </div>
+        <Link href={PRODUCTS_ROUTE} className="btn-ghost -mr-2 text-slate">
+          Keep browsing <ArrowRight size={14} />
+        </Link>
+      </motion.header>
 
-      <div className="grid lg:grid-cols-[1fr_340px] gap-10 items-start">
-        <section
-          aria-label="Cart items"
-          className="card-frame divide-y divide-hairline dark:divide-[#262932] dark:border-[#262932]"
-        >
-          {items.map((item) => {
-            const atLimit = item.quantity >= stockLimit(item);
-            return (
-              <div key={item.id} className="flex gap-4 p-5">
-                <Link
-                  href={`${PRODUCTS_ROUTE}/${item.id}`}
-                  className="relative h-20 w-20 shrink-0 border border-hairline dark:border-[#262932] bg-paper dark:bg-[#16181f] overflow-hidden"
-                >
-                  <Image
-                    src={productImage(item)}
-                    alt={item.name}
-                    fill
-                    sizes="80px"
-                    className="object-cover"
-                  />
-                </Link>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <Link
-                        href={`${PRODUCTS_ROUTE}/${item.id}`}
-                        className="font-display font-semibold leading-tight text-ink dark:text-[#f0efe8] hover:underline line-clamp-2"
-                      >
-                        {item.name}
-                      </Link>
-                      {item.brand && (
-                        <p className="eyebrow dark:text-[#8b8fa8] mt-1">{item.brand}</p>
-                      )}
-                      <p className="font-mono text-[11px] text-slate dark:text-[#8b8fa8] mt-1">
-                        {formatNPR(item.price)} each
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => dispatch(removeFromCart(item.id))}
-                      className="grid h-8 w-8 place-items-center text-slate dark:text-[#8b8fa8] hover:text-danger dark:hover:text-danger transition-colors shrink-0"
-                      aria-label={`Remove ${item.name}`}
+      <div className="grid items-start gap-6 lg:grid-cols-[1fr_360px] lg:gap-10">
+        <section aria-label="Cart items">
+          <ul className="space-y-3">
+            <AnimatePresence initial={false}>
+              {items.map((item, i) => {
+                const limit = stockLimit(item);
+                const atLimit = item.quantity >= limit;
+                return (
+                  <motion.li
+                    key={item.id}
+                    layout
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0, transition: { duration: 0.45, delay: i * 0.05, ease: EASE_OUT } }}
+                    exit={{ opacity: 0, x: -60, transition: { duration: 0.25 } }}
+                    className="group flex gap-4 rounded-3xl border border-hairline bg-panel p-3 transition-shadow hover:shadow-soft sm:p-4"
+                  >
+                    <Link
+                      href={`${PRODUCTS_ROUTE}/${item.id}`}
+                      className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-mist sm:h-28 sm:w-28"
                     >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
+                      <Image
+                        src={productImage(item)}
+                        alt={item.name}
+                        fill
+                        sizes="112px"
+                        className="object-cover transition-transform duration-700 ease-out-expo group-hover:scale-110"
+                      />
+                    </Link>
 
-                  <div className="mt-3 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center border border-hairline dark:border-[#262932]">
+                    <div className="flex min-w-0 flex-1 flex-col justify-between gap-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          {item.brand && <p className="eyebrow mb-1">{item.brand}</p>}
+                          <Link
+                            href={`${PRODUCTS_ROUTE}/${item.id}`}
+                            className="link-underline line-clamp-2 font-display text-base font-semibold leading-snug text-ink sm:text-lg"
+                          >
+                            {item.name}
+                          </Link>
+                          <p className="mt-1 font-mono text-[11px] text-slate">
+                            {formatNPR(item.price)} each
+                          </p>
+                        </div>
                         <button
                           type="button"
-                          onClick={() => dispatch(decreaseQuantity(item.id))}
-                          className="grid h-8 w-8 place-items-center text-slate dark:text-[#8b8fa8] hover:bg-hairline/40 dark:hover:bg-[#262932] hover:text-ink dark:hover:text-[#f0efe8] transition-colors"
-                          aria-label={
-                            item.quantity === 1
-                              ? `Remove ${item.name}`
-                              : `Decrease quantity of ${item.name}`
-                          }
+                          onClick={() => dispatch(removeFromCart(item.id))}
+                          className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-slate transition-all hover:rotate-90 hover:bg-danger/10 hover:text-danger"
+                          aria-label={`Remove ${item.name}`}
                         >
-                          <Minus size={12} />
-                        </button>
-                        <span
-                          aria-live="polite"
-                          className="w-8 text-center font-mono text-sm text-ink dark:text-[#f0efe8]"
-                        >
-                          {item.quantity}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleIncrease(item)}
-                          aria-disabled={atLimit}
-                          className={`grid h-8 w-8 place-items-center transition-colors ${
-                            atLimit
-                              ? "text-slate-light dark:text-[#5b5e72] cursor-not-allowed"
-                              : "text-slate dark:text-[#8b8fa8] hover:bg-hairline/40 dark:hover:bg-[#262932] hover:text-ink dark:hover:text-[#f0efe8]"
-                          }`}
-                          aria-label={`Increase quantity of ${item.name}`}
-                        >
-                          <Plus size={12} />
+                          <X size={15} />
                         </button>
                       </div>
-                      {atLimit && Number.isFinite(stockLimit(item)) && (
-                        <span className="font-mono text-[11px] text-signal-dim dark:text-signal">
-                          Max in stock
-                        </span>
-                      )}
+
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <div className="inline-flex items-center rounded-full border border-hairline bg-paper p-0.5">
+                            <motion.button
+                              type="button"
+                              whileTap={{ scale: 0.85 }}
+                              onClick={() => dispatch(decreaseQuantity(item.id))}
+                              className={STEP_BTN}
+                              aria-label={
+                                item.quantity === 1
+                                  ? `Remove ${item.name}`
+                                  : `Decrease quantity of ${item.name}`
+                              }
+                            >
+                              {item.quantity === 1 ? (
+                                <Trash2 size={13} className="text-danger" />
+                              ) : (
+                                <Minus size={13} />
+                              )}
+                            </motion.button>
+                            <span aria-live="polite" className="w-8 text-center">
+                              <RollingValue
+                                value={item.quantity}
+                                className="justify-center font-mono text-sm font-medium text-ink"
+                              />
+                            </span>
+                            <motion.button
+                              type="button"
+                              whileTap={atLimit ? undefined : { scale: 0.85 }}
+                              onClick={() => handleIncrease(item)}
+                              aria-disabled={atLimit}
+                              className={`${STEP_BTN} ${atLimit ? "cursor-not-allowed opacity-30" : ""}`}
+                              aria-label={`Increase quantity of ${item.name}`}
+                            >
+                              <Plus size={13} />
+                            </motion.button>
+                          </div>
+                          {atLimit && Number.isFinite(limit) && (
+                            <span className="rounded-full bg-marigold-tint px-2 py-0.5 font-mono text-[10px] font-medium text-marigold-dim">
+                              Max in stock
+                            </span>
+                          )}
+                        </div>
+
+                        <RollingValue
+                          value={formatNPR(item.price * item.quantity)}
+                          className="font-mono text-base font-semibold text-ink"
+                        />
+                      </div>
                     </div>
+                  </motion.li>
+                );
+              })}
+            </AnimatePresence>
+          </ul>
 
-                    <span className="font-mono text-sm text-ink dark:text-[#f0efe8]">
-                      {formatNPR(item.price * item.quantity)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-
-          <div className="p-5 flex flex-wrap items-center gap-3">
-            {confirmClear ? (
-              <>
-                <span className="text-sm text-ink dark:text-[#f0efe8]">
-                  Remove all {totalItems} items?
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    dispatch(clearCart());
-                    setConfirmClear(false);
-                  }}
-                  className="font-mono text-xs uppercase tracking-widest text-danger hover:underline"
+          <div className="mt-4 flex min-h-10 flex-wrap items-center gap-3 px-1">
+            <AnimatePresence mode="wait" initial={false}>
+              {confirmClear ? (
+                <motion.div
+                  key="confirm"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  className="flex flex-wrap items-center gap-2 rounded-full bg-danger/10 py-1 pl-4 pr-1"
                 >
-                  Yes, clear cart
-                </button>
-                <button
+                  <span className="text-sm text-ink">
+                    Remove all {totalItems} items?
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      dispatch(clearCart());
+                      setConfirmClear(false);
+                    }}
+                    className="rounded-full bg-danger px-3 py-1.5 text-xs font-semibold text-paper transition-opacity hover:opacity-90"
+                  >
+                    Yes, clear cart
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmClear(false)}
+                    className="rounded-full bg-panel px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:bg-mist"
+                    autoFocus
+                  >
+                    Keep items
+                  </button>
+                </motion.div>
+              ) : (
+                <motion.button
+                  key="clear"
                   type="button"
-                  onClick={() => setConfirmClear(false)}
-                  className="font-mono text-xs uppercase tracking-widest text-slate dark:text-[#8b8fa8] hover:text-ink dark:hover:text-[#f0efe8]"
-                  autoFocus
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setConfirmClear(true)}
+                  className="btn-ghost px-3 text-xs text-slate hover:text-danger"
                 >
-                  Keep items
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setConfirmClear(true)}
-                className="font-mono text-xs text-slate dark:text-[#8b8fa8] hover:text-danger dark:hover:text-danger underline transition-colors"
-              >
-                Clear cart
-              </button>
-            )}
+                  <Trash2 size={13} /> Clear cart
+                </motion.button>
+              )}
+            </AnimatePresence>
           </div>
         </section>
 
-        <aside
+        <motion.aside
+          {...fadeUp(0.15)}
           aria-label="Order summary"
-          className="card-frame p-6 h-fit lg:sticky lg:top-24 dark:border-[#262932]"
+          className="relative overflow-hidden rounded-4xl bg-night p-6 text-on-night shadow-lift lg:sticky lg:top-24 dark:border dark:border-hairline"
         >
-          <p className="eyebrow dark:text-[#8b8fa8] mb-4">Order summary</p>
+          <span
+            aria-hidden
+            className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 animate-drift rounded-full bg-signal/40 blur-3xl"
+          />
+          <div className="relative">
+            <p className="eyebrow mb-5 text-on-night/60">Order summary</p>
 
-          <dl className="space-y-2 font-mono text-sm mb-4">
-            <div className="flex justify-between">
-              <dt className="text-slate dark:text-[#8b8fa8]">Items ({totalItems})</dt>
-              <dd className="text-ink dark:text-[#f0efe8]">{formatNPR(totalPrice)}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-slate dark:text-[#8b8fa8]">Delivery</dt>
-              <dd className="text-ink dark:text-[#f0efe8]">{formatNPR(delivery)}</dd>
-            </div>
-          </dl>
+            <dl className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <dt className="text-on-night/70">Items ({totalItems})</dt>
+                <dd className="font-mono">{formatNPR(totalPrice)}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-on-night/70">Delivery</dt>
+                <dd className="font-mono">{formatNPR(delivery)}</dd>
+              </div>
+            </dl>
 
-          <div className="flex justify-between border-t border-hairline dark:border-[#262932] pt-4 mb-6 font-mono">
-            <span className="font-medium text-ink dark:text-[#f0efe8]">Estimated total</span>
-            <span className="text-lg font-medium text-ink dark:text-[#f0efe8]">
-              {formatNPR(totalPrice + delivery)}
-            </span>
+            <div className="my-5 border-t border-dashed border-on-night/20" />
+
+            <div className="mb-6 flex items-baseline justify-between">
+              <span className="text-sm font-medium">Estimated total</span>
+              <RollingValue
+                value={formatNPR(totalPrice + delivery)}
+                className="font-display text-3xl font-bold tracking-tight"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={goToCheckout}
+              className="btn-accent group w-full py-3.5 text-base"
+            >
+              {user ? "Checkout" : "Sign in to checkout"}
+              <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+            </button>
+
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-on-night/60">
+              <span className="inline-flex items-center gap-1.5"><Wallet size={12} aria-hidden /> Khalti</span>
+              <span className="inline-flex items-center gap-1.5"><CreditCard size={12} aria-hidden /> Card</span>
+              <span className="inline-flex items-center gap-1.5"><Banknote size={12} aria-hidden /> Cash on delivery</span>
+            </div>
           </div>
-
-          <button type="button" onClick={goToCheckout} className="btn-primary w-full">
-            {user ? "Checkout" : "Sign in to checkout"} <ArrowRight size={15} />
-          </button>
-          <Link
-            href={PRODUCTS_ROUTE}
-            className="btn-ghost w-full justify-center mt-2 dark:text-[#8b8fa8] dark:hover:text-[#f0efe8]"
-          >
-            Keep browsing
-          </Link>
-        </aside>
+        </motion.aside>
       </div>
     </div>
   );

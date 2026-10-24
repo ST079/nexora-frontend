@@ -67,25 +67,13 @@ const StripeForm = ({ onClose, onSuccess, orderId }) => {
 
       {/* Error */}
       {error && (
-        <p className="text-sm text-danger border border-danger/40 bg-danger/5 dark:bg-danger/10 px-3 py-2.5">
+        <p role="alert" className="rounded-2xl bg-danger/10 px-4 py-3 text-sm text-danger">
           {error}
         </p>
       )}
 
       {/* Actions */}
-      <div className="flex gap-3 pt-1">
-        <button
-          type="submit"
-          disabled={!stripe || paying}
-          className="flex flex-1 items-center justify-center gap-2 bg-[#635BFF] text-white px-4 py-2.5 text-sm font-medium hover:bg-[#5851EA] disabled:opacity-60 transition-colors"
-        >
-          {paying ? (
-            <Loader2 size={14} className="animate-spin" />
-          ) : (
-            <Lock size={14} />
-          )}
-          {paying ? "Processing…" : "Pay now"}
-        </button>
+      <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row">
         <button
           type="button"
           onClick={onClose}
@@ -94,9 +82,21 @@ const StripeForm = ({ onClose, onSuccess, orderId }) => {
         >
           Cancel
         </button>
+        <button
+          type="submit"
+          disabled={!stripe || paying}
+          className="inline-flex flex-2 items-center justify-center gap-2 rounded-full bg-[#635BFF] px-5 py-3 text-sm font-semibold text-white transition-all duration-300 ease-out-expo hover:-translate-y-0.5 hover:bg-[#5851EA] active:scale-[0.97] disabled:opacity-60 disabled:hover:translate-y-0"
+        >
+          {paying ? (
+            <Loader2 size={14} className="animate-spin" />
+          ) : (
+            <Lock size={14} />
+          )}
+          {paying ? "Processing…" : "Pay now"}
+        </button>
       </div>
 
-      <p className="flex items-center justify-center gap-1.5 font-mono text-[11px] text-slate dark:text-[#8b8fa8]">
+      <p className="flex items-center justify-center gap-1.5 text-[11px] text-slate">
         <Lock size={10} /> Secured by Stripe
       </p>
     </form>

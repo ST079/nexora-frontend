@@ -1,11 +1,15 @@
 "use client";
 
-import { useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { X, User, MapPin, Package, Mail, Phone } from "lucide-react";
+import { Check, Copy, CreditCard, Mail, MapPin, Package, Phone, User, X } from "lucide-react";
+import { Modal } from "@/components/Modal";
 import OrderStatusBadge from "@/components/OrderStatusBadge";
+import OrderTimeline from "@/components/OrderTimeline";
 import PaymentBadge from "@/components/PaymentBadge";
+import { Avatar } from "@/components/UserProfile";
 import { formatDate, formatNPR } from "@/utils/format";
+import { stagger, item as listItem } from "@/utils/motion";
 import { PAYMENT_METHOD_LABELS } from "@/constants/payment";
 
 // Items keep the name and price captured at checkout; fall back to the
@@ -14,13 +18,20 @@ const lineName = (item) =>
   item.name || item.product?.name || `Product #${String(item.product?._id ?? item.product).slice(-6)}`;
 const linePrice = (item) => item.price ?? item.product?.price ?? 0;
 
-const OrderViewModal = ({ order, onClose, merchantView = false }) => {
-  useEffect(() => {
-    const onKey = (e) => e.key === "Escape" && onClose();
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+const InfoCard = ({ icon: Icon, title, children }) => (
+  <motion.div variants={listItem} className="rounded-3xl border border-hairline bg-panel p-4">
+    <div className="mb-3 flex items-center gap-2">
+      <span className="grid h-7 w-7 place-items-center rounded-xl bg-signal-tint text-signal-dim">
+        <Icon size={14} aria-hidden />
+      </span>
+      <p className="eyebrow">{title}</p>
+    </div>
+    {children}
+  </motion.div>
+);
 
+const OrderViewModal = ({ order, onClose, merchantView = false }) => {
+  const [copied, setCopied] = useState(false);
   const address = order.shippingAddress ?? {};
   const orderNo =
     order.orderNumber?.toUpperCase() ?? order._id?.slice(-8).toUpperCase();
@@ -29,173 +40,163 @@ const OrderViewModal = ({ order, onClose, merchantView = false }) => {
     0,
   );
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-ink/50 dark:bg-black/70"
-        onClick={onClose}
-      />
+  const copyOrderNo = async () => {
+    try {
+      await navigator.clipboard.writeText(orderNo);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // Clipboard can be blocked (http, permissions); the number is on screen anyway.
+    }
+  };
 
-      <motion.div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="order-view-title"
-        initial={{ opacity: 0, scale: 0.96, y: 12 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.96, y: 12 }}
-        transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-        className="relative w-full max-w-2xl max-h-[85vh] overflow-y-auto bg-paper dark:bg-[#16181f] border border-hairline dark:border-[#262932] shadow-lift"
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-hairline dark:border-[#262932] sticky top-0 z-10 bg-paper dark:bg-[#16181f]">
-          <div className="min-w-0">
-            <p className="eyebrow dark:text-[#8b8fa8]">Order #{orderNo}</p>
-            <h3
-              id="order-view-title"
-              className="font-display text-lg font-semibold text-ink dark:text-[#f0efe8]"
-            >
-              {formatNPR(merchantView ? order.merchantTotal : order.totalPrice)}
-              {merchantView && (
-                <span className="ml-2 font-mono text-xs font-normal text-slate dark:text-[#8b8fa8]">
-                  your share
-                </span>
-              )}
-            </h3>
-          </div>
-          <div className="flex items-center gap-3">
-            <OrderStatusBadge status={order.status} />
-            <button
-              onClick={onClose}
-              className="grid h-8 w-8 place-items-center text-slate dark:text-[#8b8fa8] hover:text-ink dark:hover:text-[#f0efe8] transition-colors"
-              aria-label="Close"
-              autoFocus
-            >
-              <X size={16} />
-            </button>
-          </div>
+  return (
+    <Modal onClose={onClose} labelledBy="order-view-title" size="max-w-2xl">
+      {/* Header */}
+      <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-hairline bg-panel/90 px-6 py-5 backdrop-blur-xl">
+        <div className="min-w-0">
+          <button
+            type="button"
+            onClick={copyOrderNo}
+            className="group mb-1 inline-flex items-center gap-1.5 rounded-full bg-mist px-2.5 py-1 font-mono text-[11px] text-slate-dim transition-colors hover:bg-signal-tint hover:text-signal-dim"
+            aria-label={`Copy order number ${orderNo}`}
+          >
+            #{orderNo}
+            {copied ? <Check size={11} className="text-ok" /> : <Copy size={11} className="opacity-60 group-hover:opacity-100" />}
+          </button>
+          <h3 id="order-view-title" className="font-display text-2xl font-bold text-ink">
+            {formatNPR(merchantView ? order.merchantTotal : order.totalPrice)}
+            {merchantView && (
+              <span className="ml-2 align-middle text-xs font-medium text-slate">your share</span>
+            )}
+          </h3>
+          <p className="mt-0.5 text-xs text-slate">Placed {formatDate(order.createdAt)}</p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <OrderStatusBadge status={order.status} />
+          <button
+            type="button"
+            onClick={onClose}
+            className="icon-btn h-9 w-9"
+            aria-label="Close"
+            autoFocus
+          >
+            <X size={16} />
+          </button>
+        </div>
+      </div>
+
+      <motion.div variants={stagger(0.06, 0.05)} initial="hidden" animate="show" className="space-y-4 p-6">
+        <motion.div variants={listItem}>
+          <OrderTimeline status={order.status} />
+        </motion.div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <InfoCard icon={User} title="Ordered by">
+            <div className="flex items-center gap-3">
+              <Avatar user={order.user} size="h-10 w-10 text-xs shrink-0" />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-ink">
+                  {order.user?.name || "Deleted account"}
+                </p>
+                {order.user?.email && (
+                  <a
+                    href={`mailto:${order.user.email}`}
+                    className="flex items-center gap-1.5 break-all text-xs text-slate hover:text-signal-dim"
+                  >
+                    <Mail size={11} className="shrink-0" /> {order.user.email}
+                  </a>
+                )}
+                {order.user?.phone && (
+                  <a
+                    href={`tel:${order.user.phone}`}
+                    className="flex items-center gap-1.5 text-xs text-slate hover:text-signal-dim"
+                  >
+                    <Phone size={11} /> {order.user.phone}
+                  </a>
+                )}
+              </div>
+            </div>
+          </InfoCard>
+
+          <InfoCard icon={MapPin} title="Shipping to">
+            <p className="text-sm font-medium text-ink">{address.street || "—"}</p>
+            <p className="text-sm text-slate">
+              {[address.city, address.province, address.country].filter(Boolean).join(", ")}
+            </p>
+          </InfoCard>
         </div>
 
-        <div className="p-6 space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2">
-            {/* Customer info */}
-            <div className="border border-hairline dark:border-[#262932] p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <User size={14} className="text-signal" />
-                <p className="eyebrow dark:text-[#8b8fa8]">Ordered by</p>
-              </div>
-              <p className="text-sm font-medium text-ink dark:text-[#f0efe8] mb-1">
-                {order.user?.name || "Deleted account"}
-              </p>
-              {order.user?.email && (
-                <p className="flex items-center gap-1.5 text-xs text-slate dark:text-[#8b8fa8] mb-1 break-all">
-                  <Mail size={11} className="shrink-0" /> {order.user.email}
-                </p>
-              )}
-              {order.user?.phone && (
-                <p className="flex items-center gap-1.5 text-xs text-slate dark:text-[#8b8fa8]">
-                  <Phone size={11} /> {order.user.phone}
-                </p>
-              )}
-            </div>
-
-            {/* Shipping */}
-            <div className="border border-hairline dark:border-[#262932] p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <MapPin size={14} className="text-signal" />
-                <p className="eyebrow dark:text-[#8b8fa8]">Shipping to</p>
-              </div>
-              <p className="text-sm text-ink dark:text-[#f0efe8]">
-                {address.street || "—"}
-              </p>
-              <p className="text-sm text-slate dark:text-[#8b8fa8]">
-                {[address.city, address.province, address.country]
-                  .filter(Boolean)
-                  .join(", ")}
-              </p>
-            </div>
+        {/* Items */}
+        <motion.div variants={listItem} className="overflow-hidden rounded-3xl border border-hairline">
+          <div className="flex items-center gap-2 border-b border-hairline px-4 py-3">
+            <span className="grid h-7 w-7 place-items-center rounded-xl bg-signal-tint text-signal-dim">
+              <Package size={14} aria-hidden />
+            </span>
+            <p className="eyebrow">{merchantView ? "Your items in this order" : "Items"}</p>
+            <span className="ml-auto rounded-full bg-mist px-2 py-0.5 text-[11px] font-semibold text-slate-dim">
+              {order.orderItems?.length ?? 0}
+            </span>
           </div>
-
-          {/* Items */}
-          <div className="border border-hairline dark:border-[#262932]">
-            <div className="flex items-center gap-2 px-4 py-3 border-b border-hairline dark:border-[#262932]">
-              <Package size={14} className="text-signal" />
-              <p className="eyebrow dark:text-[#8b8fa8]">
-                {merchantView ? "Your items in this order" : "Items"}
-              </p>
-            </div>
-            <div className="divide-y divide-hairline dark:divide-[#262932]">
-              {order.orderItems?.map((item, i) => (
-                <div
-                  key={item._id || i}
-                  className="flex items-center justify-between gap-3 px-4 py-3"
-                >
+          <ul className="space-y-0.5 p-2">
+            {order.orderItems?.map((item, i) => (
+              <li
+                key={item._id || i}
+                className="flex items-center justify-between gap-3 rounded-2xl px-3 py-2.5 transition-colors hover:bg-mist"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="grid h-8 min-w-8 place-items-center rounded-xl bg-ink px-1.5 text-xs font-bold text-paper">
+                    ×{item.quantity}
+                  </span>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-ink dark:text-[#f0efe8] truncate">
-                      {lineName(item)}
-                    </p>
-                    <p className="font-mono text-xs text-slate dark:text-[#8b8fa8]">
-                      {formatNPR(linePrice(item))} × {item.quantity}
-                    </p>
+                    <p className="truncate text-sm font-semibold text-ink">{lineName(item)}</p>
+                    <p className="text-xs tabular-nums text-slate">{formatNPR(linePrice(item))} each</p>
                   </div>
-                  <p className="font-mono text-sm text-ink dark:text-[#f0efe8] shrink-0">
-                    {formatNPR(linePrice(item) * item.quantity)}
-                  </p>
                 </div>
-              ))}
-            </div>
-            <dl className="px-4 py-3 font-mono text-sm space-y-1.5 border-t border-hairline dark:border-[#262932]">
-              {merchantView ? (
+                <p className="shrink-0 text-sm font-semibold tabular-nums text-ink">
+                  {formatNPR(linePrice(item) * item.quantity)}
+                </p>
+              </li>
+            ))}
+          </ul>
+          <dl className="space-y-1.5 border-t border-hairline bg-mist/40 px-5 py-4 text-sm">
+            {merchantView ? (
+              <div className="flex justify-between">
+                <dt className="text-slate">Your share</dt>
+                <dd className="font-bold tabular-nums text-ink">{formatNPR(order.merchantTotal)}</dd>
+              </div>
+            ) : (
+              <>
                 <div className="flex justify-between">
-                  <dt className="text-slate dark:text-[#8b8fa8]">Your share</dt>
-                  <dd className="font-medium text-ink dark:text-[#f0efe8]">
-                    {formatNPR(order.merchantTotal)}
+                  <dt className="text-slate">Items</dt>
+                  <dd className="tabular-nums text-ink">{formatNPR(itemsTotal)}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-slate">Delivery</dt>
+                  <dd className="tabular-nums text-ink">{formatNPR(order.deliveryCharge ?? 0)}</dd>
+                </div>
+                <div className="flex justify-between border-t border-dashed border-ink/15 pt-2">
+                  <dt className="font-semibold text-ink">Total</dt>
+                  <dd className="text-base font-bold tabular-nums text-ink">
+                    {formatNPR(order.totalPrice)}
                   </dd>
                 </div>
-              ) : (
-                <>
-                  <div className="flex justify-between">
-                    <dt className="text-slate dark:text-[#8b8fa8]">Items</dt>
-                    <dd className="text-ink dark:text-[#f0efe8]">{formatNPR(itemsTotal)}</dd>
-                  </div>
-                  <div className="flex justify-between">
-                    <dt className="text-slate dark:text-[#8b8fa8]">Delivery</dt>
-                    <dd className="text-ink dark:text-[#f0efe8]">
-                      {formatNPR(order.deliveryCharge ?? 0)}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between pt-1.5 border-t border-hairline dark:border-[#262932]">
-                    <dt className="text-slate dark:text-[#8b8fa8]">Total</dt>
-                    <dd className="text-base font-medium text-ink dark:text-[#f0efe8]">
-                      {formatNPR(order.totalPrice)}
-                    </dd>
-                  </div>
-                </>
-              )}
-            </dl>
-          </div>
+              </>
+            )}
+          </dl>
+        </motion.div>
 
-          {/* Payment */}
-          <div className="border border-hairline dark:border-[#262932] p-4 space-y-2">
-            <div className="flex items-center justify-between">
-              <p className="eyebrow dark:text-[#8b8fa8]">Payment</p>
-              <PaymentBadge order={order} />
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-slate dark:text-[#8b8fa8]">Method</span>
-              <span className="text-ink dark:text-[#f0efe8]">
-                {PAYMENT_METHOD_LABELS[order.payment?.method] ?? "Not chosen yet"}
-              </span>
-            </div>
-            <p className="font-mono text-xs text-slate dark:text-[#8b8fa8]">
-              Placed {formatDate(order.createdAt)}
-            </p>
+        {/* Payment */}
+        <InfoCard icon={CreditCard} title="Payment">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+            <span className="font-medium text-ink">
+              {PAYMENT_METHOD_LABELS[order.payment?.method] ?? "Not chosen yet"}
+            </span>
+            <PaymentBadge order={order} methodShown />
           </div>
-        </div>
+        </InfoCard>
       </motion.div>
-    </div>
+    </Modal>
   );
 };
 

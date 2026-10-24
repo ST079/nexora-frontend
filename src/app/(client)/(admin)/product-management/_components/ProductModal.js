@@ -1,17 +1,19 @@
 "use client";
 
-import { AlertTriangle, Check, Loader2, X } from "lucide-react";
+import { AlertTriangle, Check, ImagePlus, Loader2, PackageOpen, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import AnimatedField from "@/components/AnimatedField";
+import { Modal } from "@/components/Modal";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { useDropzone } from "react-dropzone";
 import Image from "next/image";
 import toast from "react-hot-toast";
-import { useEscape } from "@/hooks/useEscape";
+import StatusBadge from "./StockStatusBadge";
 import { categories } from "@/constants/categories";
 import { createProduct, updateProduct } from "@/api/product";
-import { apiErrorMessage, formatExt, formatSize } from "@/utils/format";
+import { apiErrorMessage, formatExt, formatNPR, formatSize } from "@/utils/format";
+import { bouncy } from "@/utils/motion";
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
@@ -31,6 +33,46 @@ const RULES = {
     validate: (v) => Number.isInteger(Number(v)) || "Use a whole number.",
   },
 };
+
+const Section = ({ step, title, children }) => (
+  <section className="space-y-4">
+    <h3 className="flex items-center gap-2.5 text-sm font-bold text-ink">
+      <span className="grid h-6 w-6 place-items-center rounded-full bg-ink text-[11px] text-paper">
+        {step}
+      </span>
+      {title}
+    </h3>
+    {children}
+  </section>
+);
+
+// One photo in the gallery grid. The first one is the cover.
+const Thumb = ({ src, alt, cover, meta, onRemove, removeLabel }) => (
+  <motion.li
+    layout
+    initial={{ opacity: 0, scale: 0.8 }}
+    animate={{ opacity: 1, scale: 1 }}
+    exit={{ opacity: 0, scale: 0.8 }}
+    transition={bouncy}
+    className="group relative aspect-square overflow-hidden rounded-2xl border border-hairline bg-mist"
+  >
+    <Image src={src} alt={alt} fill sizes="120px" className="object-cover" />
+    {cover && <span className="sticker absolute left-1.5 top-1.5">Cover</span>}
+    {meta && (
+      <span className="absolute inset-x-1.5 bottom-1.5 truncate rounded-full bg-night/70 px-2 py-0.5 text-center font-mono text-[10px] text-on-night backdrop-blur-sm">
+        {meta}
+      </span>
+    )}
+    <button
+      type="button"
+      onClick={onRemove}
+      className="absolute right-1.5 top-1.5 grid h-7 w-7 place-items-center rounded-full bg-panel/90 text-ink shadow-soft transition-all hover:bg-danger hover:text-paper sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+      aria-label={removeLabel}
+    >
+      <X size={13} />
+    </button>
+  </motion.li>
+);
 
 const rejectionMessage = ({ file, errors }) => {
   const code = errors[0]?.code;
@@ -88,6 +130,7 @@ const ProductModal = ({ product, onClose, onSave }) => {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm({
     defaultValues: {
@@ -100,7 +143,13 @@ const ProductModal = ({ product, onClose, onSave }) => {
     },
   });
 
-  useEscape(onClose, !saving);
+  // Drives the live preview card at the bottom of the form.
+  const [name, brand, category, price, stock] = useWatch({
+    control,
+    name: ["name", "brand", "category", "price", "stock"],
+  });
+  const cover = existingUrls[0] ?? newFiles[0]?.preview;
+  const photoCount = existingUrls.length + newFiles.length;
 
   const submit = async (data) => {
     setSaving(true);
@@ -135,312 +184,219 @@ const ProductModal = ({ product, onClose, onSave }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-ink/50 dark:bg-black/70"
-        onClick={() => !saving && onClose()}
-      />
-
-      <motion.div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        initial={{ opacity: 0, scale: 0.96, y: 12 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.96, y: 12 }}
-        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-        className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto bg-paper dark:bg-[#16181f] border border-hairline dark:border-[#262932] shadow-lift"
-      >
-        {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-hairline dark:border-[#262932] bg-paper dark:bg-[#16181f]">
+    <Modal onClose={onClose} dismissable={!saving} labelledBy={titleId} size="max-w-2xl">
+      {/* Header */}
+      <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-hairline bg-panel/90 px-6 py-4 backdrop-blur-xl">
+        <div className="flex min-w-0 items-center gap-3">
+          <motion.span
+            initial={{ scale: 0.4, rotate: -20 }}
+            animate={{ scale: 1, rotate: -6 }}
+            transition={{ ...bouncy, delay: 0.05 }}
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-signal text-on-signal shadow-glow"
+          >
+            <PackageOpen size={20} aria-hidden />
+          </motion.span>
           <div className="min-w-0">
-            <p className="eyebrow dark:text-[#8b8fa8]">
-              {isEdit ? "Edit product" : "New product"}
-            </p>
-            <h2
-              id={titleId}
-              className="font-display text-lg font-semibold text-ink dark:text-[#f0efe8] truncate"
-            >
+            <p className="eyebrow">{isEdit ? "Edit product" : "New product"}</p>
+            <h2 id={titleId} className="truncate font-display text-xl font-bold text-ink">
               {isEdit ? product.name || "Untitled" : "Add to catalog"}
             </h2>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={saving}
-            className="grid h-8 w-8 shrink-0 place-items-center text-slate dark:text-[#8b8fa8] hover:text-ink dark:hover:text-[#f0efe8] transition-colors"
-            aria-label="Close"
-          >
-            <X size={16} />
-          </button>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          disabled={saving}
+          className="icon-btn h-9 w-9"
+          aria-label="Close"
+        >
+          <X size={16} />
+        </button>
+      </div>
+
+      <form onSubmit={handleSubmit(submit)} noValidate>
+        <div className="space-y-8 p-6">
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                role="alert"
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0, x: [0, -5, 5, -3, 3, 0] }}
+                exit={{ opacity: 0, y: -6 }}
+                className="flex items-start gap-2.5 rounded-2xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger"
+              >
+                <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+                <span>{error}</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <Section step={1} title="The basics">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <AnimatedField
+                label="Product name"
+                placeholder="iPhone 16 Pro"
+                required
+                error={errors.name?.message}
+                {...register("name", RULES.name)}
+              />
+              <AnimatedField label="Brand" placeholder="e.g. Himalayan Java" {...register("brand")} />
+              <div>
+                <AnimatedField
+                  label="Category"
+                  placeholder="e.g. Smartphones"
+                  list="product-categories"
+                  {...register("category")}
+                />
+                <datalist id="product-categories">
+                  {categories.map((c) => (
+                    <option key={c.label} value={c.label} />
+                  ))}
+                </datalist>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <AnimatedField
+                  label="Price (Rs.)"
+                  placeholder="197000"
+                  required
+                  type="number"
+                  inputMode="decimal"
+                  min={1}
+                  error={errors.price?.message}
+                  {...register("price", RULES.price)}
+                />
+                <AnimatedField
+                  label="Stock"
+                  placeholder="10"
+                  required
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  step={1}
+                  error={errors.stock?.message}
+                  {...register("stock", RULES.stock)}
+                />
+              </div>
+            </div>
+            <p className="text-[11px] text-slate">Shoppers can&apos;t add it to their cart at 0 stock.</p>
+          </Section>
+
+          <Section step={2} title="Photos">
+            <ul className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+              <AnimatePresence initial={false}>
+                {existingUrls.map((url, i) => (
+                  <Thumb
+                    key={url}
+                    src={url}
+                    alt={`Saved image ${i + 1}`}
+                    cover={i === 0}
+                    meta="Saved"
+                    onRemove={() => removeExisting(url)}
+                    removeLabel={`Remove saved image ${i + 1}`}
+                  />
+                ))}
+                {newFiles.map((entry, i) => (
+                  <Thumb
+                    key={entry.preview}
+                    src={entry.preview}
+                    alt={entry.file.name}
+                    cover={existingUrls.length === 0 && i === 0}
+                    meta={`${formatExt(entry.file.name)} · ${formatSize(entry.file.size)}`}
+                    onRemove={() => removeNew(entry)}
+                    removeLabel={`Remove ${entry.file.name}`}
+                  />
+                ))}
+              </AnimatePresence>
+              <motion.li layout className={photoCount ? "" : "col-span-3 sm:col-span-4"}>
+                <div
+                  {...getRootProps()}
+                  className={`flex h-full min-h-28 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-4 text-center transition-all focus-visible:outline-2 focus-visible:outline-signal ${
+                    isDragActive
+                      ? "scale-[1.02] border-signal bg-signal-tint"
+                      : "border-hairline bg-mist/50 hover:border-signal/50 hover:bg-signal-tint/50"
+                  } ${photoCount ? "aspect-square" : "py-8"}`}
+                >
+                  <input {...getInputProps()} aria-label="Upload product images" />
+                  <motion.span
+                    animate={isDragActive ? { y: [0, -4, 0] } : { y: 0 }}
+                    transition={{ repeat: isDragActive ? Infinity : 0, duration: 0.8 }}
+                    className="grid h-10 w-10 place-items-center rounded-2xl bg-panel text-signal shadow-soft"
+                  >
+                    <ImagePlus size={18} aria-hidden />
+                  </motion.span>
+                  <p className="text-xs font-semibold text-ink">
+                    {isDragActive ? "Drop them here" : photoCount ? "Add more" : "Click or drag photos here"}
+                  </p>
+                  {!photoCount && (
+                    <p className="text-[11px] text-slate">
+                      PNG or JPG · up to 5 MB each · the first photo is the cover
+                    </p>
+                  )}
+                </div>
+              </motion.li>
+            </ul>
+          </Section>
+
+          <Section step={3} title="Description">
+            <div>
+              <label htmlFor="product-description" className="sr-only">
+                Description
+              </label>
+              <textarea
+                id="product-description"
+                rows={4}
+                placeholder="What makes it worth buying? Size, materials, what's in the box…"
+                aria-describedby="product-description-hint"
+                className="field resize-y"
+                {...register("description")}
+              />
+              <p id="product-description-hint" className="mt-1.5 text-[11px] text-slate">
+                {isEdit
+                  ? "Shown on the product page."
+                  : "Leave blank and Nexora will draft one from the name, brand and category."}
+              </p>
+            </div>
+          </Section>
+
+          {/* Live preview of the listing */}
+          <div className="rounded-3xl border border-dashed border-ink/15 bg-mist/40 p-4">
+            <p className="eyebrow mb-3">Shoppers will see</p>
+            <div className="flex items-center gap-4">
+              <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-hairline bg-panel">
+                {cover ? (
+                  <Image src={cover} alt="" fill sizes="64px" className="object-cover" />
+                ) : (
+                  <span className="grid h-full w-full place-items-center text-slate-light">
+                    <PackageOpen size={20} aria-hidden />
+                  </span>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-semibold text-ink">{name?.trim() || "Product name"}</p>
+                <p className="truncate text-xs text-slate">
+                  {[brand?.trim(), category?.trim()].filter(Boolean).join(" · ") || "Brand · Category"}
+                </p>
+                <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                  <span className="font-semibold text-ink">{price ? formatNPR(price) : "Rs. —"}</span>
+                  {stock !== "" && stock != null && <StatusBadge stock={stock} />}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit(submit)} noValidate className="p-6 space-y-4">
-          {error && (
-            <div
-              role="alert"
-              className="flex items-start gap-2 border border-danger/40 bg-danger/5 dark:bg-danger/10 px-3 py-2.5 text-sm text-danger"
-            >
-              <AlertTriangle size={14} className="mt-0.5 shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          <div className="grid sm:grid-cols-2 gap-4">
-            <AnimatedField
-              label="Product name"
-              placeholder="iPhone 16 Pro"
-              required
-              error={errors.name?.message}
-              {...register("name", RULES.name)}
-            />
-            <AnimatedField label="Brand" placeholder="Apple" {...register("brand")} />
-          </div>
-
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <AnimatedField
-                label="Category"
-                placeholder="e.g. Smartphones"
-                list="product-categories"
-                {...register("category")}
-              />
-              <datalist id="product-categories">
-                {categories.map((c) => (
-                  <option key={c.label} value={c.label} />
-                ))}
-              </datalist>
-            </div>
-            <AnimatedField
-              label="Price (Rs.)"
-              placeholder="197000"
-              required
-              type="number"
-              inputMode="decimal"
-              min={1}
-              error={errors.price?.message}
-              {...register("price", RULES.price)}
-            />
-          </div>
-
-          <AnimatedField
-            label="Stock"
-            placeholder="10"
-            required
-            type="number"
-            inputMode="numeric"
-            min={0}
-            step={1}
-            error={errors.stock?.message}
-            hint="Shoppers can't add it to their cart at 0."
-            {...register("stock", RULES.stock)}
-          />
-
-          {/* ── Images ── */}
-          <div>
-            <p className="font-mono text-xs text-slate dark:text-[#8b8fa8] mb-1">Images</p>
-
-            <div
-              {...getRootProps()}
-              className={`flex flex-col items-center justify-center w-full py-8 border border-dashed cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-signal ${
-                isDragActive
-                  ? "border-signal bg-signal/5 dark:bg-signal/10"
-                  : "border-hairline dark:border-[#262932] hover:border-ink dark:hover:border-[#f0efe8] bg-paper dark:bg-[#0e0f12]"
-              }`}
-            >
-              <input {...getInputProps()} aria-label="Upload product images" />
-              <svg
-                className="w-8 h-8 mb-3 text-slate dark:text-[#8b8fa8]"
-                aria-hidden="true"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M15 17h3a3 3 0 0 0 0-6h-.025a5.56 5.56 0 0 0 .025-.5A5.5 5.5 0 0 0 7.207 9.021C7.137 9.017 7.071 9 7 9a4 4 0 1 0 0 8h2.167M12 19v-9m0 0-2 2m2-2 2 2"
-                />
-              </svg>
-              <p className="text-sm text-ink dark:text-[#f0efe8]">
-                <span className="font-semibold">
-                  {isDragActive ? "Drop images here…" : "Click to upload"}
-                </span>
-                {!isDragActive && " or drag and drop"}
-              </p>
-              <p className="font-mono text-[11px] text-slate dark:text-[#8b8fa8] mt-1">
-                PNG, JPG or JPEG · max 5 MB each · first image is the cover
-              </p>
-            </div>
-
-            {/* Existing image previews (edit mode) */}
-            <AnimatePresence>
-              {existingUrls.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="overflow-hidden"
-                >
-                  <p className="font-mono text-[10px] uppercase tracking-widest text-slate dark:text-[#8b8fa8] mt-3 mb-1.5">
-                    Current images
-                  </p>
-                  <ul className="space-y-2">
-                    {existingUrls.map((url, i) => (
-                      <motion.li
-                        key={url}
-                        initial={{ opacity: 0, x: -8 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 8 }}
-                        transition={{ duration: 0.2 }}
-                        className="flex items-center gap-3 border border-hairline dark:border-[#262932] p-2 bg-paper dark:bg-[#0e0f12]"
-                      >
-                        <div className="h-12 w-12 shrink-0 overflow-hidden border border-hairline dark:border-[#262932]">
-                          <Image
-                            src={url}
-                            alt={`Saved image ${i + 1}`}
-                            width={80}
-                            height={80}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-ink dark:text-[#f0efe8] truncate">
-                            {url.split("/").pop()}
-                          </p>
-                          <span className="font-mono text-[10px] uppercase tracking-widest px-1.5 py-0.5 bg-ok/10 text-ok">
-                            Saved
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeExisting(url)}
-                          className="grid h-7 w-7 shrink-0 place-items-center text-slate dark:text-[#8b8fa8] hover:text-danger transition-colors"
-                          aria-label={`Remove saved image ${i + 1}`}
-                        >
-                          <X size={14} />
-                        </button>
-                      </motion.li>
-                    ))}
-                  </ul>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* New file previews */}
-            <AnimatePresence>
-              {newFiles.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="overflow-hidden"
-                >
-                  <p className="font-mono text-[10px] uppercase tracking-widest text-slate dark:text-[#8b8fa8] mt-3 mb-1.5">
-                    New uploads
-                  </p>
-                  <ul className="space-y-2">
-                    {newFiles.map((entry, i) => (
-                      <motion.li
-                        key={entry.preview}
-                        initial={{ opacity: 0, x: -8 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 8 }}
-                        transition={{ duration: 0.2, delay: i * 0.04 }}
-                        className="flex items-center gap-3 border border-hairline dark:border-[#262932] p-2 bg-paper dark:bg-[#0e0f12]"
-                      >
-                        <div className="h-12 w-12 shrink-0 overflow-hidden border border-hairline dark:border-[#262932]">
-                          <Image
-                            src={entry.preview}
-                            alt={entry.file.name}
-                            width={80}
-                            height={80}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-ink dark:text-[#f0efe8] truncate">
-                            {entry.file.name}
-                          </p>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="font-mono text-[10px] uppercase tracking-widest px-1.5 py-0.5 bg-blueprint/10 dark:bg-blueprint/20 text-blueprint dark:text-[#5c78ff]">
-                              {formatExt(entry.file.name)}
-                            </span>
-                            <span className="font-mono text-[11px] text-slate dark:text-[#8b8fa8]">
-                              {formatSize(entry.file.size)}
-                            </span>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeNew(entry)}
-                          className="grid h-7 w-7 shrink-0 place-items-center text-slate dark:text-[#8b8fa8] hover:text-danger transition-colors"
-                          aria-label={`Remove ${entry.file.name}`}
-                        >
-                          <X size={14} />
-                        </button>
-                      </motion.li>
-                    ))}
-                  </ul>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* Description */}
-          <div>
-            <label
-              htmlFor="product-description"
-              className="font-mono text-xs text-slate dark:text-[#8b8fa8] mb-1 block"
-            >
-              Description
-            </label>
-            <textarea
-              id="product-description"
-              rows={3}
-              placeholder="Brief product description…"
-              aria-describedby="product-description-hint"
-              className="w-full border border-hairline dark:border-[#262932] bg-paper dark:bg-[#16181f] text-ink dark:text-[#f0efe8] px-3 py-2.5 text-sm outline-none transition-colors focus:border-ink dark:focus:border-[#f0efe8] placeholder:text-slate-light dark:placeholder:text-[#5b5e72] resize-y"
-              {...register("description")}
-            />
-            <p
-              id="product-description-hint"
-              className="mt-1 font-mono text-[11px] text-slate dark:text-[#8b8fa8]"
-            >
-              {isEdit
-                ? "Shown on the product page."
-                : "Leave blank and Nexora will draft one from the name, brand and category."}
-            </p>
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-3 pt-2">
-            <button type="submit" disabled={saving} className="btn-primary flex-1">
-              {saving ? (
-                <Loader2 size={14} className="animate-spin" />
-              ) : (
-                <Check size={14} />
-              )}
-              {saving ? "Saving…" : isEdit ? "Update product" : "Add product"}
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={saving}
-              className="btn-secondary px-5"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      </motion.div>
-    </div>
+        {/* Actions */}
+        <div className="sticky bottom-0 flex flex-col-reverse gap-2 border-t border-hairline bg-panel/90 px-6 py-4 backdrop-blur-xl sm:flex-row sm:justify-end">
+          <button type="button" onClick={onClose} disabled={saving} className="btn-secondary">
+            Cancel
+          </button>
+          <button type="submit" disabled={saving} className="btn-primary sm:min-w-44">
+            {saving ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}
+            {saving ? "Saving…" : isEdit ? "Update product" : "Add product"}
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 };
 

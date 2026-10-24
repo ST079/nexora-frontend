@@ -36,25 +36,25 @@ const SearchField = ({
   return (
     <div
       role="search"
-      className={`flex items-center border border-hairline dark:border-[#262932] bg-paper dark:bg-[#16181f] px-3 py-2.5 gap-2 focus-within:border-ink dark:focus-within:border-[#f0efe8] transition-colors ${className}`}
+      className={`flex items-center gap-2 rounded-full border border-hairline bg-panel px-4 py-2.5 transition-all focus-within:border-signal focus-within:ring-4 focus-within:ring-signal/15 hover:border-ink/25 ${className}`}
     >
-      <Search size={14} className="text-slate dark:text-[#8b8fa8] shrink-0" />
+      <Search size={14} className="text-slate shrink-0" />
       <input
         type="search"
         value={text}
         onChange={(e) => setText(e.target.value)}
         placeholder={placeholder}
         aria-label={label}
-        className="w-full bg-transparent text-sm outline-none text-ink dark:text-[#f0efe8] placeholder:text-slate-light dark:placeholder:text-[#5b5e72] [&::-webkit-search-cancel-button]:hidden"
+        className="w-full bg-transparent text-sm outline-none text-ink placeholder:text-slate-light dark:placeholder:text-slate-light [&::-webkit-search-cancel-button]:hidden"
       />
       {text && (
         <button
           type="button"
           onClick={() => setText("")}
-          className="text-slate dark:text-[#8b8fa8] hover:text-ink dark:hover:text-[#f0efe8]"
+          className="grid h-5 w-5 place-items-center rounded-full bg-mist text-slate transition-colors hover:text-ink"
           aria-label="Clear search"
         >
-          <X size={13} />
+          <X size={11} />
         </button>
       )}
     </div>

@@ -68,11 +68,11 @@ export function slugStatus(status = "") {
 export const STATUS_STYLES = {
   PENDING: "bg-signal-tint text-signal-dim dark:bg-signal/15 dark:text-signal",
   CONFIRMED: "bg-ok/10 text-ok",
-  SHIPPED: "bg-blueprint-tint text-blueprint-dim dark:bg-blueprint/20 dark:text-[#8b9bff]",
+  SHIPPED: "bg-blueprint-tint text-blueprint-dim dark:bg-blueprint/20 dark:text-blueprint",
   DELIVERED: "bg-ok/10 text-ok",
   COMPLETED: "bg-ok/10 text-ok",
   FAILED: "bg-danger/10 text-danger",
-  REFUNDED: "bg-hairline text-slate-dim dark:bg-[#262932] dark:text-[#8b8fa8]",
+  REFUNDED: "bg-hairline text-slate-dim dark:text-slate",
   CANCELLED: "bg-danger/10 text-danger",
   UNPAID: "bg-signal-tint text-signal-dim dark:bg-signal/15 dark:text-signal",
   PAID: "bg-ok/10 text-ok",
@@ -81,7 +81,7 @@ export const STATUS_STYLES = {
 export function statusStyle(status) {
   return (
     STATUS_STYLES[slugStatus(status)] ||
-    "bg-hairline text-slate-dim dark:bg-[#262932] dark:text-[#8b8fa8]"
+    "bg-hairline text-slate-dim dark:text-slate"
   );
 }
 

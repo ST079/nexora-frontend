@@ -6,11 +6,11 @@ const OrderStatusBadge = ({ status }) => {
 
   return (
     <span
-      className={`inline-flex items-center justify-center gap-1 px-2.5 py-1 font-mono text-[12px] uppercase tracking-wide leading-none ${
-        entry?.color || "bg-hairline text-slate-dim"
+      className={`inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold leading-none ${
+        entry?.color || "bg-mist text-slate-dim"
       }`}
     >
-      {Icon && <Icon size={14} />}
+      {Icon && <Icon size={13} strokeWidth={2.4} aria-hidden />}
       {entry?.label || status || "Unknown"}
     </span>
   );

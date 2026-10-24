@@ -1,26 +1,27 @@
 import "./globals.css";
-import { IBM_Plex_Mono, IBM_Plex_Sans, Space_Grotesk } from "next/font/google";
+import { Bricolage_Grotesque, Figtree, Geist_Mono } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import { config } from "@/config/config";
 import AppProvider from "@/redux/provider";
 
-const spaceGrotesk = Space_Grotesk({
+// Bricolage Grotesque for headlines (variable, with optical sizing), Figtree
+// for reading text and Geist Mono for prices, SKUs and small labels.
+const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
-  variable: "--font-space-grotesk",
+  variable: "--font-bricolage",
+  display: "swap",
+  axes: ["opsz", "wdth"],
+});
+
+const figtree = Figtree({
+  subsets: ["latin"],
+  variable: "--font-figtree",
   display: "swap",
 });
 
-const plexSans = IBM_Plex_Sans({
+const geistMono = Geist_Mono({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-plex-sans",
-  display: "swap",
-});
-
-const plexMono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--font-plex-mono",
+  variable: "--font-geist-mono",
   display: "swap",
 });
 
@@ -53,8 +54,8 @@ export const metadata = {
 
 export const viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fafaf7" },
-    { media: "(prefers-color-scheme: dark)", color: "#0e0f12" },
+    { media: "(prefers-color-scheme: light)", color: "#f7f4ee" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f0d14" },
   ],
 };
 
@@ -66,7 +67,7 @@ const RootLayout = ({ children }) => {
   return (
     <html
       lang="en"
-      className={`h-full ${spaceGrotesk.variable} ${plexSans.variable} ${plexMono.variable}`}
+      className={`h-full ${bricolage.variable} ${figtree.variable} ${geistMono.variable}`}
       suppressHydrationWarning
     >
       <head>
@@ -76,9 +77,21 @@ const RootLayout = ({ children }) => {
         <AppProvider>
           {children}
           <Toaster
+            position="top-center"
             toastOptions={{
               duration: 3000,
-              style: { fontSize: "14px", borderRadius: 0 },
+              style: {
+                fontSize: "14px",
+                fontWeight: 500,
+                borderRadius: "999px",
+                padding: "10px 16px",
+                background: "var(--color-ink)",
+                color: "var(--color-paper)",
+                boxShadow: "var(--shadow-lift)",
+              },
+              success: {
+                iconTheme: { primary: "#ffbf2e", secondary: "#17151c" },
+              },
             }}
           />
         </AppProvider>

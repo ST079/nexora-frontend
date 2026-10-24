@@ -2,9 +2,8 @@
 
 import { Suspense, useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
 import {
-  AlertTriangle,
+  CheckCircle2,
   Eye,
   RefreshCw,
   ShieldCheck,
@@ -13,19 +12,34 @@ import {
   UserCheck,
   Users,
   UserX,
+  XCircle,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import Pagination from "@/components/Pagination";
 import Loader from "@/components/Loader";
 import SearchField from "@/components/SearchField";
 import SortableHeader from "@/components/SortableHeader";
+import { Avatar } from "@/components/UserProfile";
 import RoleBadge from "./_components/RoleBadge";
 import DeleteModal from "./_components/DeleteModal";
 import RoleModal from "./_components/RoleModal";
 import UserViewModal from "./_components/UserViewModal";
 import UserStatusModal from "./_components/UserStatusModal";
+import {
+  ConsoleHeader,
+  ConsoleTable,
+  FilterChips,
+  RowAction,
+  StatStrip,
+  TableCard,
+  TableEmpty,
+  TableError,
+  TableSkeleton,
+  rowMotion,
+  tdClass,
+} from "../_components/Console";
 import { getAllUsers, getTotalCount, getUserStats } from "@/api/user";
-import { apiErrorMessage, formatDate, initials } from "@/utils/format";
+import { apiErrorMessage, formatDate } from "@/utils/format";
 import { fadeUp } from "@/utils/motion";
 import { nextSortKey, sortJSON } from "@/utils/sort";
 import { ROLE_ADMIN, ROLE_MERCHANT, ROLE_USER } from "@/constants/user";
@@ -38,7 +52,6 @@ const DEFAULT_SORT_KEY = "-createdAt";
 
 const COLUMNS = [
   { label: "User", field: "name" },
-  { label: "Email", field: "email" },
   { label: "Phone" },
   { label: "Role" },
   { label: "Status" },
@@ -55,12 +68,9 @@ const ROLE_OPTIONS = [
 
 const STATUS_OPTIONS = [
   { value: "", label: "Any status" },
-  { value: "active", label: "Active" },
-  { value: "inactive", label: "Inactive" },
+  { value: "active", label: "Active", dot: "bg-ok" },
+  { value: "inactive", label: "Inactive", dot: "bg-danger" },
 ];
-
-const iconButton =
-  "grid h-8 w-8 place-items-center border border-hairline dark:border-[#262932] text-slate dark:text-[#8b8fa8] transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-hairline disabled:hover:text-slate";
 
 const UserManagement = () => {
   const dispatch = useDispatch();
@@ -129,161 +139,101 @@ const UserManagement = () => {
   };
 
   const s = stats.data;
-  const statTiles = [
-    { label: "Total users", value: s?.total, icon: Users, reset: true },
-    { label: "Active", value: s?.active, icon: UserCheck, param: "status", match: "active" },
-    { label: "Inactive", value: s?.inactive, icon: UserX, param: "status", match: "inactive" },
-    { label: "Admins", value: s?.admins, icon: ShieldCheck, param: "role", match: ROLE_ADMIN },
-    { label: "Merchants", value: s?.merchants, icon: Store, param: "role", match: ROLE_MERCHANT },
-  ];
   const current = { role, status };
+  const statTiles = [
+    { label: "Total users", value: s?.total, icon: Users, tone: "bg-mist text-ink", reset: true },
+    { label: "Active", value: s?.active, icon: UserCheck, tone: "bg-ok/12 text-ok", param: "status", match: "active" },
+    { label: "Inactive", value: s?.inactive, icon: UserX, tone: "bg-danger/10 text-danger", param: "status", match: "inactive" },
+    { label: "Admins", value: s?.admins, icon: ShieldCheck, tone: "bg-blueprint-tint text-blueprint-dim", param: "role", match: ROLE_ADMIN },
+    { label: "Merchants", value: s?.merchants, icon: Store, tone: "bg-signal-tint text-signal-dim", param: "role", match: ROLE_MERCHANT },
+  ].map(({ reset, param, match, ...tile }) => {
+    const active = reset ? !role && !status : current[param] === match;
+    return {
+      ...tile,
+      active,
+      onClick: () =>
+        reset ? setParams({ role: "", status: "" }) : setParams({ [param]: active ? "" : match }),
+    };
+  });
 
   return (
-    <div className="container-page py-8 lg:py-10 transition-colors duration-300">
-      {/* Header */}
-      <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
-        <motion.div {...fadeUp()}>
-          <p className="eyebrow dark:text-[#8b8fa8] mb-2">Admin · Users</p>
-          <h1 className="font-display text-3xl font-semibold text-ink dark:text-[#f0efe8]">
-            User management
-          </h1>
-        </motion.div>
-        <motion.button
-          {...fadeUp(0.05)}
-          onClick={refresh}
-          disabled={loading}
-          className="btn-secondary"
-        >
-          <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-          Refresh
-        </motion.button>
-      </div>
-
-      {/* Stats — each tile doubles as a quick filter */}
-      <motion.div
-        {...fadeUp(0.07)}
-        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-hairline dark:bg-[#262932] border border-hairline dark:border-[#262932] mb-6"
+    <div className="container-page py-8 transition-colors duration-300 lg:py-10">
+      <ConsoleHeader
+        eyebrow="Admin · Users"
+        title={
+          <>
+            User <span className="marker">management</span>
+          </>
+        }
+        description="Tap a tile to filter. Click any row for the full profile."
       >
-        {statTiles.map((t, i) => {
-          const Icon = t.icon;
-          const active = t.reset ? !role && !status : current[t.param] === t.match;
-          const onClick = () =>
-            t.reset
-              ? setParams({ role: "", status: "" })
-              : setParams({ [t.param]: active ? "" : t.match });
-          return (
-            <button
-              key={t.label}
-              onClick={onClick}
-              aria-pressed={active}
-              className={`flex items-start gap-3 px-5 py-4 text-left transition-colors ${
-                i === 0 ? "col-span-2 sm:col-span-1" : ""
-              } ${
-                active
-                  ? "bg-signal-tint dark:bg-signal/10"
-                  : "bg-paper dark:bg-[#0e0f12] hover:bg-hairline/30 dark:hover:bg-[#16181f]"
-              }`}
-            >
-              <Icon size={16} className="text-signal mt-1 shrink-0" />
-              <span>
-                <span className="block font-display text-2xl font-semibold text-ink dark:text-[#f0efe8]">
-                  {t.value ?? "—"}
-                </span>
-                <span className="block eyebrow dark:text-[#8b8fa8] mt-1">{t.label}</span>
-              </span>
-            </button>
-          );
-        })}
-      </motion.div>
+        <button type="button" onClick={refresh} disabled={loading} className="btn-secondary">
+          <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+          {loading ? "Refreshing…" : "Refresh"}
+        </button>
+      </ConsoleHeader>
 
-      {/* Filters */}
+      {/* Counts describe every account, not just the page on screen. */}
+      <StatStrip tiles={statTiles} loading={stats.loading} />
+
       <motion.div
         {...fadeUp(0.1)}
-        className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center mb-4"
+        className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"
       >
         <SearchField
           value={search}
           onChange={(value) => setParams({ search: value })}
           placeholder="Search name or email…"
           label="Search users"
-          className="w-full sm:max-w-sm sm:flex-1"
+          className="w-full lg:max-w-sm"
         />
-        <div className="flex gap-3">
-          <label className="sr-only" htmlFor="user-role-filter">
-            Role
-          </label>
-          <select
-            id="user-role-filter"
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <FilterChips
+            label="Filter by role"
+            layoutId="user-role-filter"
+            options={ROLE_OPTIONS}
             value={role}
-            onChange={(e) => setParams({ role: e.target.value })}
-            className="field flex-1 sm:w-40 px-2 cursor-pointer dark:border-[#262932] dark:bg-[#16181f] dark:text-[#f0efe8]"
-          >
-            {ROLE_OPTIONS.map((o) => (
-              <option key={o.value || "all"} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-          <label className="sr-only" htmlFor="user-status-filter">
-            Status
-          </label>
-          <select
-            id="user-status-filter"
+            onChange={(value) => setParams({ role: value })}
+          />
+          <FilterChips
+            label="Filter by status"
+            layoutId="user-status-filter"
+            options={STATUS_OPTIONS}
             value={status}
-            onChange={(e) => setParams({ status: e.target.value })}
-            className="field flex-1 sm:w-40 px-2 cursor-pointer dark:border-[#262932] dark:bg-[#16181f] dark:text-[#f0efe8]"
-          >
-            {STATUS_OPTIONS.map((o) => (
-              <option key={o.value || "any"} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
+            onChange={(value) => setParams({ status: value })}
+          />
         </div>
       </motion.div>
 
-      {/* Table */}
-      <motion.div
-        {...fadeUp(0.12)}
-        className="border border-hairline dark:border-[#262932] overflow-x-auto"
-      >
-        {loading ? (
-          <Loader label="Loading users" />
+      <TableCard stale={loading && Boolean(data)}>
+        {loading && !data ? (
+          <TableSkeleton label="Loading users" />
         ) : error ? (
-          <div role="alert" className="flex flex-col items-center justify-center py-20 gap-3 text-center px-6">
-            <AlertTriangle size={24} className="text-danger" />
-            <p className="font-display font-semibold text-ink dark:text-[#f0efe8]">
-              Couldn&apos;t load users
-            </p>
-            <p className="text-sm text-slate dark:text-[#8b8fa8]">
-              {apiErrorMessage(error, "Check your connection and try again.")}
-            </p>
-            <button onClick={refresh} className="btn-secondary mt-2">
-              <RefreshCw size={14} /> Try again
-            </button>
-          </div>
+          <TableError
+            title="Couldn't load users"
+            message={apiErrorMessage(error, "Check your connection and try again.")}
+            onRetry={refresh}
+          />
         ) : users.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-3 text-center px-6">
-            <Users size={28} className="text-slate dark:text-[#8b8fa8]" />
-            <p className="font-display font-semibold text-ink dark:text-[#f0efe8]">
-              No users found
-            </p>
-            <p className="text-sm text-slate dark:text-[#8b8fa8]">
-              {hasFilters ? "Try a different search or filter." : "New sign-ups will appear here."}
-            </p>
+          <TableEmpty
+            icon={Users}
+            title="No users found"
+            description={hasFilters ? "Try a different search or filter." : "New sign-ups will appear here."}
+          >
             {hasFilters && (
               <button
+                type="button"
                 onClick={() => setParams({ search: "", role: "", status: "" })}
-                className="btn-secondary mt-2"
+                className="btn-secondary"
               >
                 Clear filters
               </button>
             )}
-          </div>
+          </TableEmpty>
         ) : (
-          <table className="w-full text-sm">
+          <ConsoleTable>
             <thead>
-              <tr className="border-b border-hairline dark:border-[#262932]">
+              <tr>
                 {COLUMNS.map((col) => (
                   <SortableHeader
                     key={col.label || "actions"}
@@ -294,117 +244,100 @@ const UserManagement = () => {
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-hairline dark:divide-[#262932]">
+            <tbody>
               {users.map((user, i) => {
                 const isSelf = user._id === me?._id;
                 const isActive = user.isActive !== false;
                 return (
                   <motion.tr
                     key={user._id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: i * 0.03 }}
-                    className="hover:bg-hairline/20 dark:hover:bg-[#262932]/40 transition-colors"
+                    {...rowMotion(i)}
+                    onClick={() => setViewTarget(user)}
+                    className="group cursor-pointer"
                   >
-                    <td className="px-4 py-3">
+                    <td className={tdClass}>
                       <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 shrink-0 overflow-hidden border border-hairline dark:border-[#262932] bg-ink dark:bg-[#262932] grid place-items-center">
-                          {user.profileImageUrl ? (
-                            <Image
-                              src={user.profileImageUrl}
-                              alt=""
-                              width={32}
-                              height={32}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <span className="font-display text-xs text-paper dark:text-[#f0efe8]">
-                              {initials(user.name)}
-                            </span>
-                          )}
+                        <Avatar user={user} size="h-10 w-10 shrink-0 text-xs" />
+                        <div className="min-w-0">
+                          <p className="flex items-center gap-2">
+                            <span className="max-w-40 truncate font-semibold text-ink">{user.name}</span>
+                            {isSelf && (
+                              <span className="rounded-full bg-signal px-1.5 py-0.5 text-[10px] font-bold leading-none text-on-signal">
+                                You
+                              </span>
+                            )}
+                          </p>
+                          <p className="max-w-56 truncate text-xs text-slate">{user.email}</p>
                         </div>
-                        <span className="font-medium text-ink dark:text-[#f0efe8] max-w-36 truncate">
-                          {user.name}
-                        </span>
-                        {isSelf && (
-                          <span className="font-mono text-[10px] uppercase tracking-widest text-signal">
-                            You
-                          </span>
-                        )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-slate dark:text-[#8b8fa8] max-w-48 truncate">
-                      {user.email}
-                    </td>
-                    <td className="px-4 py-3 font-mono text-xs text-slate dark:text-[#8b8fa8] whitespace-nowrap">
+                    <td className={`${tdClass} whitespace-nowrap text-xs tabular-nums text-slate`}>
                       {user.phone || "—"}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className={tdClass}>
                       <div className="flex flex-wrap gap-1">
                         {(user.roles?.length ? user.roles : [ROLE_USER]).map((r) => (
                           <RoleBadge key={r} role={r} />
                         ))}
                       </div>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className={tdClass}>
                       <span
-                        className={`font-mono text-[10px] uppercase tracking-widest px-2 py-0.5 ${
-                          isActive ? "bg-ok/10 text-ok" : "bg-danger/10 text-danger"
+                        className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold leading-none ${
+                          isActive ? "bg-ok/12 text-ok" : "bg-danger/10 text-danger"
                         }`}
                       >
+                        {isActive ? <CheckCircle2 size={12} aria-hidden /> : <XCircle size={12} aria-hidden />}
                         {isActive ? "Active" : "Inactive"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs text-slate dark:text-[#8b8fa8] whitespace-nowrap">
+                    <td className={`${tdClass} whitespace-nowrap text-xs text-slate`}>
                       {formatDate(user.createdAt)}
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
+                    <td className={tdClass} onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <RowAction
                           onClick={() => setViewTarget(user)}
-                          className={`${iconButton} hover:border-ink dark:hover:border-[#f0efe8] hover:text-ink dark:hover:text-[#f0efe8]`}
                           aria-label={`View ${user.name}`}
                           title="View details"
                         >
-                          <Eye size={13} />
-                        </button>
-                        <button
+                          <Eye size={14} />
+                        </RowAction>
+                        <RowAction
+                          tone="signal"
                           onClick={() => setRoleTarget(user)}
-                          className={`${iconButton} hover:border-signal hover:text-signal`}
                           aria-label={`Change roles for ${user.name}`}
                           title="Change roles"
                         >
-                          <ShieldCheck size={13} />
-                        </button>
-                        <button
+                          <ShieldCheck size={14} />
+                        </RowAction>
+                        <RowAction
+                          tone={isActive ? "danger" : "ok"}
                           onClick={() => setStatusTarget(user)}
                           disabled={isSelf}
-                          className={`${iconButton} ${
-                            isActive ? "hover:border-danger hover:text-danger" : "hover:border-ok hover:text-ok"
-                          }`}
                           aria-label={`${isActive ? "Deactivate" : "Activate"} ${user.name}`}
                           title={isSelf ? "You can't deactivate yourself" : isActive ? "Deactivate" : "Activate"}
                         >
-                          {isActive ? <UserX size={13} /> : <UserCheck size={13} />}
-                        </button>
-                        <button
+                          {isActive ? <UserX size={14} /> : <UserCheck size={14} />}
+                        </RowAction>
+                        <RowAction
+                          tone="danger"
                           onClick={() => setDeleteTarget(user)}
                           disabled={isSelf}
-                          className={`${iconButton} hover:border-danger hover:text-danger`}
                           aria-label={`Delete ${user.name}`}
                           title={isSelf ? "You can't delete yourself" : "Delete user"}
                         >
-                          <Trash2 size={13} />
-                        </button>
+                          <Trash2 size={14} />
+                        </RowAction>
                       </div>
                     </td>
                   </motion.tr>
                 );
               })}
             </tbody>
-          </table>
+          </ConsoleTable>
         )}
-      </motion.div>
+      </TableCard>
 
       <Pagination total={data?.total ?? 0} pageSize={USER_MANAGEMENT_PAGE_SIZE} />
 

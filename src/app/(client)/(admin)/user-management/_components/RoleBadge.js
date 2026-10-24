@@ -1,17 +1,22 @@
+import { ShieldCheck, Store, User } from "lucide-react";
+
 const STYLES = {
-  ADMIN: "bg-blueprint-tint text-blueprint dark:bg-blueprint/20 dark:text-[#9aa6ff]",
-  MERCHANT: "bg-signal-tint text-signal-dim dark:bg-signal/15 dark:text-signal",
-  USER: "bg-hairline dark:bg-[#262932] text-slate-dim dark:text-[#8b8fa8]",
+  ADMIN: { label: "Admin", icon: ShieldCheck, tone: "bg-blueprint-tint text-blueprint-dim" },
+  MERCHANT: { label: "Merchant", icon: Store, tone: "bg-signal-tint text-signal-dim" },
+  USER: { label: "Customer", icon: User, tone: "bg-mist text-slate-dim" },
 };
 
-const RoleBadge = ({ role }) => (
-  <span
-    className={`font-mono text-[10px] uppercase tracking-widest px-2 py-0.5 whitespace-nowrap ${
-      STYLES[role?.toUpperCase()] ?? STYLES.USER
-    }`}
-  >
-    {role ?? "USER"}
-  </span>
-);
+const RoleBadge = ({ role }) => {
+  const style = STYLES[role?.toUpperCase()] ?? STYLES.USER;
+  const Icon = style.icon;
+  return (
+    <span
+      className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-1 text-[11px] font-semibold leading-none ${style.tone}`}
+    >
+      <Icon size={11} strokeWidth={2.4} aria-hidden />
+      {style.label}
+    </span>
+  );
+};
 
 export default RoleBadge;

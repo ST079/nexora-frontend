@@ -1,4 +1,5 @@
 "use client";
+import { MotionConfig } from "framer-motion";
 import { useEffect } from "react";
 import { Provider, useDispatch, useSelector } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
@@ -38,7 +39,8 @@ const AppProvider = ({ children }) => {
       <PersistGate loading={null} persistor={persistor}>
         <ThemeSync />
         <SessionWatcher />
-        {children}
+        {/* Framer animations drop movement for visitors who ask for reduced motion. */}
+        <MotionConfig reducedMotion="user">{children}</MotionConfig>
       </PersistGate>
     </Provider>
   );

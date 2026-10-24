@@ -1,18 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import {
-  AlertTriangle,
-  ArrowRight,
-  Check,
-  Eye,
-  EyeOff,
-  Loader2,
-} from "lucide-react";
 import AnimatedField from "@/components/AnimatedField";
-import AuthVisualPanel from "@/components/AuthVisualPanel";
+import AuthShell, { AuthError, PasswordToggle, SubmitButton } from "@/components/AuthShell";
 import { useForm } from "react-hook-form";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Suspense, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useSearchParams } from "next/navigation";
@@ -22,6 +14,17 @@ import { clearAuthError } from "@/redux/auth/authSlice";
 import { FORGOT_PASSWORD_ROUTE, REGISTER_ROUTE } from "@/constants/routes";
 import { USER_RULES } from "@/constants/user";
 import { withNext } from "@/utils/navigation";
+
+const PANEL = {
+  scene: "orders",
+  eyebrow: "Good to see you",
+  title: "Your bag and orders, right where you left them.",
+  points: [
+    "Follow each order from placed to delivered",
+    "Pay with Khalti, card or cash on delivery",
+    "Live stock counts on every product",
+  ],
+};
 
 const LoginForm = () => {
   const {
@@ -54,157 +57,71 @@ const LoginForm = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-paper dark:bg-[#0e0f12] transition-colors duration-300">
-      <AuthVisualPanel
-        eyebrow="Secure access"
-        title="Every session starts with a verified handshake."
-        log={[
-          "nexora-auth boot sequence",
-          "resolving endpoint… /api/v1/auth/login",
-          "handshake established",
-          "awaiting credentials",
-        ]}
-      />
+    <AuthShell
+      panel={PANEL}
+      eyebrow="Sign in"
+      title={
+        <>
+          Welcome <span className="marker">back</span>
+        </>
+      }
+      intro="Pick up your cart and order history where you left off."
+    >
+      <AuthError message={status === "error" ? error?.message || error : null} />
 
-      <div className="flex flex-1 items-center justify-center p-6 sm:p-10">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          className="w-full max-w-sm"
-        >
-          <p className="eyebrow dark:text-[#8b8fa8] mb-2">Account</p>
-          <h1 className="font-display text-3xl font-semibold mb-1 text-ink dark:text-[#f0efe8]">
-            Sign in
-          </h1>
-          <p className="text-sm text-slate dark:text-[#8b8fa8] mb-8">
-            Pick up your cart and order history where you left off.
-          </p>
+      <motion.form
+        noValidate
+        className="space-y-4"
+        onSubmit={handleSubmit(loginCredentials)}
+        animate={status === "error" ? { x: [0, -8, 8, -5, 5, 0] } : {}}
+        transition={{ duration: 0.4 }}
+      >
+        <AnimatedField
+          label="Email"
+          type="email"
+          autoComplete="email"
+          placeholder="you@example.com"
+          error={errors.email?.message}
+          {...register("email", USER_RULES.email)}
+        />
 
-          {/* Error banner */}
-          <AnimatePresence>
-            {status === "error" && (
-              <motion.div
-                initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-                animate={{ opacity: 1, height: "auto", marginBottom: 16 }}
-                exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                className="flex items-start gap-2 border border-danger/40 bg-danger/5 dark:bg-danger/10 px-3 py-2.5 text-sm text-danger"
-              >
-                <AlertTriangle size={15} className="mt-0.5 shrink-0" />
-                <span>{error?.message || error}</span>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Form */}
-          <motion.form
-            noValidate
-            className="space-y-4"
-            onSubmit={handleSubmit(loginCredentials)}
-            animate={status === "error" ? { x: [0, -8, 8, -5, 5, 0] } : {}}
-            transition={{ duration: 0.4 }}
-          >
-            <AnimatedField
-              label="Email"
-              type="email"
-              autoComplete="email"
-              placeholder="you@example.com"
-              error={errors.email?.message}
-              {...register("email", USER_RULES.email)}
-            />
-
-            <AnimatedField
-              label="Password"
-              type={showPassword ? "text" : "password"}
-              autoComplete="current-password"
-              placeholder="••••••••"
-              error={errors.password?.message}
-              {...register("password", {
-                required: "Password is required",
-                minLength: { value: 6, message: "At least 6 characters" },
-              })}
-              right={
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((s) => !s)}
-                  className="text-slate dark:text-[#8b8fa8] hover:text-ink dark:hover:text-[#f0efe8]"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-                </button>
-              }
-            />
-
-            <div className="flex justify-end">
-              <Link
-                href={FORGOT_PASSWORD_ROUTE}
-                className="font-mono text-xs text-slate dark:text-[#8b8fa8] hover:text-signal dark:hover:text-signal"
-              >
-                Forgot password?
-              </Link>
-            </div>
-
-            <motion.button
-              type="submit"
-              disabled={status === "loading" || status === "success"}
-              whileTap={{ scale: 0.98 }}
-              className={`relative flex w-full items-center justify-center gap-2 overflow-hidden px-5 py-3 text-sm font-medium tracking-wide text-paper transition-colors ${
-                status === "success"
-                  ? "bg-ok"
-                  : status === "error"
-                    ? "bg-danger"
-                    : "bg-ink hover:bg-signal dark:bg-[#f0efe8] dark:text-[#0e0f12] dark:hover:bg-signal dark:hover:text-paper"
-              }`}
-            >
-              <AnimatePresence mode="wait" initial={false}>
-                {status === "loading" && (
-                  <motion.span
-                    key="loading"
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                    className="flex items-center gap-2"
-                  >
-                    <Loader2 size={15} className="animate-spin" /> Verifying…
-                  </motion.span>
-                )}
-                {status === "success" && (
-                  <motion.span
-                    key="success"
-                    initial={{ opacity: 0, scale: 0.7 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="flex items-center gap-2"
-                  >
-                    <Check size={15} /> Signed in
-                  </motion.span>
-                )}
-                {(status === "idle" || status === "error") && (
-                  <motion.span
-                    key="idle"
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                    className="flex items-center gap-2"
-                  >
-                    Sign in <ArrowRight size={15} />
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </motion.button>
-          </motion.form>
-
-          <p className="mt-6 text-sm text-slate dark:text-[#8b8fa8]">
-            New to Nexora?{" "}
+        <div>
+          <AnimatedField
+            label="Password"
+            type={showPassword ? "text" : "password"}
+            autoComplete="current-password"
+            placeholder="••••••••"
+            error={errors.password?.message}
+            {...register("password", {
+              required: "Password is required",
+              minLength: { value: 6, message: "At least 6 characters" },
+            })}
+            right={
+              <PasswordToggle shown={showPassword} onToggle={() => setShowPassword((s) => !s)} />
+            }
+          />
+          <div className="mt-2 flex justify-end">
             <Link
-              href={withNext(REGISTER_ROUTE, next)}
-              className="text-ink dark:text-[#f0efe8] underline hover:text-signal dark:hover:text-signal"
+              href={FORGOT_PASSWORD_ROUTE}
+              className="text-xs font-semibold text-signal-dim transition-colors hover:text-signal"
             >
-              Create an account
+              Forgot password?
             </Link>
-          </p>
-        </motion.div>
+          </div>
+        </div>
+
+        <SubmitButton status={status} idle="Sign in" loading="Signing you in…" success="Signed in" />
+      </motion.form>
+
+      <div className="my-7 flex items-center gap-3 text-xs text-slate">
+        <span className="h-px flex-1 bg-hairline" />
+        New to Nexora?
+        <span className="h-px flex-1 bg-hairline" />
       </div>
-    </div>
+      <Link href={withNext(REGISTER_ROUTE, next)} className="btn-secondary w-full">
+        Create an account
+      </Link>
+    </AuthShell>
   );
 };
 

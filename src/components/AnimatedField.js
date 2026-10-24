@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, forwardRef, useId } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 
 const AnimatedField = forwardRef(
   (
@@ -32,15 +32,23 @@ const AnimatedField = forwardRef(
       <div className={className}>
         <label
           htmlFor={inputId}
-          className="font-mono text-xs text-slate dark:text-[#8b8fa8] mb-1 block"
+          className={`mb-1.5 flex items-center gap-1.5 text-xs font-semibold transition-colors ${
+            error ? "text-danger" : focused ? "text-signal-dim" : "text-slate-dim"
+          }`}
         >
           {label}
-          {required && <span className="text-danger"> *</span>}
+          {required && <span className="text-danger" aria-hidden>*</span>}
         </label>
 
-        <div className="relative">
+        {/* A short shake when an error appears, so it's noticed. */}
+        <motion.div
+          initial={false}
+          animate={error ? { x: [0, -5, 5, -3, 3, 0] } : { x: 0 }}
+          transition={{ duration: 0.35 }}
+          className="relative"
+        >
           {/* Handlers are taken out of `props` so react-hook-form's onBlur
-              can't replace ours and leave the focus underline stuck on. */}
+              can't replace ours and leave the focus state stuck on. */}
           <input
             ref={ref}
             id={inputId}
@@ -58,38 +66,32 @@ const AnimatedField = forwardRef(
               setFocused(false);
               onBlur?.(e);
             }}
-            className={`w-full border bg-paper dark:bg-[#16181f] text-ink dark:text-[#f0efe8] px-4 py-3 text-sm outline-none transition-colors placeholder:text-slate-light dark:placeholder:text-[#5b5e72] ${
-              error
-                ? "border-danger/60"
-                : "border-hairline dark:border-[#262932]"
+            className={`field ${
+              error ? "border-danger/60 focus:border-danger focus:ring-danger/15" : ""
             } ${right ? "pr-11" : ""}`}
             {...props}
           />
 
           {right && (
-            <div className="absolute right-0 top-0 h-full flex items-center pr-3">
+            <div className="absolute right-0 top-0 flex h-full items-center pr-3">
               {right}
             </div>
           )}
+        </motion.div>
 
-          <motion.span
-            className={`absolute -bottom-px left-0 h-0.5 ${error ? "bg-danger" : "bg-signal"}`}
-            initial={false}
-            animate={{ width: focused ? "100%" : "0%" }}
-            transition={{ duration: 0.25 }}
-          />
-        </div>
-
-        {message && (
-          <p
-            id={messageId}
-            className={`mt-1 font-mono text-[11px] ${
-              error ? "text-danger" : "text-slate dark:text-[#8b8fa8]"
-            }`}
-          >
-            {message}
-          </p>
-        )}
+        <AnimatePresence initial={false}>
+          {message && (
+            <motion.p
+              id={messageId}
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              className={`mt-1.5 text-[11px] ${error ? "font-medium text-danger" : "text-slate"}`}
+            >
+              {message}
+            </motion.p>
+          )}
+        </AnimatePresence>
       </div>
     );
   }

@@ -1,6 +1,9 @@
 "use client";
 
+import { useId } from "react";
+import { motion } from "framer-motion";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { spring } from "@/utils/motion";
 import { PRODUCT_MANAGEMENT_PAGE_SIZE } from "@/constants/pagination";
 import {
   ChevronLeft,
@@ -16,6 +19,8 @@ export const PaginationControls = ({
   pageSize = PRODUCT_MANAGEMENT_PAGE_SIZE,
   onPageChange,
 }) => {
+  // Two paginated lists on one page each get their own sliding highlight.
+  const layoutGroup = useId();
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   // A stale ?page=99 still shows the real last page's range.
   const page = Math.min(Math.max(1, requestedPage), totalPages);
@@ -41,23 +46,23 @@ export const PaginationControls = ({
   };
 
   const btnBase =
-    "grid h-8 w-8 place-items-center border border-hairline dark:border-[#262932] text-slate dark:text-[#8b8fa8] hover:border-ink dark:hover:border-[#f0efe8] hover:text-ink dark:hover:text-[#f0efe8] disabled:opacity-30 disabled:cursor-not-allowed transition-colors";
+    "grid h-9 w-9 place-items-center rounded-full text-slate transition-all hover:bg-mist hover:text-ink active:scale-90 disabled:pointer-events-none disabled:opacity-30";
 
   return (
     <nav
       aria-label="Pagination"
-      className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3"
+      className="mt-8 flex flex-col items-center justify-between gap-3 sm:flex-row"
     >
-      <p className="font-mono text-xs text-slate dark:text-[#8b8fa8]">
+      <p className="font-mono text-xs text-slate">
         Showing{" "}
-        <span className="text-ink dark:text-[#f0efe8]">
+        <span className="text-ink">
           {startIndex}–{endIndex}
         </span>{" "}
-        of <span className="text-ink dark:text-[#f0efe8]">{total}</span>{" "}
+        of <span className="text-ink">{total}</span>{" "}
         {total === 1 ? "result" : "results"}
       </p>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-0.5 rounded-full border border-hairline bg-panel p-1 shadow-soft">
         <button
           type="button"
           onClick={() => goToPage(1)}
@@ -65,7 +70,7 @@ export const PaginationControls = ({
           className={btnBase}
           aria-label="First page"
         >
-          <ChevronsLeft size={13} />
+          <ChevronsLeft size={15} />
         </button>
 
         <button
@@ -75,7 +80,7 @@ export const PaginationControls = ({
           className={btnBase}
           aria-label="Previous page"
         >
-          <ChevronLeft size={13} />
+          <ChevronLeft size={15} />
         </button>
 
         {pageRange().map((p) => (
@@ -85,13 +90,18 @@ export const PaginationControls = ({
             onClick={() => goToPage(p)}
             aria-current={p === page ? "page" : undefined}
             aria-label={`Page ${p}`}
-            className={`h-8 min-w-8 px-2 font-mono text-xs border transition-colors ${
-              p === page
-                ? "border-ink dark:border-[#f0efe8] bg-ink dark:bg-[#f0efe8] text-paper dark:text-[#0e0f12]"
-                : "border-hairline dark:border-[#262932] text-slate dark:text-[#8b8fa8] hover:border-ink dark:hover:border-[#f0efe8] hover:text-ink dark:hover:text-[#f0efe8]"
+            className={`relative h-9 min-w-9 rounded-full px-2 font-mono text-xs transition-colors ${
+              p === page ? "font-semibold text-paper" : "text-slate hover:bg-mist hover:text-ink"
             }`}
           >
-            {p}
+            {p === page && (
+              <motion.span
+                layoutId={`page-active-${layoutGroup}`}
+                transition={spring}
+                className="absolute inset-0 rounded-full bg-ink"
+              />
+            )}
+            <span className="relative">{p}</span>
           </button>
         ))}
 
@@ -102,7 +112,7 @@ export const PaginationControls = ({
           className={btnBase}
           aria-label="Next page"
         >
-          <ChevronRight size={13} />
+          <ChevronRight size={15} />
         </button>
 
         <button
@@ -112,7 +122,7 @@ export const PaginationControls = ({
           className={btnBase}
           aria-label="Last page"
         >
-          <ChevronsRight size={13} />
+          <ChevronsRight size={15} />
         </button>
       </div>
     </nav>

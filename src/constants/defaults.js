@@ -5,21 +5,18 @@ export const DEFAULT_MIN_Price = 0;
 export const DEFAULT_MAX_Price = "";
 export const DEFAULT_CATEGORY = "";
 
-export const DEFAULT_LOG = [
-  "nexora-auth boot sequence",
-  "resolving endpoint… /api/v1/auth",
-  "handshake established",
-  "awaiting credentials",
-];
-
+// Placeholder for products without a photo, drawn in the light palette
+// (mist, hairline, slate-light) so it reads as a soft empty shelf.
 export const FALLBACK_IMG =
   "data:image/svg+xml;utf8," +
   encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600">
-      <rect width="600" height="600" fill="#FAFAF7"/>
-      <rect x="0.5" y="0.5" width="599" height="599" fill="none" stroke="#E3E1D8"/>
-      <g stroke="#E3E1D8"><line x1="0" y1="0" x2="600" y2="600"/><line x1="600" y1="0" x2="0" y2="600"/></g>
-      <text x="300" y="308" font-family="monospace" font-size="13" fill="#6B7280" text-anchor="middle">NO IMAGE</text>
+      <rect width="600" height="600" fill="#f0ece4"/>
+      <g fill="none" stroke="#9a95a5" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M228 262h144l-10 118a16 16 0 0 1-16 15H254a16 16 0 0 1-16-15z"/>
+        <path d="M264 262v-16a36 36 0 0 1 72 0v16"/>
+      </g>
+      <text x="300" y="452" font-family="ui-monospace,monospace" font-size="18" letter-spacing="3" fill="#9a95a5" text-anchor="middle">NO PHOTO YET</text>
     </svg>`,
   );
 

@@ -1,10 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, Check, Eye, EyeOff, Loader2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import AnimatedField from "@/components/AnimatedField";
-import AuthVisualPanel from "@/components/AuthVisualPanel";
-import { useForm } from "react-hook-form";
+import AuthShell, {
+  AuthError,
+  PasswordMeter,
+  PasswordToggle,
+  SubmitButton,
+} from "@/components/AuthShell";
+import { useForm, useWatch } from "react-hook-form";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import { useSearchParams } from "next/navigation";
@@ -15,14 +20,42 @@ import { clearAuthError } from "@/redux/auth/authSlice";
 import { LOGIN_ROUTE } from "@/constants/routes";
 import { NEPAL_PROVINCES, USER_RULES } from "@/constants/user";
 import { withNext } from "@/utils/navigation";
+import { EASE_OUT } from "@/utils/motion";
+
+const PANEL = {
+  scene: "welcome",
+  eyebrow: "Join Nexora",
+  title: "One account for every order and address.",
+  points: [
+    "Your address fills itself in at checkout",
+    "Track orders from placed to delivered",
+    "Shop products from Nexora merchants",
+  ],
+};
+
+// Two short steps feel lighter than one long form.
+const STEPS = [
+  { label: "About you", fields: ["name", "phone", "email", "password"] },
+  { label: "Delivery", fields: ["province", "city", "street"] },
+];
+
+const slide = {
+  enter: (dir) => ({ opacity: 0, x: dir * 32 }),
+  center: { opacity: 1, x: 0, transition: { duration: 0.35, ease: EASE_OUT } },
+  exit: (dir) => ({ opacity: 0, x: dir * -32, transition: { duration: 0.18 } }),
+};
 
 const RegisterForm = () => {
   const {
     register,
     handleSubmit,
+    trigger,
+    control,
     formState: { errors },
   } = useForm({ defaultValues: { country: "Nepal", province: "" } });
+  const password = useWatch({ control, name: "password" }) ?? "";
   const [showPassword, setShowPassword] = useState(false);
+  const [step, setStep] = useState(0);
   const dispatch = useDispatch();
   const next = useSearchParams().get("next");
 
@@ -41,127 +74,150 @@ const RegisterForm = () => {
     }
   };
 
+  // Step one only checks its own fields; the address fields aren't mounted
+  // yet, so submitting from here must never reach the API.
+  const continueToDelivery = async (e) => {
+    e.preventDefault();
+    if (await trigger(STEPS[0].fields)) setStep(1);
+  };
+
+  const dir = step === 1 ? 1 : -1;
+
   return (
-    <div className="flex min-h-screen bg-paper dark:bg-[#0e0f12] transition-colors duration-300">
-      <AuthVisualPanel
-        eyebrow="New account"
-        title="One profile. Every order, address and receipt in one place."
-        log={[
-          "nexora-auth boot sequence",
-          "resolving endpoint… /api/v1/auth/register",
-          "provisioning profile",
-          "awaiting details",
-        ]}
-      />
-
-      <div className="flex flex-1 items-center justify-center p-6 sm:p-10">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          className="w-full max-w-lg"
-        >
-          <p className="eyebrow dark:text-[#8b8fa8] mb-2">Account</p>
-          <h1 className="font-display text-3xl font-semibold mb-1 text-ink dark:text-[#f0efe8]">
-            Create your account
-          </h1>
-          <p className="text-sm text-slate dark:text-[#8b8fa8] mb-8">
-            Takes under a minute. We use your address as the default for delivery.
-          </p>
-
-          {/* Error banner */}
-          <AnimatePresence>
-            {status === "error" && (
-              <motion.div
-                role="alert"
-                initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-                animate={{ opacity: 1, height: "auto", marginBottom: 16 }}
-                exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                className="flex items-start gap-2 border border-danger/40 bg-danger/5 dark:bg-danger/10 px-3 py-2.5 text-sm text-danger"
-              >
-                <AlertTriangle size={15} className="mt-0.5 shrink-0" />
-                <span>{error?.message || error}</span>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Form */}
-          <motion.form
-            noValidate
-            onSubmit={handleSubmit(registerCredentials)}
-            className="space-y-4"
-            animate={status === "error" ? { x: [0, -8, 8, -5, 5, 0] } : {}}
-            transition={{ duration: 0.4 }}
-          >
-            <div className="grid sm:grid-cols-2 gap-4">
-              <AnimatedField
-                label="Full name"
-                autoComplete="name"
-                required
-                error={errors.name?.message}
-                {...register("name", USER_RULES.name)}
+    <AuthShell
+      panel={PANEL}
+      width="max-w-md"
+      eyebrow="New account"
+      title={
+        <>
+          Create your <span className="marker">account</span>
+        </>
+      }
+      intro="Takes under a minute. Your address becomes the default for delivery."
+    >
+      <div className="mb-6">
+        <div className="mb-2 flex justify-between text-xs font-semibold">
+          <span className="text-ink">
+            Step {step + 1} of {STEPS.length}
+          </span>
+          <span className="text-slate">{STEPS[step].label}</span>
+        </div>
+        <div aria-hidden className="grid grid-cols-2 gap-1.5">
+          {STEPS.map((s, i) => (
+            <span key={s.label} className="h-1.5 overflow-hidden rounded-full bg-mist">
+              <motion.span
+                initial={false}
+                animate={{ scaleX: i <= step ? 1 : 0 }}
+                transition={{ duration: 0.5, ease: EASE_OUT }}
+                className="block h-full origin-left rounded-full bg-signal"
               />
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <AuthError message={status === "error" ? error?.message || error : null} />
+
+      <motion.form
+        noValidate
+        onSubmit={step === 0 ? continueToDelivery : handleSubmit(registerCredentials)}
+        animate={status === "error" ? { x: [0, -8, 8, -5, 5, 0] } : {}}
+        transition={{ duration: 0.4 }}
+      >
+        <input type="hidden" {...register("country")} />
+
+        <AnimatePresence mode="wait" initial={false} custom={dir}>
+          {step === 0 ? (
+            <motion.div
+              key="you"
+              custom={dir}
+              variants={slide}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              className="space-y-4"
+            >
+              <div className="grid gap-4 sm:grid-cols-2">
+                <AnimatedField
+                  label="Full name"
+                  autoComplete="name"
+                  required
+                  error={errors.name?.message}
+                  {...register("name", USER_RULES.name)}
+                />
+                <AnimatedField
+                  label="Phone"
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel-national"
+                  placeholder="98XXXXXXXX"
+                  required
+                  error={errors.phone?.message}
+                  {...register("phone", USER_RULES.phone)}
+                />
+              </div>
+
               <AnimatedField
-                label="Phone"
-                type="tel"
-                inputMode="numeric"
-                autoComplete="tel-national"
-                placeholder="98XXXXXXXX"
+                label="Email"
+                type="email"
+                autoComplete="email"
+                placeholder="you@example.com"
                 required
-                error={errors.phone?.message}
-                {...register("phone", USER_RULES.phone)}
+                error={errors.email?.message}
+                {...register("email", USER_RULES.email)}
               />
-            </div>
 
-            <AnimatedField
-              label="Email"
-              type="email"
-              autoComplete="email"
-              placeholder="you@example.com"
-              required
-              error={errors.email?.message}
-              {...register("email", USER_RULES.email)}
-            />
+              <div>
+                <AnimatedField
+                  label="Password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  required
+                  hint={errors.password ? undefined : "At least 6 characters"}
+                  error={errors.password?.message}
+                  {...register("password", USER_RULES.password)}
+                  right={
+                    <PasswordToggle
+                      shown={showPassword}
+                      onToggle={() => setShowPassword((s) => !s)}
+                    />
+                  }
+                />
+                <PasswordMeter value={password} />
+              </div>
 
-            <AnimatedField
-              label="Password"
-              type={showPassword ? "text" : "password"}
-              autoComplete="new-password"
-              required
-              hint={errors.password ? undefined : "At least 6 characters"}
-              error={errors.password?.message}
-              {...register("password", USER_RULES.password)}
-              right={
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((s) => !s)}
-                  className="text-slate dark:text-[#8b8fa8] hover:text-ink dark:hover:text-[#f0efe8]"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-                </button>
-              }
-            />
-
-            <fieldset className="grid sm:grid-cols-2 gap-4">
-              <legend className="eyebrow dark:text-[#8b8fa8] mb-3 sm:col-span-2">
-                Delivery address
-              </legend>
-
+              <SubmitButton idle="Continue to delivery" />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="delivery"
+              custom={dir}
+              variants={slide}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              className="space-y-4"
+            >
               <div>
                 <label
                   htmlFor="register-province"
-                  className="font-mono text-xs text-slate dark:text-[#8b8fa8] mb-1 block"
+                  className={`mb-1.5 flex items-center gap-1.5 text-xs font-semibold ${
+                    errors.province ? "text-danger" : "text-slate-dim"
+                  }`}
                 >
-                  Province<span className="text-danger"> *</span>
+                  Province
+                  <span className="text-danger" aria-hidden>
+                    *
+                  </span>
                 </label>
                 <select
                   id="register-province"
+                  autoFocus
+                  autoComplete="address-level1"
                   aria-invalid={errors.province ? true : undefined}
-                  className={`w-full border bg-paper dark:bg-[#16181f] text-ink dark:text-[#f0efe8] px-4 py-3 text-sm outline-none focus:border-signal ${
-                    errors.province
-                      ? "border-danger/60"
-                      : "border-hairline dark:border-[#262932]"
+                  aria-describedby={errors.province ? "register-province-message" : undefined}
+                  className={`field cursor-pointer ${
+                    errors.province ? "border-danger/60 focus:border-danger focus:ring-danger/15" : ""
                   }`}
                   {...register("province", { required: "Province is required" })}
                 >
@@ -175,75 +231,67 @@ const RegisterForm = () => {
                   ))}
                 </select>
                 {errors.province && (
-                  <p className="mt-1 font-mono text-[11px] text-danger">
+                  <p id="register-province-message" className="mt-1.5 text-[11px] font-medium text-danger">
                     {errors.province.message}
                   </p>
                 )}
               </div>
 
-              <AnimatedField
-                label="City"
-                autoComplete="address-level2"
-                required
-                error={errors.city?.message}
-                {...register("city", { required: "City is required" })}
-              />
-              <AnimatedField
-                label="Street"
-                autoComplete="address-line1"
-                {...register("street")}
-              />
-              <AnimatedField
-                label="Country"
-                autoComplete="country-name"
-                {...register("country")}
-              />
-            </fieldset>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <AnimatedField
+                  label="City"
+                  autoComplete="address-level2"
+                  placeholder="e.g. Pokhara"
+                  required
+                  error={errors.city?.message}
+                  {...register("city", { required: "City is required" })}
+                />
+                <AnimatedField
+                  label="Street"
+                  autoComplete="address-line1"
+                  hint="Optional"
+                  {...register("street")}
+                />
+              </div>
 
-            <motion.button
-              type="submit"
-              disabled={status === "loading" || status === "success"}
-              whileTap={{ scale: 0.98 }}
-              className={`relative flex w-full items-center justify-center gap-2 px-5 py-3 text-sm font-medium tracking-wide text-paper transition-colors ${
-                status === "success"
-                  ? "bg-ok"
-                  : status === "error"
-                    ? "bg-danger"
-                    : "bg-ink hover:bg-signal dark:bg-[#f0efe8] dark:text-[#0e0f12] dark:hover:bg-signal dark:hover:text-paper"
-              }`}
-            >
-              <AnimatePresence mode="wait" initial={false}>
-                {status === "loading" && (
-                  <motion.span key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
-                    <Loader2 size={15} className="animate-spin" /> Creating account…
-                  </motion.span>
-                )}
-                {status === "success" && (
-                  <motion.span key="success" initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }} className="flex items-center gap-2">
-                    <Check size={15} /> Account created
-                  </motion.span>
-                )}
-                {(status === "idle" || status === "error") && (
-                  <motion.span key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
-                    Create account <ArrowRight size={15} />
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </motion.button>
-          </motion.form>
+              <p className="rounded-2xl bg-mist px-4 py-3 text-xs text-slate">
+                This becomes your default delivery address. You can change it at checkout.
+              </p>
 
-          <p className="mt-6 text-sm text-slate dark:text-[#8b8fa8]">
-            Already have an account?{" "}
-            <Link
-              href={withNext(LOGIN_ROUTE, next)}
-              className="text-ink dark:text-[#f0efe8] underline hover:text-signal dark:hover:text-signal"
-            >
-              Sign in
-            </Link>
-          </p>
-        </motion.div>
-      </div>
-    </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setStep(0)}
+                  disabled={status === "loading" || status === "success"}
+                  className="icon-btn h-12 w-12"
+                  aria-label="Back to your details"
+                >
+                  <ArrowLeft size={16} />
+                </button>
+                <div className="flex-1">
+                  <SubmitButton
+                    status={status}
+                    idle="Create account"
+                    loading="Creating account…"
+                    success="Account created"
+                  />
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.form>
+
+      <p className="mt-7 text-center text-sm text-slate">
+        Already have an account?{" "}
+        <Link
+          href={withNext(LOGIN_ROUTE, next)}
+          className="font-semibold text-signal-dim transition-colors hover:text-signal"
+        >
+          Sign in
+        </Link>
+      </p>
+    </AuthShell>
   );
 };
 

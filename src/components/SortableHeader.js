@@ -6,7 +6,7 @@ import { sortDirection } from "@/utils/sort";
 const ICONS = { ascending: ArrowUp, descending: ArrowDown, none: ArrowUpDown };
 
 const thClass =
-  "px-4 py-3 text-left font-mono text-[11px] uppercase tracking-widest text-slate dark:text-[#8b8fa8] whitespace-nowrap";
+  "px-4 py-3 text-left font-mono text-[11px] uppercase tracking-widest text-slate whitespace-nowrap";
 
 // A <th> whose label is a real button, so sorting works from the keyboard
 // and screen readers hear the current order through aria-sort.
@@ -25,8 +25,8 @@ const SortableHeader = ({ label, field, sortKey, onSort }) => {
       <button
         type="button"
         onClick={() => onSort(field)}
-        className={`inline-flex items-center gap-1 uppercase tracking-widest hover:text-ink dark:hover:text-[#f0efe8] transition-colors ${
-          state !== "none" ? "text-ink dark:text-[#f0efe8]" : ""
+        className={`-mx-2 inline-flex items-center gap-1 rounded-full px-2 py-1 uppercase tracking-widest transition-colors hover:bg-mist hover:text-ink ${
+          state !== "none" ? "bg-signal-tint text-signal-dim" : ""
         }`}
       >
         {label}

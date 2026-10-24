@@ -6,8 +6,17 @@ import { ChevronDown, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { PRODUCTS_ROUTE } from "@/constants/routes";
 import { categories } from "@/constants/categories";
+import { spring } from "@/utils/motion";
 
-const ProductsMenu = () => {
+// Rotating tile colours keep the mega menu lively without a rainbow:
+// violet, marigold and teal tints, each with its readable text colour.
+export const CATEGORY_TONES = [
+  "bg-signal-tint text-signal-dim",
+  "bg-marigold-tint text-marigold-dim",
+  "bg-blueprint-tint text-blueprint-dim",
+];
+
+const ProductsMenu = ({ active = false }) => {
   const [open, setOpen] = useState(false);
   const containerRef = useRef(null);
 
@@ -30,74 +39,85 @@ const ProductsMenu = () => {
         href={PRODUCTS_ROUTE}
         aria-haspopup="true"
         aria-expanded={open}
-        className={`eyebrow flex items-center gap-1 transition-colors hover:text-ink dark:hover:text-[#f0efe8] ${
-          open
-            ? "text-ink dark:text-[#f0efe8]"
-            : "text-slate dark:text-[#8b8fa8]"
+        aria-current={active ? "page" : undefined}
+        className={`relative flex items-center gap-1 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+          active || open ? "text-ink" : "text-slate hover:text-ink"
         }`}
       >
-        Products
-        <motion.span
-          animate={{ rotate: open ? 180 : 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          <ChevronDown size={12} />
+        {active && (
+          <motion.span
+            layoutId="nav-active"
+            transition={spring}
+            className="absolute inset-0 -z-10 rounded-full bg-panel shadow-soft"
+          />
+        )}
+        Shop
+        <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
+          <ChevronDown size={13} />
         </motion.span>
       </Link>
 
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute left-1/2 top-full z-30 w-[560px] -translate-x-1/2 pt-3"
+            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 6, scale: 0.98 }}
+            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute left-1/2 top-full z-30 w-[620px] -translate-x-1/2 pt-4"
           >
-            <div className="card-frame shadow-lift p-5">
-
-              <div className="flex items-center justify-between mb-4">
-                <p className="eyebrow dark:text-[#8b8fa8]">Shop by category</p>
-                <Link
-                  href={PRODUCTS_ROUTE}
-                  onClick={() => setOpen(false)}
-                  className="font-mono text-xs text-slate dark:text-[#8b8fa8] hover:text-signal dark:hover:text-signal inline-flex items-center gap-1 transition-colors"
-                >
-                  All products <ArrowRight size={11} />
-                </Link>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
+            <div className="card-frame grid grid-cols-[1fr_180px] gap-3 p-3 shadow-lift">
+              <div className="grid grid-cols-2 gap-1.5">
                 {categories.map((c, i) => (
                   <motion.div
                     key={c.label}
-                    initial={{ opacity: 0, y: 6 }}
+                    initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.2, delay: i * 0.025 }}
+                    transition={{ duration: 0.25, delay: i * 0.02 }}
                   >
                     <Link
                       href={`${PRODUCTS_ROUTE}?category=${encodeURIComponent(c.label)}`}
                       onClick={() => setOpen(false)}
-                      className="group flex items-start gap-3 border border-hairline dark:border-[#262932] p-3 hover:border-ink dark:hover:border-[#f0efe8] transition-colors"
+                      className="group flex items-center gap-3 rounded-2xl p-2.5 transition-colors hover:bg-mist"
                     >
-                      {/* Icon box */}
-                      <span className="grid h-9 w-9 shrink-0 place-items-center bg-paper dark:bg-[#0e0f12] border border-hairline dark:border-[#262932] text-ink dark:text-[#f0efe8] group-hover:bg-ink group-hover:text-paper group-hover:border-ink dark:group-hover:bg-[#f0efe8] dark:group-hover:text-[#0e0f12] dark:group-hover:border-[#f0efe8] transition-colors">
-                        <c.icon size={16} />
+                      <span
+                        className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl transition-transform duration-300 ease-spring group-hover:-rotate-6 group-hover:scale-110 ${
+                          CATEGORY_TONES[i % CATEGORY_TONES.length]
+                        }`}
+                      >
+                        <c.icon size={18} />
                       </span>
-
-                      {/* Label + blurb */}
-                      <span>
-                        <span className="block text-sm font-medium text-ink dark:text-[#f0efe8] group-hover:text-signal dark:group-hover:text-signal transition-colors">
-                          {c.label}
-                        </span>
-                        <span className="block font-mono text-[11px] text-slate dark:text-[#8b8fa8]">
-                          {c.blurb}
-                        </span>
+                      <span className="min-w-0">
+                        <span className="block text-sm font-semibold text-ink">{c.label}</span>
+                        <span className="block truncate text-xs text-slate">{c.blurb}</span>
                       </span>
                     </Link>
                   </motion.div>
                 ))}
               </div>
+
+              <Link
+                href={PRODUCTS_ROUTE}
+                onClick={() => setOpen(false)}
+                className="group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-signal p-4 text-on-signal"
+              >
+                <span
+                  aria-hidden
+                  className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-marigold/90 transition-transform duration-700 ease-spring group-hover:scale-125"
+                />
+                <span className="relative font-mono text-[10px] uppercase tracking-[0.18em] opacity-80">
+                  Everything
+                </span>
+                <span className="relative">
+                  <span className="block font-display text-2xl font-bold leading-tight">
+                    Browse the whole store
+                  </span>
+                  <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold">
+                    Shop all
+                    <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
+                  </span>
+                </span>
+              </Link>
             </div>
           </motion.div>
         )}

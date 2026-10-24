@@ -4,10 +4,14 @@ import { useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   AlertTriangle,
+  CheckCircle2,
+  Package,
   PackageOpen,
   Pencil,
   Plus,
+  RefreshCw,
   Trash2,
+  XCircle,
 } from "lucide-react";
 import Image from "next/image";
 import { useSelector } from "react-redux";
@@ -15,8 +19,20 @@ import toast from "react-hot-toast";
 import StatusBadge from "./StockStatusBadge";
 import ProductModal from "./ProductModal";
 import DeleteModal from "./DeleteModal";
+import {
+  ConsoleHeader,
+  ConsoleTable,
+  FilterChips,
+  RowAction,
+  StatStrip,
+  TableCard,
+  TableEmpty,
+  TableError,
+  TableSkeleton,
+  rowMotion,
+  tdClass,
+} from "../../_components/Console";
 import Pagination from "@/components/Pagination";
-import Loader from "@/components/Loader";
 import SearchField from "@/components/SearchField";
 import SortableHeader from "@/components/SortableHeader";
 import { EMPTY_FORM } from "@/constants/defaults";
@@ -43,8 +59,8 @@ const COLUMNS = [
 
 const STOCK_FILTERS = [
   { value: "", label: "All" },
-  { value: "low", label: "Low stock" },
-  { value: "out", label: "Out of stock" },
+  { value: "low", label: "Low stock", dot: "bg-marigold" },
+  { value: "out", label: "Out of stock", dot: "bg-danger" },
 ];
 
 const ProductDashboard = () => {
@@ -117,76 +133,81 @@ const ProductDashboard = () => {
   };
 
   const statTiles = [
-    { label: isAdmin ? "Total products" : "Your products", value: stats.data?.total },
+    {
+      label: isAdmin ? "Total products" : "Your products",
+      value: stats.data?.total,
+      icon: Package,
+      tone: "bg-signal-tint text-signal-dim",
+    },
     {
       label: "In stock",
       value: stats.data ? stats.data.total - stats.data.out : undefined,
+      icon: CheckCircle2,
+      tone: "bg-ok/12 text-ok",
     },
-    { label: "Low stock", value: stats.data?.low, filter: "low" },
-    { label: "Out of stock", value: stats.data?.out, filter: "out" },
-  ];
+    {
+      label: "Low stock",
+      value: stats.data?.low,
+      icon: AlertTriangle,
+      tone: "bg-marigold-tint text-marigold-dim",
+      filter: "low",
+    },
+    {
+      label: "Out of stock",
+      value: stats.data?.out,
+      icon: XCircle,
+      tone: "bg-danger/10 text-danger",
+      filter: "out",
+    },
+  ].map(({ filter, ...tile }) =>
+    filter
+      ? {
+          ...tile,
+          active: stock === filter,
+          onClick: () => setParams({ stock: stock === filter ? "" : filter }),
+        }
+      : tile,
+  );
 
   return (
-    <div className="container-page py-8 lg:py-10 transition-colors duration-300">
-      {/* Header */}
-      <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
-        <motion.div {...fadeUp()}>
-          <p className="eyebrow dark:text-[#8b8fa8] mb-2">
-            {isAdmin ? "Admin" : "Merchant"} · Products
-          </p>
-          <h1 className="font-display text-3xl font-semibold text-ink dark:text-[#f0efe8]">
-            {isAdmin ? "Product management" : "Your products"}
-          </h1>
-        </motion.div>
-        <motion.button
-          {...fadeUp(0.05)}
-          onClick={() => setEditProduct(EMPTY_FORM)}
-          className="btn-primary"
-        >
-          <Plus size={15} /> Add product
-        </motion.button>
-      </div>
-
-      {/* Stats strip — counts cover every product, not just this page */}
-      <motion.div
-        {...fadeUp(0.07)}
-        className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-hairline dark:bg-[#262932] border border-hairline dark:border-[#262932] mb-6"
-      >
-        {statTiles.map((s) => {
-          const active = s.filter && stock === s.filter;
-          const body = (
+    <div className="container-page py-8 transition-colors duration-300 lg:py-10">
+      <ConsoleHeader
+        eyebrow={`${isAdmin ? "Admin" : "Merchant"} · Products`}
+        title={
+          isAdmin ? (
             <>
-              <p className="font-display text-2xl font-semibold text-ink dark:text-[#f0efe8]">
-                {s.value ?? "—"}
-              </p>
-              <p className="eyebrow dark:text-[#8b8fa8] mt-1">{s.label}</p>
+              Product <span className="marker">management</span>
             </>
-          );
-          return s.filter ? (
-            <button
-              key={s.label}
-              onClick={() => setParams({ stock: active ? "" : s.filter })}
-              aria-pressed={active}
-              className={`text-left px-5 py-4 transition-colors ${
-                active
-                  ? "bg-signal-tint dark:bg-signal/10"
-                  : "bg-paper dark:bg-[#0e0f12] hover:bg-hairline/30 dark:hover:bg-[#16181f]"
-              }`}
-            >
-              {body}
-            </button>
           ) : (
-            <div key={s.label} className="px-5 py-4 bg-paper dark:bg-[#0e0f12]">
-              {body}
-            </div>
-          );
-        })}
-      </motion.div>
+            <>
+              Your <span className="marker">products</span>
+            </>
+          )
+        }
+        description="Add, edit and restock listings. Tap a stock tile to filter the table."
+      >
+        <button
+          type="button"
+          onClick={refresh}
+          disabled={loading}
+          className="icon-btn"
+          aria-label="Refresh products"
+          title="Refresh"
+        >
+          <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
+        </button>
+        <button type="button" onClick={() => setEditProduct(EMPTY_FORM)} className="btn-primary group">
+          <Plus size={16} className="transition-transform duration-300 group-hover:rotate-90" />
+          Add product
+        </button>
+      </ConsoleHeader>
 
-      {/* Filters */}
+      {/* Counts cover every product, not just this page. */}
+      <StatStrip tiles={statTiles} loading={stats.loading} />
+
       <motion.div
         {...fadeUp(0.1)}
-        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4"
+        className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
       >
         <SearchField
           value={search}
@@ -195,75 +216,52 @@ const ProductDashboard = () => {
           label="Search products"
           className="w-full sm:max-w-sm"
         />
-        <div role="group" aria-label="Filter by stock" className="flex gap-1">
-          {STOCK_FILTERS.map((f) => {
-            const active = stock === f.value;
-            return (
-              <button
-                key={f.value || "all"}
-                onClick={() => setParams({ stock: f.value })}
-                aria-pressed={active}
-                className={`px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest border transition-colors ${
-                  active
-                    ? "border-ink dark:border-[#f0efe8] bg-ink dark:bg-[#f0efe8] text-paper dark:text-[#0e0f12]"
-                    : "border-hairline dark:border-[#262932] text-slate dark:text-[#8b8fa8] hover:border-ink dark:hover:border-[#f0efe8] hover:text-ink dark:hover:text-[#f0efe8]"
-                }`}
-              >
-                {f.label}
-              </button>
-            );
-          })}
-        </div>
+        <FilterChips
+          label="Filter by stock"
+          layoutId="product-stock-filter"
+          options={STOCK_FILTERS}
+          value={stock}
+          onChange={(value) => setParams({ stock: value })}
+        />
       </motion.div>
 
-      {/* Table */}
-      <motion.div
-        {...fadeUp(0.12)}
-        className="border border-hairline dark:border-[#262932] overflow-x-auto"
-      >
-        {loading ? (
-          <Loader label="Loading products" />
+      <TableCard stale={loading && Boolean(data)}>
+        {loading && !data ? (
+          <TableSkeleton label="Loading products" />
         ) : error ? (
-          <div role="alert" className="flex flex-col items-center justify-center py-20 gap-3 text-center px-6">
-            <AlertTriangle size={26} className="text-danger" />
-            <p className="font-display font-semibold text-ink dark:text-[#f0efe8]">
-              Couldn&apos;t load products
-            </p>
-            <p className="text-sm text-slate dark:text-[#8b8fa8]">
-              {apiErrorMessage(error, "Check your connection and try again.")}
-            </p>
-            <button onClick={refresh} className="btn-secondary mt-2">
-              Try again
-            </button>
-          </div>
+          <TableError
+            title="Couldn't load products"
+            message={apiErrorMessage(error, "Check your connection and try again.")}
+            onRetry={refresh}
+          />
         ) : products.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-3 text-center px-6">
-            <PackageOpen size={28} className="text-slate dark:text-[#8b8fa8]" />
-            <p className="font-display font-semibold text-ink dark:text-[#f0efe8]">
-              {hasFilters ? "No products match" : "No products yet"}
-            </p>
-            <p className="text-sm text-slate dark:text-[#8b8fa8]">
-              {hasFilters
+          <TableEmpty
+            icon={PackageOpen}
+            title={hasFilters ? "No products match" : "No products yet"}
+            description={
+              hasFilters
                 ? "Try a different search or stock filter."
-                : "Add your first product to start selling."}
-            </p>
+                : "Add your first product to start selling."
+            }
+          >
             {hasFilters ? (
               <button
+                type="button"
                 onClick={() => setParams({ search: "", stock: "" })}
-                className="btn-secondary mt-2"
+                className="btn-secondary"
               >
                 Clear filters
               </button>
             ) : (
-              <button onClick={() => setEditProduct(EMPTY_FORM)} className="btn-primary mt-2">
+              <button type="button" onClick={() => setEditProduct(EMPTY_FORM)} className="btn-primary">
                 <Plus size={15} /> Add product
               </button>
             )}
-          </div>
+          </TableEmpty>
         ) : (
-          <table className="w-full text-sm">
+          <ConsoleTable>
             <thead>
-              <tr className="border-b border-hairline dark:border-[#262932]">
+              <tr>
                 {COLUMNS.map((col) => (
                   <SortableHeader
                     key={col.label || "actions"}
@@ -274,79 +272,81 @@ const ProductDashboard = () => {
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-hairline dark:divide-[#262932]">
+            <tbody>
               {products.map((product, i) => (
                 <motion.tr
                   key={product._id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: i * 0.03 }}
-                  className="hover:bg-hairline/20 dark:hover:bg-[#262932]/40 transition-colors"
+                  {...rowMotion(i)}
+                  onClick={() => setEditProduct(product)}
+                  className="group cursor-pointer"
                 >
-                  <td className="px-4 py-3">
+                  <td className={tdClass}>
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 shrink-0 border border-hairline dark:border-[#262932] bg-paper dark:bg-[#0e0f12] overflow-hidden">
+                      <div className="h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-hairline bg-mist">
                         {product.imageUrls?.[0] ? (
                           <Image
                             src={product.imageUrls[0]}
                             alt=""
-                            width={40}
-                            height={40}
-                            className="h-full w-full object-cover"
+                            width={44}
+                            height={44}
+                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                           />
                         ) : (
-                          <div className="h-full w-full grid place-items-center">
-                            <PackageOpen size={14} className="text-slate dark:text-[#8b8fa8]" />
+                          <div className="grid h-full w-full place-items-center">
+                            <PackageOpen size={15} className="text-slate-light" />
                           </div>
                         )}
                       </div>
                       <span
-                        className="font-medium text-ink dark:text-[#f0efe8] max-w-45 truncate"
+                        className="max-w-45 truncate font-semibold text-ink"
                         title={product.name}
                       >
                         {product.name}
                       </span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-slate dark:text-[#8b8fa8]">
-                    {product.brand || "—"}
+                  <td className={`${tdClass} text-slate`}>{product.brand || "—"}</td>
+                  <td className={tdClass}>
+                    {product.category ? (
+                      <span className="rounded-full bg-mist px-2.5 py-1 text-xs font-medium text-slate-dim transition-colors group-hover:bg-panel">
+                        {product.category}
+                      </span>
+                    ) : (
+                      <span className="text-slate">—</span>
+                    )}
                   </td>
-                  <td className="px-4 py-3 text-slate dark:text-[#8b8fa8]">
-                    {product.category || "—"}
-                  </td>
-                  <td className="px-4 py-3 font-mono text-ink dark:text-[#f0efe8] whitespace-nowrap">
+                  <td className={`${tdClass} whitespace-nowrap font-semibold tabular-nums text-ink`}>
                     {formatNPR(product.price)}
                   </td>
-                  <td className="px-4 py-3 font-mono text-ink dark:text-[#f0efe8]">
-                    {product.stock}
-                  </td>
-                  <td className="px-4 py-3">
+                  <td className={`${tdClass} tabular-nums text-ink`}>{product.stock}</td>
+                  <td className={tdClass}>
                     <StatusBadge stock={product.stock} />
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
+                  <td className={tdClass} onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-end gap-1.5">
+                      <RowAction
                         onClick={() => setEditProduct(product)}
-                        className="grid h-8 w-8 place-items-center border border-hairline dark:border-[#262932] text-slate dark:text-[#8b8fa8] hover:border-ink dark:hover:border-[#f0efe8] hover:text-ink dark:hover:text-[#f0efe8] transition-colors"
                         aria-label={`Edit ${product.name}`}
+                        title="Edit"
                       >
-                        <Pencil size={13} />
-                      </button>
-                      <button
+                        <Pencil size={14} />
+                      </RowAction>
+                      <RowAction
+                        tone="danger"
                         onClick={() => setDeleteTarget(product)}
-                        className="grid h-8 w-8 place-items-center border border-hairline dark:border-[#262932] text-slate dark:text-[#8b8fa8] hover:border-danger hover:text-danger dark:hover:border-danger dark:hover:text-danger transition-colors"
                         aria-label={`Delete ${product.name}`}
+                        title="Delete"
                       >
-                        <Trash2 size={13} />
-                      </button>
+                        <Trash2 size={14} />
+                      </RowAction>
                     </div>
                   </td>
                 </motion.tr>
               ))}
             </tbody>
-          </table>
+          </ConsoleTable>
         )}
-      </motion.div>
+      </TableCard>
 
       <Pagination total={data?.total ?? 0} pageSize={PRODUCT_MANAGEMENT_PAGE_SIZE} />
 

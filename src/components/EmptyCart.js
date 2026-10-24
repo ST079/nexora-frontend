@@ -2,31 +2,45 @@
 
 import { PRODUCTS_ROUTE } from "@/constants/routes";
 import { closeCart } from "@/redux/cart/cartSlice";
-import { ShoppingBag } from "lucide-react";
+import { motion } from "framer-motion";
+import { ShoppingBag, Sparkles } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 import { useDispatch } from "react-redux";
+import { bouncy } from "@/utils/motion";
 
 const EmptyCart = () => {
   const dispatch = useDispatch();
 
   return (
-    <div className="flex flex-col items-center justify-center h-full gap-4 py-20 text-center">
-      <div className="grid h-14 w-14 place-items-center border border-hairline dark:border-[#262932]">
-        <ShoppingBag size={22} className="text-slate dark:text-[#8b8fa8]" />
-      </div>
-      <p className="font-display text-lg font-semibold text-ink dark:text-[#f0efe8]">
-        Your cart is empty
-      </p>
-      <p className="text-sm text-slate dark:text-[#8b8fa8]">
-        Add a product to see it here.
+    <div className="flex h-full flex-col items-center justify-center gap-3 px-6 py-16 text-center">
+      <motion.div
+        initial={{ scale: 0.6, rotate: -12, opacity: 0 }}
+        animate={{ scale: 1, rotate: 0, opacity: 1 }}
+        transition={bouncy}
+        className="relative mb-2"
+      >
+        <span className="grid h-24 w-24 place-items-center rounded-4xl bg-signal-tint text-signal">
+          <ShoppingBag size={38} strokeWidth={1.6} />
+        </span>
+        <motion.span
+          animate={{ y: [0, -6, 0], rotate: [0, 12, 0] }}
+          transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -right-2 -top-2 grid h-9 w-9 place-items-center rounded-full bg-marigold text-on-marigold shadow-soft"
+        >
+          <Sparkles size={16} />
+        </motion.span>
+      </motion.div>
+      <p className="font-display text-2xl font-bold text-ink">Your bag is feeling light</p>
+      <p className="max-w-xs text-sm text-slate">
+        Find something you love and it will wait for you right here.
       </p>
       <Link
         href={PRODUCTS_ROUTE}
         onClick={() => dispatch(closeCart())}
-        className="btn-primary mt-2"
+        className="btn-primary mt-3"
       >
-        Browse products
+        Start shopping
       </Link>
     </div>
   );

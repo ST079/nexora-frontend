@@ -12,15 +12,19 @@ import {
   AlertTriangle,
   MessageSquare,
   ShieldCheck,
-  Truck,
+  Hash,
+  Plus,
+  ArrowUpRight,
 } from "lucide-react";
 import AnimatedField from "@/components/AnimatedField";
+import { bouncy, revealUp, spring } from "@/utils/motion";
 
 const SUPPORT_EMAIL = "support@nexora.com.np";
 
 const CONTACT_CARDS = [
   {
     icon: Mail,
+    tone: "bg-signal-tint text-signal-dim",
     label: "Email",
     value: SUPPORT_EMAIL,
     sub: "Reply within 24 hours",
@@ -28,6 +32,7 @@ const CONTACT_CARDS = [
   },
   {
     icon: Phone,
+    tone: "bg-ok/12 text-ok",
     label: "Phone",
     value: "+977 98-NEXORA-01",
     sub: "Sun – Fri, 10 AM – 7 PM",
@@ -35,6 +40,7 @@ const CONTACT_CARDS = [
   },
   {
     icon: MapPin,
+    tone: "bg-marigold-tint text-marigold-dim",
     label: "Office",
     value: "Bhaktapur, Kathmandu",
     sub: "Bagmati Province, Nepal",
@@ -42,6 +48,7 @@ const CONTACT_CARDS = [
   },
   {
     icon: Clock,
+    tone: "bg-blueprint-tint text-blueprint-dim",
     label: "Hours",
     value: "10:00 AM – 7:00 PM",
     sub: "Sunday through Friday",
@@ -58,51 +65,52 @@ const TOPICS = [
   { value: "other", label: "Other" },
 ];
 
+// Only answers the store can stand behind: no delivery-time or returns
+// promises that the app doesn't enforce.
 const FAQ = [
   {
-    q: "How long does delivery take?",
-    a: "Same-day delivery within Kathmandu Valley for orders before 12 PM. Outside valley takes 2–4 business days.",
+    q: "How do I track my order?",
+    a: "Open Orders from your account. Each order shows where it is: placed, confirmed, on the way or delivered.",
   },
   {
     q: "What payment methods do you accept?",
-    a: "Khalti, debit or credit card, and cash on delivery.",
+    a: "Khalti, debit or credit card through Stripe, and cash on delivery.",
+  },
+  {
+    q: "Can I cancel an order?",
+    a: "Yes, any time before it ships. Open the order and choose Cancel order. If you'd already paid, we'll contact you about your refund.",
   },
   {
     q: "Can I return a product?",
-    a: "Yes, within 7 days of delivery with original packaging.",
+    a: "Email us with your order number and what's wrong, and we'll sort it out with the merchant.",
   },
   {
     q: "Is stock accurate?",
-    a: "Yes. Stock is pulled live from warehouse data.",
+    a: "Yes. Stock counts are live, and your bag won't let you add more than there is.",
   },
 ];
 
-const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 16 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, margin: "-40px" },
-  transition: { duration: 0.4, delay, ease: [0.22, 1, 0.36, 1] },
-});
+const EMPTY = { name: "", email: "", topic: "", message: "" };
 
 const ContactPage = () => {
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    topic: "",
-    message: "",
-  });
+  const [form, setForm] = useState(EMPTY);
   const [status, setStatus] = useState("idle");
   const [errorMsg, setErrorMsg] = useState("");
-  const [openFaq, setOpenFaq] = useState(null);
+  const [openFaq, setOpenFaq] = useState(0);
 
-  const update = (field, value) =>
-    setForm((prev) => ({ ...prev, [field]: value }));
+  const update = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
 
   // There's no contact endpoint yet, so hand the message to the visitor's
   // mail app instead of pretending to send it. The form keeps its values in
   // case no mail app opens.
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!form.topic) {
+      setErrorMsg("Pick a topic so the right person picks it up.");
+      setStatus("error");
+      setTimeout(() => setStatus("idle"), 1800);
+      return;
+    }
     if (!form.message.trim()) {
       setErrorMsg("Add a message before sending.");
       setStatus("error");
@@ -119,109 +127,108 @@ const ContactPage = () => {
   };
 
   return (
-    <div className="bg-paper dark:bg-[#0e0f12] transition-colors duration-300">
+    <div className="bg-paper transition-colors duration-300">
       {/* ── Hero ── */}
-      <section className="container-page pt-14 pb-12 md:pt-20">
-        <div className="grid lg:grid-cols-2 gap-10 items-start">
-          <motion.div {...fadeUp()}>
-            <p className="eyebrow dark:text-[#8b8fa8] mb-4">
-              Contact · Support
-            </p>
-            <h1 className="font-display text-[2.6rem] sm:text-[3.2rem] font-semibold leading-[1.05] text-ink dark:text-[#f0efe8]">
+      <section className="container-page pb-12 pt-12 md:pt-20">
+        <div className="grid items-center gap-10 lg:grid-cols-2">
+          <motion.div {...revealUp()}>
+            <p className="eyebrow mb-4">Contact · Support</p>
+            <h1 className="font-display text-[2.6rem] font-bold leading-[1.02] tracking-tight text-ink sm:text-6xl">
               We&apos;re in Kathmandu.
               <br />
-              <span className="text-signal">Let&apos;s talk.</span>
+              <span className="marker">Let&apos;s talk.</span>
             </h1>
-            <p className="mt-5 max-w-md text-slate dark:text-[#8b8fa8] text-[15px]">
-              Got a question about an order, product spec, or return? Drop us a
-              message.
+            <p className="mt-6 max-w-md text-[15px] leading-relaxed text-slate">
+              Got a question about an order, a product spec or a payment? Drop us a message
+              and a real person will read it.
             </p>
           </motion.div>
 
-          {/* Contact cards */}
-          <motion.div {...fadeUp(0.1)} className="grid grid-cols-2 gap-3">
-            {CONTACT_CARDS.map((card) => {
+          <div className="grid grid-cols-2 gap-3">
+            {CONTACT_CARDS.map((card, i) => {
               const Icon = card.icon;
-              const Tag = card.href ? "a" : "div";
+              const Tag = card.href ? motion.a : motion.div;
               return (
                 <Tag
                   key={card.label}
                   href={card.href || undefined}
                   target={card.href?.startsWith("http") ? "_blank" : undefined}
-                  rel="noopener noreferrer"
-                  className="card-frame group p-4 flex flex-col gap-3 hover:border-ink dark:hover:border-[#f0efe8] transition-colors"
+                  rel={card.href?.startsWith("http") ? "noopener noreferrer" : undefined}
+                  {...revealUp(0.05 + i * 0.06)}
+                  whileHover={card.href ? { y: -4 } : undefined}
+                  className={`group relative flex min-w-0 flex-col gap-3 rounded-3xl border border-hairline bg-panel p-4 transition-shadow sm:p-5 ${
+                    card.href ? "hover:shadow-lift" : ""
+                  }`}
                 >
-                  <Icon
-                    size={16}
-                    className="text-ink dark:text-[#f0efe8] group-hover:text-signal dark:group-hover:text-signal transition-colors"
-                  />
-                  <span className="font-display font-semibold text-sm text-ink dark:text-[#f0efe8]">
-                    {card.value}
+                  <span className="flex items-center justify-between">
+                    <span
+                      className={`grid h-10 w-10 place-items-center rounded-2xl transition-transform duration-500 ease-spring group-hover:-rotate-12 ${card.tone}`}
+                    >
+                      <Icon size={18} aria-hidden />
+                    </span>
+                    {card.href && (
+                      <ArrowUpRight
+                        size={16}
+                        aria-hidden
+                        className="text-slate-light transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-ink"
+                      />
+                    )}
                   </span>
-                  <span className="text-xs text-slate dark:text-[#8b8fa8]">
-                    {card.sub}
-                  </span>
-                  <span className="eyebrow dark:text-[#8b8fa8] mt-auto">
+                  <span className="mt-1 text-[11px] font-semibold uppercase tracking-widest text-slate">
                     {card.label}
                   </span>
+                  <span className="-mt-2 wrap-break-word font-display text-sm font-bold text-ink sm:text-base">
+                    {card.value}
+                  </span>
+                  <span className="-mt-2 text-xs text-slate">{card.sub}</span>
                 </Tag>
               );
             })}
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {/* ── Form + FAQ ── */}
-      <section className="container-page py-16">
-        <div className="grid lg:grid-cols-[1fr_420px] gap-12 items-start">
-          {/* Form */}
-          <div>
-            <motion.div {...fadeUp()} className="mb-8">
-              <p className="eyebrow dark:text-[#8b8fa8] mb-2">Send a message</p>
-              <h2 className="font-display text-3xl font-semibold text-ink dark:text-[#f0efe8]">
-                What can we help with?
-              </h2>
-            </motion.div>
-
-            <AnimatePresence>
+      <section className="container-page pb-20 pt-6">
+        <div className="grid items-start gap-8 lg:grid-cols-[1fr_400px] lg:gap-12">
+          <motion.div
+            {...revealUp()}
+            className="rounded-4xl border border-hairline bg-panel p-5 sm:p-8"
+          >
+            <AnimatePresence mode="wait" initial={false}>
               {status === "success" ? (
                 <motion.div
                   key="success"
                   initial={{ opacity: 0, scale: 0.96 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="card-frame p-10 text-center"
+                  exit={{ opacity: 0, scale: 0.98 }}
+                  className="py-8 text-center"
                 >
-                  <div className="grid h-14 w-14 place-items-center border border-ok bg-ok/10 dark:bg-ok/20 mx-auto mb-4">
-                    <Check size={22} className="text-ok" />
-                  </div>
-                  <p className="font-display text-xl font-semibold mb-2 text-ink dark:text-[#f0efe8]">
-                    Your email is ready
-                  </p>
-                  <p className="text-sm text-slate dark:text-[#8b8fa8] max-w-sm mx-auto">
-                    Your mail app should have opened with the message filled
-                    in. Press send there and we&apos;ll reply within one
-                    business day. Nothing opened? Email{" "}
-                    <a
-                      href={`mailto:${SUPPORT_EMAIL}`}
-                      className="underline text-ink dark:text-[#f0efe8]"
-                    >
+                  <motion.span
+                    initial={{ scale: 0.3, rotate: -20 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={bouncy}
+                    className="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-3xl bg-ok text-paper"
+                  >
+                    <Check size={28} strokeWidth={3} aria-hidden />
+                  </motion.span>
+                  <p className="mb-2 font-display text-2xl font-bold text-ink">Your email is ready</p>
+                  <p className="mx-auto max-w-sm text-sm leading-relaxed text-slate">
+                    Your mail app should have opened with the message filled in. Press send
+                    there and we&apos;ll get back to you. Nothing opened? Email{" "}
+                    <a href={`mailto:${SUPPORT_EMAIL}`} className="font-semibold text-signal-dim underline">
                       {SUPPORT_EMAIL}
                     </a>
                     .
                   </p>
-                  <div className="mt-6 flex flex-wrap justify-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setStatus("idle")}
-                      className="btn-secondary"
-                    >
+                  <div className="mt-7 flex flex-wrap justify-center gap-3">
+                    <button type="button" onClick={() => setStatus("idle")} className="btn-secondary">
                       Back to my message
                     </button>
                     <button
                       type="button"
                       onClick={() => {
-                        setForm({ name: "", email: "", topic: "", message: "" });
+                        setForm(EMPTY);
                         setStatus("idle");
                       }}
                       className="btn-ghost"
@@ -237,34 +244,75 @@ const ContactPage = () => {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                 >
-                  {/* Error banner */}
+                  <p className="eyebrow mb-2">Send a message</p>
+                  <h2 className="mb-6 font-display text-3xl font-bold tracking-tight text-ink">
+                    What can we help with?
+                  </h2>
+
                   <AnimatePresence>
                     {status === "error" && (
                       <motion.div
-                        initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-                        animate={{
-                          opacity: 1,
-                          height: "auto",
-                          marginBottom: 16,
-                        }}
-                        exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                        className="flex items-start gap-2 border border-danger/40 bg-danger/5 dark:bg-danger/10 px-3 py-2.5 text-sm text-danger"
+                        role="alert"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="overflow-hidden"
                       >
-                        <AlertTriangle size={15} className="shrink-0 mt-0.5" />
-                        <span>{errorMsg}</span>
+                        <div className="mb-5 flex items-center gap-3 rounded-2xl bg-danger/10 p-3 text-sm text-danger">
+                          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-danger text-paper">
+                            <AlertTriangle size={14} aria-hidden />
+                          </span>
+                          {errorMsg}
+                        </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
 
                   <motion.form
                     onSubmit={handleSubmit}
-                    className="space-y-4"
-                    animate={
-                      status === "error" ? { x: [0, -8, 8, -5, 5, 0] } : {}
-                    }
+                    className="space-y-5"
+                    animate={status === "error" ? { x: [0, -8, 8, -5, 5, 0] } : {}}
                     transition={{ duration: 0.4 }}
                   >
-                    <div className="grid sm:grid-cols-2 gap-4">
+                    <fieldset>
+                      <legend className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-slate-dim">
+                        Topic <span className="text-danger" aria-hidden>*</span>
+                      </legend>
+                      <div className="flex flex-wrap gap-2">
+                        {TOPICS.map((t) => {
+                          const active = form.topic === t.value;
+                          return (
+                            <label
+                              key={t.value}
+                              className={`relative cursor-pointer select-none rounded-full border px-4 py-2 text-sm font-medium transition-colors has-focus-visible:ring-4 has-focus-visible:ring-signal/25 ${
+                                active
+                                  ? "border-ink text-paper"
+                                  : "border-hairline bg-paper text-ink hover:border-ink/30"
+                              }`}
+                            >
+                              <input
+                                type="radio"
+                                name="topic"
+                                value={t.value}
+                                checked={active}
+                                onChange={() => update("topic", t.value)}
+                                className="sr-only"
+                              />
+                              {active && (
+                                <motion.span
+                                  layoutId="contactTopic"
+                                  transition={spring}
+                                  className="absolute inset-0 rounded-full bg-ink"
+                                />
+                              )}
+                              <span className="relative">{t.label}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </fieldset>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
                       <AnimatedField
                         label="Your name"
                         value={form.name}
@@ -284,42 +332,12 @@ const ContactPage = () => {
                       />
                     </div>
 
-                    {/* Topic select */}
-                    <div>
-                      <label
-                        htmlFor="contact-topic"
-                        className="font-mono text-xs text-slate dark:text-[#8b8fa8] mb-1 block"
-                      >
-                        Topic <span className="text-danger">*</span>
-                      </label>
-                      <div className="relative">
-                        <select
-                          id="contact-topic"
-                          value={form.topic}
-                          onChange={(e) => update("topic", e.target.value)}
-                          className="field appearance-none cursor-pointer pr-8 dark:border-[#262932] dark:bg-[#16181f] dark:text-[#f0efe8]"
-                          required
-                        >
-                          <option value="">Select a topic</option>
-                          {TOPICS.map((t) => (
-                            <option key={t.value} value={t.value}>
-                              {t.label}
-                            </option>
-                          ))}
-                        </select>
-                        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate dark:text-[#8b8fa8]">
-                          ▾
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Message textarea */}
                     <div>
                       <label
                         htmlFor="contact-message"
-                        className="font-mono text-xs text-slate dark:text-[#8b8fa8] mb-1 block"
+                        className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-slate-dim"
                       >
-                        Message <span className="text-danger">*</span>
+                        Message <span className="text-danger" aria-hidden>*</span>
                       </label>
                       <div className="relative">
                         <textarea
@@ -328,10 +346,10 @@ const ContactPage = () => {
                           rows={6}
                           value={form.message}
                           onChange={(e) => update("message", e.target.value)}
-                          placeholder="Describe your issue or question in as much detail as you can — order number, product name, anything relevant."
-                          className="field resize-none dark:border-[#262932] dark:bg-[#16181f] dark:text-[#f0efe8] dark:placeholder:text-[#5b5e72]"
+                          placeholder="Tell us as much as you can: order number, product name, anything relevant."
+                          className="field resize-none pb-8"
                         />
-                        <span className="absolute bottom-2 right-3 font-mono text-[11px] text-slate dark:text-[#8b8fa8]">
+                        <span className="pointer-events-none absolute bottom-3 right-4 font-mono text-[11px] text-slate-light">
                           {form.message.length} chars
                         </span>
                       </div>
@@ -339,76 +357,79 @@ const ContactPage = () => {
 
                     <motion.button
                       type="submit"
-                      whileTap={{ scale: 0.98 }}
-                      className="btn-primary disabled:opacity-60"
+                      whileTap={{ scale: 0.97 }}
+                      className="btn-primary group w-full sm:w-auto"
                     >
-                      <Send size={15} />
+                      <Send size={15} className="transition-transform group-hover:-rotate-12 group-hover:translate-x-0.5" />
                       Write email
                     </motion.button>
                   </motion.form>
                 </motion.div>
               )}
             </AnimatePresence>
-          </div>
+          </motion.div>
 
           {/* FAQ */}
           <div className="lg:sticky lg:top-24">
-            <motion.div {...fadeUp(0.1)} className="mb-6">
-              <p className="eyebrow dark:text-[#8b8fa8] mb-2">Quick answers</p>
-              <h2 className="font-display text-2xl font-semibold text-ink dark:text-[#f0efe8]">
+            <motion.div {...revealUp(0.1)} className="mb-5">
+              <p className="eyebrow mb-2">Quick answers</p>
+              <h2 className="font-display text-2xl font-bold tracking-tight text-ink">
                 Common questions
               </h2>
             </motion.div>
 
-            <div className="card-frame divide-y divide-hairline dark:divide-[#262932]">
-              {FAQ.map((item, i) => (
-                <motion.div key={i} {...fadeUp(0.1 + i * 0.06)}>
-                  <button
-                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                    className="w-full flex items-start justify-between gap-4 px-5 py-4 text-left hover:bg-hairline/30 dark:hover:bg-[#262932]/50 transition-colors"
+            <ul className="space-y-2">
+              {FAQ.map((item, i) => {
+                const open = openFaq === i;
+                return (
+                  <motion.li
+                    key={item.q}
+                    {...revealUp(0.1 + i * 0.05)}
+                    className={`overflow-hidden rounded-3xl border transition-colors ${
+                      open ? "border-ink/20 bg-panel shadow-soft" : "border-hairline bg-panel/60"
+                    }`}
                   >
-                    <span className="font-medium text-sm text-ink dark:text-[#f0efe8]">
-                      {item.q}
-                    </span>
-                    <motion.span
-                      animate={{ rotate: openFaq === i ? 180 : 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="shrink-0 mt-0.5 font-mono text-slate dark:text-[#8b8fa8]"
+                    <button
+                      type="button"
+                      onClick={() => setOpenFaq(open ? null : i)}
+                      aria-expanded={open}
+                      aria-controls={`faq-${i}`}
+                      className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
                     >
-                      ▾
-                    </motion.span>
-                  </button>
-                  <AnimatePresence>
-                    {openFaq === i && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.25 }}
-                        className="overflow-hidden"
+                      <span className="text-sm font-semibold text-ink">{item.q}</span>
+                      <motion.span
+                        animate={{ rotate: open ? 45 : 0 }}
+                        transition={spring}
+                        className={`grid h-7 w-7 shrink-0 place-items-center rounded-full transition-colors ${
+                          open ? "bg-ink text-paper" : "bg-mist text-ink"
+                        }`}
                       >
-                        <p className="text-sm text-slate dark:text-[#8b8fa8] px-5 pb-4 leading-relaxed">
-                          {item.a}
-                        </p>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
-              ))}
-            </div>
+                        <Plus size={14} aria-hidden />
+                      </motion.span>
+                    </button>
+                    <AnimatePresence initial={false}>
+                      {open && (
+                        <motion.div
+                          id={`faq-${i}`}
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.25 }}
+                        >
+                          <p className="px-5 pb-5 text-sm leading-relaxed text-slate">{item.a}</p>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.li>
+                );
+              })}
+            </ul>
 
-            {/* Trust strip */}
-            <motion.div
-              {...fadeUp(0.2)}
-              className="mt-6 card-frame divide-y divide-hairline dark:divide-[#262932]"
-            >
+            <motion.ul {...revealUp(0.2)} className="mt-5 space-y-1 rounded-3xl bg-mist p-2">
               <TrustRow icon={MessageSquare} label="Real human replies" />
               <TrustRow icon={ShieldCheck} label="Your data stays private" />
-              <TrustRow
-                icon={Truck}
-                label="Order issues resolved in 1 business day"
-              />
-            </motion.div>
+              <TrustRow icon={Hash} label="Add your order number for a faster reply" />
+            </motion.ul>
           </div>
         </div>
       </section>
@@ -417,10 +438,12 @@ const ContactPage = () => {
 };
 
 const TrustRow = ({ icon: Icon, label }) => (
-  <div className="flex items-center gap-3 px-4 py-3">
-    <Icon size={15} className="text-signal shrink-0" />
-    <span className="text-sm text-ink dark:text-[#f0efe8]">{label}</span>
-  </div>
+  <li className="flex items-center gap-3 rounded-2xl px-3 py-2.5">
+    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-panel text-signal-dim">
+      <Icon size={15} aria-hidden />
+    </span>
+    <span className="text-sm text-ink">{label}</span>
+  </li>
 );
 
 export default ContactPage;

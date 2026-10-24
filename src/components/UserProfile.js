@@ -25,9 +25,28 @@ import {
   REGISTER_ROUTE,
 } from "@/constants/routes";
 import { isStaff } from "@/constants/navLinks";
+import { initials } from "@/utils/format";
 
 const itemClass =
-  "flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink dark:text-[#f0efe8] hover:bg-hairline/50 dark:hover:bg-[#262932] transition-colors";
+  "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-mist";
+const iconClass = "text-slate transition-colors group-hover:text-signal";
+
+export const Avatar = ({ user, size = "h-8 w-8 text-xs" }) =>
+  user?.profileImageUrl ? (
+    <Image
+      src={user.profileImageUrl}
+      alt=""
+      className={`${size} rounded-full object-cover`}
+      width={64}
+      height={64}
+    />
+  ) : (
+    <span
+      className={`${size} grid place-items-center rounded-full bg-signal font-display font-bold text-on-signal`}
+    >
+      {user ? initials(user.name) || <User size={14} /> : <User size={14} />}
+    </span>
+  );
 
 const UserProfile = () => {
   const [open, setOpen] = useState(false);
@@ -62,107 +81,95 @@ const UserProfile = () => {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* Trigger button */}
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1.5 h-9 px-2 border border-hairline dark:border-[#262932] hover:border-ink dark:hover:border-[#f0efe8] text-ink dark:text-[#f0efe8] transition-colors"
+        className="flex h-10 items-center gap-1.5 rounded-full border border-hairline bg-panel pl-1 pr-2.5 text-ink transition-all hover:border-ink/30 hover:shadow-soft"
         aria-label="Account menu"
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        {user?.profileImageUrl ? (
-          <Image
-            src={user.profileImageUrl}
-            alt=""
-            className="h-5 w-5 rounded-full object-cover"
-            width={40}
-            height={40}
-          />
-        ) : (
-          <User size={15} />
-        )}
-        {user?.name && (
-          <span className="font-mono text-xs hidden md:block max-w-[80px] truncate">
+        <Avatar user={user} />
+        {user?.name ? (
+          <span className="hidden max-w-[84px] truncate text-sm font-medium xl:block">
             {user.name.split(" ")[0]}
           </span>
+        ) : (
+          <span className="text-sm font-medium">Sign in</span>
         )}
-        <motion.span
-          animate={{ rotate: open ? 180 : 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          <ChevronDown size={12} />
+        <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
+          <ChevronDown size={13} className="text-slate" />
         </motion.span>
       </button>
 
-      {/* Dropdown */}
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: 6, scale: 0.97 }}
+            initial={{ opacity: 0, y: 8, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 6, scale: 0.97 }}
-            transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+            style={{ transformOrigin: "top right" }}
             role="menu"
-            className="absolute right-0 top-full mt-2 w-56 z-50 card-frame shadow-lift overflow-hidden"
+            className="card-frame absolute right-0 top-full z-50 mt-3 w-64 p-2 shadow-lift"
           >
-            {/* User info */}
-            {user && (
-              <div className="px-4 py-3 border-b border-hairline dark:border-[#262932]">
-                <p className="font-medium text-sm text-ink dark:text-[#f0efe8] truncate">
-                  {user.name}
-                </p>
-                <p className="font-mono text-[11px] text-slate dark:text-[#8b8fa8] truncate mt-0.5">
-                  {user.email}
-                </p>
+            {user ? (
+              <div className="mb-1 flex items-center gap-3 rounded-2xl bg-signal-tint p-3">
+                <Avatar user={user} size="h-10 w-10 text-sm" />
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-ink">{user.name}</p>
+                  <p className="truncate font-mono text-[11px] text-slate">{user.email}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="mb-1 rounded-2xl bg-signal-tint p-3">
+                <p className="font-display text-base font-bold text-ink">Hello there 👋</p>
+                <p className="text-xs text-slate">Sign in to track your orders.</p>
               </div>
             )}
 
-            <div className="py-1">
-              {user ? (
-                <>
-                  {isStaff(user) && (
-                    <Link href={DASHBOARD_ROUTE} onClick={close} className={itemClass} role="menuitem">
-                      <LayoutDashboard size={14} className="text-slate dark:text-[#8b8fa8]" />
-                      Dashboard
-                    </Link>
-                  )}
-                  <Link href={ORDERS_ROUTE} onClick={close} className={itemClass} role="menuitem">
-                    <ListOrdered size={14} className="text-slate dark:text-[#8b8fa8]" />
-                    My orders
+            {user ? (
+              <>
+                {isStaff(user) && (
+                  <Link href={DASHBOARD_ROUTE} onClick={close} className={itemClass} role="menuitem">
+                    <LayoutDashboard size={16} className={iconClass} />
+                    Dashboard
                   </Link>
-                  <Link href={ACCOUNT_SETTING_ROUTE} onClick={close} className={itemClass} role="menuitem">
-                    <Settings size={14} className="text-slate dark:text-[#8b8fa8]" />
-                    Account settings
-                  </Link>
+                )}
+                <Link href={ORDERS_ROUTE} onClick={close} className={itemClass} role="menuitem">
+                  <ListOrdered size={16} className={iconClass} />
+                  My orders
+                </Link>
+                <Link href={ACCOUNT_SETTING_ROUTE} onClick={close} className={itemClass} role="menuitem">
+                  <Settings size={16} className={iconClass} />
+                  Account settings
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href={LOGIN_ROUTE} onClick={close} className={itemClass} role="menuitem">
+                  <LogIn size={16} className={iconClass} />
+                  Sign in
+                </Link>
+                <Link href={REGISTER_ROUTE} onClick={close} className={itemClass} role="menuitem">
+                  <User size={16} className={iconClass} />
+                  Create account
+                </Link>
+              </>
+            )}
 
-                  <div className="my-1 border-t border-hairline dark:border-[#262932]" />
+            <div className="my-1.5 border-t border-hairline" />
+            <ThemeToggler />
 
-                  <button
-                    onClick={handleLogout}
-                    role="menuitem"
-                    className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-danger hover:bg-danger/5 dark:hover:bg-danger/10 transition-colors"
-                  >
-                    <LogOut size={14} />
-                    Sign out
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link href={LOGIN_ROUTE} onClick={close} className={itemClass} role="menuitem">
-                    <LogIn size={14} className="text-slate dark:text-[#8b8fa8]" />
-                    Sign in
-                  </Link>
-                  <Link href={REGISTER_ROUTE} onClick={close} className={itemClass} role="menuitem">
-                    <User size={14} className="text-slate dark:text-[#8b8fa8]" />
-                    Create account
-                  </Link>
-                </>
-              )}
-
-              <div className="my-1 border-t border-hairline dark:border-[#262932]" />
-
-              <ThemeToggler />
-            </div>
+            {user && (
+              <button
+                onClick={handleLogout}
+                role="menuitem"
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-danger transition-colors hover:bg-danger/10"
+              >
+                <LogOut size={16} />
+                Sign out
+              </button>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

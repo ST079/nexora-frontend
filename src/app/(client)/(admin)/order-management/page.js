@@ -1,22 +1,43 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { PackageOpen, Eye, AlertTriangle } from "lucide-react";
+import { Eye, Info, PackageOpen, RefreshCw } from "lucide-react";
 import { useSelector } from "react-redux";
 import { ORDER_MANAGEMENT_PAGE_SIZE } from "@/constants/pagination";
-import { formatDate, formatNPR } from "@/utils/format";
+import { apiErrorMessage, formatDate, formatNPR } from "@/utils/format";
 import { fadeUp } from "@/utils/motion";
 import { ORDER_STATUSES, STATUS_MAP } from "@/constants/orders";
+
+const STATUS_FILTERS = [
+  { value: "", label: "All" },
+  ...ORDER_STATUSES.map((key) => ({ value: key, label: STATUS_MAP[key].label, dot: STATUS_MAP[key].dot })),
+];
+
+const thClass =
+  "px-4 py-3 text-left font-mono text-[11px] uppercase tracking-widest text-slate whitespace-nowrap";
 import { ROLE_ADMIN } from "@/constants/user";
 import { getAllOrders, getMerchantOrders, getTotalCount } from "@/api/order";
 import OrderViewModal from "./_components/OrderViewModal";
 import OrderStatusAction from "./_components/OrderStatusAction";
 import OrderStats from "./_components/OrderStats";
+import {
+  ConsoleHeader,
+  ConsoleTable,
+  FilterChips,
+  RowAction,
+  TableCard,
+  TableEmpty,
+  TableError,
+  TableSkeleton,
+  rowMotion,
+  tdClass,
+} from "../_components/Console";
 import Loader from "@/components/Loader";
 import Pagination from "@/components/Pagination";
 import PaymentBadge from "@/components/PaymentBadge";
 import SearchField from "@/components/SearchField";
+import { Avatar } from "@/components/UserProfile";
 import { useQueryParams } from "@/hooks/useQueryParams";
 import { useResource } from "@/hooks/useResource";
 
@@ -26,6 +47,7 @@ const OrderManagement = () => {
   const { searchParams, setParams } = useQueryParams();
   const [viewOrder, setViewOrder] = useState(null);
   const [statsVersion, setStatsVersion] = useState(0);
+  const [listVersion, setListVersion] = useState(0);
 
   const page = Math.max(1, Number(searchParams.get("page")) || 1);
   const status = searchParams.get("status") ?? "";
@@ -35,7 +57,7 @@ const OrderManagement = () => {
   // order rather than only the page in view. Merchants get their own
   // endpoint: orders trimmed to their lines, with a `merchantTotal`.
   const filters = { status, search };
-  const queryKey = `${isAdmin}|${page}|${status}|${search}`;
+  const queryKey = `${isAdmin}|${page}|${status}|${search}|${listVersion}`;
   const { data, loading, error, setData } = useResource(queryKey, async () => {
     const limit = ORDER_MANAGEMENT_PAGE_SIZE;
     const offset = (page - 1) * limit;
@@ -56,30 +78,65 @@ const OrderManagement = () => {
     setStatsVersion((v) => v + 1);
   };
 
+  // Stable, so the modal's Escape listener isn't re-bound on every render.
+  const closeView = useCallback(() => setViewOrder(null), []);
+
+  const refresh = () => {
+    setListVersion((v) => v + 1);
+    setStatsVersion((v) => v + 1);
+  };
+
   return (
-    <div className="container-page py-8 lg:py-10 transition-colors duration-300">
-      {/* Header */}
-      <motion.div {...fadeUp()} className="mb-8">
-        <p className="eyebrow dark:text-[#8b8fa8] mb-2">
-          {isAdmin ? "Admin" : "Merchant"} · Orders
-        </p>
-        <h1 className="font-display text-3xl font-semibold text-ink dark:text-[#f0efe8]">
-          {isAdmin ? "Order management" : "Orders for your products"}
-        </h1>
-        {!isAdmin && (
-          <p className="mt-2 text-sm text-slate dark:text-[#8b8fa8] max-w-xl">
-            Each order shows only the lines you sell. Fulfilment status is set by
-            the Nexora team.
-          </p>
-        )}
-      </motion.div>
+    <div className="container-page py-8 transition-colors duration-300 lg:py-10">
+      <ConsoleHeader
+        eyebrow={`${isAdmin ? "Admin" : "Merchant"} · Orders`}
+        title={
+          isAdmin ? (
+            <>
+              Order <span className="marker">management</span>
+            </>
+          ) : (
+            <>
+              Orders for your <span className="marker">products</span>
+            </>
+          )
+        }
+        description={
+          isAdmin
+            ? "Tap a status to filter, and change an order's status right from the table."
+            : undefined
+        }
+      >
+        <button
+          type="button"
+          onClick={refresh}
+          disabled={loading}
+          className="btn-secondary"
+        >
+          <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+          {loading ? "Refreshing…" : "Refresh"}
+        </button>
+      </ConsoleHeader>
 
-      <OrderStats refreshKey={statsVersion} />
+      {!isAdmin && (
+        <motion.p
+          {...fadeUp(0.04)}
+          className="-mt-4 mb-6 flex items-start gap-2.5 rounded-2xl border border-blueprint/20 bg-blueprint-tint px-4 py-3 text-sm text-blueprint-dim"
+        >
+          <Info size={16} className="mt-0.5 shrink-0" aria-hidden />
+          Each order shows only the lines you sell. Fulfilment status is set by the Nexora team.
+        </motion.p>
+      )}
 
-      {/* Filters */}
+      <OrderStats
+        refreshKey={statsVersion}
+        status={status}
+        onFilter={(value) => setParams({ status: value })}
+      />
+
       <motion.div
         {...fadeUp(0.1)}
-        className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between mb-4"
+        className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"
       >
         <SearchField
           value={search}
@@ -88,72 +145,48 @@ const OrderManagement = () => {
           label="Search orders"
           className="w-full lg:max-w-sm"
         />
-        <div
-          role="group"
-          aria-label="Filter by status"
-          className="flex gap-1 overflow-x-auto pb-1 lg:pb-0"
-        >
-          {["", ...ORDER_STATUSES].map((s) => {
-            const active = status === s;
-            return (
-              <button
-                key={s || "all"}
-                onClick={() => setParams({ status: s })}
-                aria-pressed={active}
-                className={`shrink-0 px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest border transition-colors ${
-                  active
-                    ? "border-ink dark:border-[#f0efe8] bg-ink dark:bg-[#f0efe8] text-paper dark:text-[#0e0f12]"
-                    : "border-hairline dark:border-[#262932] text-slate dark:text-[#8b8fa8] hover:border-ink dark:hover:border-[#f0efe8] hover:text-ink dark:hover:text-[#f0efe8]"
-                }`}
-              >
-                {s ? STATUS_MAP[s].label : "All"}
-              </button>
-            );
-          })}
-        </div>
+        <FilterChips
+          label="Filter by status"
+          layoutId="order-status-filter"
+          options={STATUS_FILTERS}
+          value={status}
+          onChange={(value) => setParams({ status: value })}
+        />
       </motion.div>
 
-      {/* Table */}
-      <motion.div
-        {...fadeUp(0.12)}
-        className="border border-hairline dark:border-[#262932] overflow-x-auto"
-      >
-        {loading ? (
-          <Loader label="Loading orders" />
+      <TableCard stale={loading && Boolean(data)}>
+        {loading && !data ? (
+          <TableSkeleton label="Loading orders" />
         ) : error ? (
-          <div role="alert" className="flex flex-col items-center justify-center py-20 gap-3 text-center px-6">
-            <AlertTriangle size={26} className="text-danger" />
-            <p className="font-display font-semibold text-ink dark:text-[#f0efe8]">
-              Couldn&apos;t load orders
-            </p>
-            <p className="text-sm text-slate dark:text-[#8b8fa8]">
-              {error?.response?.data?.message ?? "Check your connection and try again."}
-            </p>
-          </div>
+          <TableError
+            title="Couldn't load orders"
+            message={apiErrorMessage(error, "Check your connection and try again.")}
+            onRetry={refresh}
+          />
         ) : orders.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-3 text-center px-6">
-            <PackageOpen size={28} className="text-slate dark:text-[#8b8fa8]" />
-            <p className="font-display font-semibold text-ink dark:text-[#f0efe8]">
-              No orders found
-            </p>
-            <p className="text-sm text-slate dark:text-[#8b8fa8]">
-              {search || status
+          <TableEmpty
+            icon={PackageOpen}
+            title="No orders found"
+            description={
+              search || status
                 ? "Try a different search or status."
-                : "Orders will appear here as soon as customers check out."}
-            </p>
+                : "Orders will appear here as soon as customers check out."
+            }
+          >
             {(search || status) && (
               <button
+                type="button"
                 onClick={() => setParams({ search: "", status: "" })}
-                className="btn-secondary mt-2"
+                className="btn-secondary"
               >
                 Clear filters
               </button>
             )}
-          </div>
+          </TableEmpty>
         ) : (
-          <table className="w-full text-sm">
+          <ConsoleTable>
             <thead>
-              <tr className="border-b border-hairline dark:border-[#262932]">
+              <tr>
                 {[
                   "Order #",
                   "Customer",
@@ -163,71 +196,72 @@ const OrderManagement = () => {
                   "Status",
                   "",
                 ].map((label) => (
-                  <th
-                    key={label || "actions"}
-                    scope="col"
-                    className="px-4 py-3 text-left font-mono text-[11px] uppercase tracking-widest text-slate dark:text-[#8b8fa8] whitespace-nowrap"
-                  >
+                  <th key={label || "actions"} scope="col" className={thClass}>
                     {label || <span className="sr-only">Actions</span>}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-hairline dark:divide-[#262932]">
+            <tbody>
               {orders.map((order, i) => (
                 <motion.tr
                   key={order._id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: i * 0.03 }}
-                  className="hover:bg-hairline/20 dark:hover:bg-[#262932]/40 transition-colors cursor-pointer"
+                  {...rowMotion(i)}
+                  className="group cursor-pointer"
                   onClick={() => setViewOrder(order)}
                 >
-                  <td className="px-4 py-3 font-mono text-ink dark:text-[#f0efe8] whitespace-nowrap">
-                    #{order.orderNumber?.toUpperCase() ?? order._id?.slice(-8).toUpperCase()}
+                  <td className={`${tdClass} whitespace-nowrap`}>
+                    <span className="rounded-full bg-mist px-2.5 py-1 font-mono text-xs font-medium text-ink transition-colors group-hover:bg-panel">
+                      #{order.orderNumber?.toUpperCase() ?? order._id?.slice(-8).toUpperCase()}
+                    </span>
                   </td>
-                  <td className="px-4 py-3">
-                    <p className="font-medium text-ink dark:text-[#f0efe8] max-w-40 truncate">
-                      {order.user?.name || "Deleted account"}
-                    </p>
-                    <p className="text-xs text-slate dark:text-[#8b8fa8] max-w-40 truncate">
-                      {order.user?.email}
-                    </p>
+                  <td className={tdClass}>
+                    <div className="flex items-center gap-3">
+                      <Avatar user={order.user} size="h-8 w-8 text-[11px] shrink-0" />
+                      <div className="min-w-0">
+                        <p className="max-w-40 truncate font-semibold text-ink">
+                          {order.user?.name || "Deleted account"}
+                        </p>
+                        <p className="max-w-40 truncate text-xs text-slate">{order.user?.email}</p>
+                      </div>
+                    </div>
                   </td>
-                  <td className="px-4 py-3 text-slate dark:text-[#8b8fa8] whitespace-nowrap">
+                  <td className={`${tdClass} whitespace-nowrap text-slate`}>
                     {formatDate(order.createdAt)}
                   </td>
-                  <td className="px-4 py-3 font-mono text-ink dark:text-[#f0efe8] whitespace-nowrap">
+                  <td className={`${tdClass} whitespace-nowrap font-semibold tabular-nums text-ink`}>
                     {formatNPR(isAdmin ? order.totalPrice : order.merchantTotal)}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className={tdClass}>
                     <PaymentBadge order={order} />
                   </td>
-                  <td className="px-4 py-3">
+                  <td className={tdClass}>
                     <OrderStatusAction
                       order={order}
                       onUpdated={handleUpdated}
                       readOnly={!isAdmin}
                     />
                   </td>
-                  <td className="px-4 py-3">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setViewOrder(order);
-                      }}
-                      className="grid h-8 w-8 place-items-center border border-hairline dark:border-[#262932] text-slate dark:text-[#8b8fa8] hover:border-ink dark:hover:border-[#f0efe8] hover:text-ink dark:hover:text-[#f0efe8] transition-colors"
-                      aria-label={`View order ${order.orderNumber ?? ""}`}
-                    >
-                      <Eye size={13} />
-                    </button>
+                  <td className={tdClass}>
+                    <div className="flex justify-end">
+                      <RowAction
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setViewOrder(order);
+                        }}
+                        aria-label={`View order ${order.orderNumber ?? ""}`}
+                        title="View details"
+                      >
+                        <Eye size={14} />
+                      </RowAction>
+                    </div>
                   </td>
                 </motion.tr>
               ))}
             </tbody>
-          </table>
+          </ConsoleTable>
         )}
-      </motion.div>
+      </TableCard>
 
       <Pagination total={data?.total ?? 0} pageSize={ORDER_MANAGEMENT_PAGE_SIZE} />
 
@@ -237,7 +271,7 @@ const OrderManagement = () => {
             key="order-view-modal"
             order={viewOrder}
             merchantView={!isAdmin}
-            onClose={() => setViewOrder(null)}
+            onClose={closeView}
           />
         )}
       </AnimatePresence>

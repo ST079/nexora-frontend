@@ -50,7 +50,7 @@ const ClientLayout = ({ children }) => {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-paper dark:bg-[#0e0f12] lg:h-screen lg:flex-row lg:overflow-hidden">
+    <div className="flex min-h-screen flex-col bg-paper lg:h-screen lg:flex-row lg:overflow-hidden">
       <AdminSidebar />
       <main className="flex-1 min-w-0 lg:overflow-y-auto">{children}</main>
     </div>
