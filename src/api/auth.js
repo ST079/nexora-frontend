@@ -23,12 +23,26 @@ export const signUp = async ({
     phone,
     email,
     password,
+    // Empty strings would fail the backend's required checks; leaving them
+    // out lets `country` fall back to its "Nepal" default.
     address: {
       city,
-      street,
+      street: street || undefined,
       province,
-      country,
+      country: country || undefined,
     },
+  });
+  return response.data;
+};
+
+export const forgotPassword = async ({ email }) => {
+  const response = await api.post(`api/v1/auth/forgot-password`, { email });
+  return response.data;
+};
+
+export const resetPassword = async ({ userId, token, password }) => {
+  const response = await api.post(`api/v1/auth/reset-password`, { password }, {
+    params: { userId, token },
   });
   return response.data;
 };

@@ -12,16 +12,24 @@ import {
 } from "lucide-react";
 import RoleBadge from "./RoleBadge";
 import { formatDate, initials } from "@/utils/format";
-import { ROLE_THEME } from "@/constants/user";
+import { ROLE_ADMIN, ROLE_MERCHANT, ROLE_THEME, ROLE_USER } from "@/constants/user";
+import { useEscape } from "@/hooks/useEscape";
 
 const getRoleTheme = (roles) => {
-  if (roles?.includes("ADMIN")) return ROLE_THEME.ADMIN;
-  if (roles?.includes("MERCHANT")) return ROLE_THEME.MERCHANT;
-  return ROLE_THEME.USER;
+  if (roles?.includes(ROLE_ADMIN)) return ROLE_THEME[ROLE_ADMIN];
+  if (roles?.includes(ROLE_MERCHANT)) return ROLE_THEME[ROLE_MERCHANT];
+  return ROLE_THEME[ROLE_USER];
 };
+
+const formatAddress = (address) =>
+  [address?.street, address?.city, address?.province, address?.country]
+    .filter(Boolean)
+    .join(", ") || "—";
 
 const UserViewModal = ({ user, onClose }) => {
   const theme = getRoleTheme(user.roles);
+
+  useEscape(onClose);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -34,6 +42,9 @@ const UserViewModal = ({ user, onClose }) => {
       />
 
       <motion.div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="user-view-title"
         initial={{ opacity: 0, scale: 0.96, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 12 }}
@@ -44,6 +55,8 @@ const UserViewModal = ({ user, onClose }) => {
         <div className={`px-6 py-6 ${theme.bg} border-b ${theme.accent}`}>
           <button
             onClick={onClose}
+            aria-label="Close"
+            autoFocus
             className="absolute top-4 right-4 grid h-8 w-8 place-items-center text-slate dark:text-[#8b8fa8] hover:text-ink dark:hover:text-[#f0efe8] transition-colors"
           >
             <X size={16} />
@@ -56,7 +69,7 @@ const UserViewModal = ({ user, onClose }) => {
               {user.profileImageUrl ? (
                 <Image
                   src={user.profileImageUrl}
-                  alt={user.name}
+                  alt=""
                   width={64}
                   height={64}
                   className="h-full w-full object-cover"
@@ -67,12 +80,15 @@ const UserViewModal = ({ user, onClose }) => {
                 </span>
               )}
             </div>
-            <div>
-              <h3 className="font-display text-xl font-semibold text-ink dark:text-[#f0efe8]">
+            <div className="min-w-0 pr-8">
+              <h3
+                id="user-view-title"
+                className="font-display text-xl font-semibold text-ink dark:text-[#f0efe8] wrap-break-word"
+              >
                 {user.name}
               </h3>
               <div className="flex flex-wrap gap-1 mt-1.5">
-                {(user.roles ?? ["USER"]).map((r) => (
+                {(user.roles?.length ? user.roles : [ROLE_USER]).map((r) => (
                   <RoleBadge key={r} role={r} />
                 ))}
               </div>
@@ -84,16 +100,8 @@ const UserViewModal = ({ user, onClose }) => {
         <div className="p-6 space-y-4">
           <div className="border border-hairline dark:border-[#262932] divide-y divide-hairline dark:divide-[#262932]">
             <DetailRow icon={Mail} label="Email" value={user.email} />
-            <DetailRow icon={Phone} label="Phone" value={user.phone ?? "—"} />
-            <DetailRow
-              icon={MapPin}
-              label="Location"
-              value={
-                user.address?.city
-                  ? `${user.address.street ? user.address.street + ", " : ""}${user.address.city}`
-                  : "—"
-              }
-            />
+            <DetailRow icon={Phone} label="Phone" value={user.phone || "—"} />
+            <DetailRow icon={MapPin} label="Address" value={formatAddress(user.address)} />
             <DetailRow
               icon={Calendar}
               label="Joined"
@@ -133,7 +141,7 @@ function DetailRow({ icon: Icon, label, value }) {
         <p className="font-mono text-[10px] uppercase tracking-widest text-slate dark:text-[#8b8fa8]">
           {label}
         </p>
-        <p className="text-sm text-ink dark:text-[#f0efe8] truncate">{value}</p>
+        <p className="text-sm text-ink dark:text-[#f0efe8] wrap-break-word">{value}</p>
       </div>
     </div>
   );

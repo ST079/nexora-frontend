@@ -1,7 +1,5 @@
 import { queryFormatter } from "@/utils/format";
 import api from ".";
-import axios from "axios";
-import { config } from "@/config/config";
 
 export const createOrder = async (data) => {
   const response = await api.post(`api/v1/orders`, data);
@@ -10,13 +8,20 @@ export const createOrder = async (data) => {
 
 export const getMyOrders = async () => {
   const response = await api.get(`api/v1/orders/my-orders`);
-  console.log("Api ", response);
   return response.data;
 };
 
 export const getAllOrders = async (searchParams) => {
   const query = queryFormatter(await searchParams);
   const response = await api.get(`api/v1/orders?${query}`);
+  return response.data;
+};
+
+// Orders containing the merchant's products; each order's items are trimmed
+// to the merchant's own lines and carry a `merchantTotal`.
+export const getMerchantOrders = async (searchParams) => {
+  const query = queryFormatter(await searchParams);
+  const response = await api.get(`api/v1/orders/merchant?${query}`);
   return response.data;
 };
 
@@ -37,6 +42,11 @@ export const cancelOrder = async (id) => {
   return response.data;
 };
 
+export const deleteOrder = async (id) => {
+  const response = await api.delete(`api/v1/orders/${id}`);
+  return response.data;
+};
+
 export const payViaKhalti = async (id) => {
   const response = await api.post(`api/v1/orders/${id}/payment/khalti`);
   return response.data;
@@ -47,9 +57,11 @@ export const payViaStripe = async (id) => {
   return response.data;
 };
 
-export const confirmPayment = async (id, status) => {
+// The backend verifies the payment with Khalti/Stripe itself; Khalti
+// payments also need the `pidx` returned to the callback URL.
+export const confirmPayment = async (id, { pidx } = {}) => {
   const response = await api.put(`api/v1/orders/${id}/confirm-payment`, {
-    status,
+    pidx,
   });
   return response.data;
 };
@@ -59,7 +71,15 @@ export const payViaCash = async (id) => {
   return response.data;
 };
 
-export const getTotalCount = async () => {
-  const response = await api.get(`api/v1/orders/count`);
+export const getTotalCount = async (searchParams = {}) => {
+  const query = queryFormatter(await searchParams);
+  const response = await api.get(`api/v1/orders/count?${query}`);
+  return response.data;
+};
+
+// { total, byStatus: { PENDING, CONFIRMED, ... }, revenue } scoped to the
+// caller's role (admins see everything, merchants their own lines).
+export const getOrderStats = async () => {
+  const response = await api.get(`api/v1/orders/stats`);
   return response.data;
 };

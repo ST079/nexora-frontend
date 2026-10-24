@@ -46,7 +46,7 @@ const Newsletter = () => {
 
           {submitted ? (
             <div className="flex items-center justify-center gap-2 text-sm text-ok font-medium">
-              <Check size={16} /> You're on the list.
+              <Check size={16} /> You&apos;re on the list.
             </div>
           ) : (
             <form

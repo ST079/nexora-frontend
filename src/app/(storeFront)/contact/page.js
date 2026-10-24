@@ -10,26 +10,27 @@ import {
   Send,
   Check,
   AlertTriangle,
-  Loader2,
   MessageSquare,
   ShieldCheck,
   Truck,
 } from "lucide-react";
 import AnimatedField from "@/components/AnimatedField";
 
+const SUPPORT_EMAIL = "support@nexora.com.np";
+
 const CONTACT_CARDS = [
   {
     icon: Mail,
     label: "Email",
-    value: "support@nexora.com.np",
+    value: SUPPORT_EMAIL,
     sub: "Reply within 24 hours",
-    href: "mailto:support@nexora.com.np",
+    href: `mailto:${SUPPORT_EMAIL}`,
   },
   {
     icon: Phone,
     label: "Phone",
     value: "+977 98-NEXORA-01",
-    sub: "Mon – Fri, 10 AM – 6 PM",
+    sub: "Sun – Fri, 10 AM – 7 PM",
     href: "tel:+97798000001",
   },
   {
@@ -64,7 +65,7 @@ const FAQ = [
   },
   {
     q: "What payment methods do you accept?",
-    a: "Khalti digital wallet and cash on delivery.",
+    a: "Khalti, debit or credit card, and cash on delivery.",
   },
   {
     q: "Can I return a product?",
@@ -97,7 +98,10 @@ const ContactPage = () => {
   const update = (field, value) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
-  const handleSubmit = async (e) => {
+  // There's no contact endpoint yet, so hand the message to the visitor's
+  // mail app instead of pretending to send it. The form keeps its values in
+  // case no mail app opens.
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (!form.message.trim()) {
       setErrorMsg("Add a message before sending.");
@@ -105,10 +109,13 @@ const ContactPage = () => {
       setTimeout(() => setStatus("idle"), 1800);
       return;
     }
-    setStatus("loading");
-    await new Promise((r) => setTimeout(r, 1200));
+    const topic = TOPICS.find((t) => t.value === form.topic)?.label ?? "General";
+    const subject = `[${topic}] ${form.name.trim()}`;
+    const body = `${form.message.trim()}\n\n— ${form.name.trim()} <${form.email.trim()}>`;
+    window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(
+      subject
+    )}&body=${encodeURIComponent(body)}`;
     setStatus("success");
-    setForm({ name: "", email: "", topic: "", message: "" });
   };
 
   return (
@@ -189,18 +196,39 @@ const ContactPage = () => {
                     <Check size={22} className="text-ok" />
                   </div>
                   <p className="font-display text-xl font-semibold mb-2 text-ink dark:text-[#f0efe8]">
-                    Message received
+                    Your email is ready
                   </p>
-                  <p className="text-sm text-slate dark:text-[#8b8fa8] max-w-xs mx-auto">
-                    We&apos;ll get back to you at your email within one business
-                    day. Thanks for reaching out.
+                  <p className="text-sm text-slate dark:text-[#8b8fa8] max-w-sm mx-auto">
+                    Your mail app should have opened with the message filled
+                    in. Press send there and we&apos;ll reply within one
+                    business day. Nothing opened? Email{" "}
+                    <a
+                      href={`mailto:${SUPPORT_EMAIL}`}
+                      className="underline text-ink dark:text-[#f0efe8]"
+                    >
+                      {SUPPORT_EMAIL}
+                    </a>
+                    .
                   </p>
-                  <button
-                    onClick={() => setStatus("idle")}
-                    className="btn-secondary mt-6 mx-auto"
-                  >
-                    Send another
-                  </button>
+                  <div className="mt-6 flex flex-wrap justify-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setStatus("idle")}
+                      className="btn-secondary"
+                    >
+                      Back to my message
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setForm({ name: "", email: "", topic: "", message: "" });
+                        setStatus("idle");
+                      }}
+                      className="btn-ghost"
+                    >
+                      Start a new one
+                    </button>
+                  </div>
                 </motion.div>
               ) : (
                 <motion.div
@@ -240,27 +268,33 @@ const ContactPage = () => {
                       <AnimatedField
                         label="Your name"
                         value={form.name}
-                        onChange={(v) => update("name", v)}
-                        placeholder="Your Name"
+                        onChange={(e) => update("name", e.target.value)}
+                        placeholder="Your name"
+                        autoComplete="name"
                         required
                       />
                       <AnimatedField
                         label="Email"
                         type="email"
                         value={form.email}
-                        onChange={(v) => update("email", v)}
-                        placeholder="youremail@example.com"
+                        onChange={(e) => update("email", e.target.value)}
+                        placeholder="you@example.com"
+                        autoComplete="email"
                         required
                       />
                     </div>
 
                     {/* Topic select */}
                     <div>
-                      <label className="font-mono text-xs text-slate dark:text-[#8b8fa8] mb-1 block">
-                        Topic
+                      <label
+                        htmlFor="contact-topic"
+                        className="font-mono text-xs text-slate dark:text-[#8b8fa8] mb-1 block"
+                      >
+                        Topic <span className="text-danger">*</span>
                       </label>
                       <div className="relative">
                         <select
+                          id="contact-topic"
                           value={form.topic}
                           onChange={(e) => update("topic", e.target.value)}
                           className="field appearance-none cursor-pointer pr-8 dark:border-[#262932] dark:bg-[#16181f] dark:text-[#f0efe8]"
@@ -281,11 +315,15 @@ const ContactPage = () => {
 
                     {/* Message textarea */}
                     <div>
-                      <label className="font-mono text-xs text-slate dark:text-[#8b8fa8] mb-1 block">
-                        Message
+                      <label
+                        htmlFor="contact-message"
+                        className="font-mono text-xs text-slate dark:text-[#8b8fa8] mb-1 block"
+                      >
+                        Message <span className="text-danger">*</span>
                       </label>
                       <div className="relative">
                         <textarea
+                          id="contact-message"
                           required
                           rows={6}
                           value={form.message}
@@ -293,7 +331,7 @@ const ContactPage = () => {
                           placeholder="Describe your issue or question in as much detail as you can — order number, product name, anything relevant."
                           className="field resize-none dark:border-[#262932] dark:bg-[#16181f] dark:text-[#f0efe8] dark:placeholder:text-[#5b5e72]"
                         />
-                        <span className="absolute bottom-2 right-3 font-mono text-[11px] text-slate-light dark:text-[#5b5e72]">
+                        <span className="absolute bottom-2 right-3 font-mono text-[11px] text-slate dark:text-[#8b8fa8]">
                           {form.message.length} chars
                         </span>
                       </div>
@@ -301,16 +339,11 @@ const ContactPage = () => {
 
                     <motion.button
                       type="submit"
-                      disabled={status === "loading"}
                       whileTap={{ scale: 0.98 }}
                       className="btn-primary disabled:opacity-60"
                     >
-                      {status === "loading" ? (
-                        <Loader2 size={15} className="animate-spin" />
-                      ) : (
-                        <Send size={15} />
-                      )}
-                      {status === "loading" ? "Sending…" : "Send message"}
+                      <Send size={15} />
+                      Write email
                     </motion.button>
                   </motion.form>
                 </motion.div>

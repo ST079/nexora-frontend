@@ -1,133 +1,141 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Plus,
-  Pencil,
-  Trash2,
-  Search,
-  X,
-  Loader2,
+  AlertTriangle,
   PackageOpen,
-  ChevronDown,
-  ChevronUp,
+  Pencil,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import Image from "next/image";
+import { useSelector } from "react-redux";
+import toast from "react-hot-toast";
 import StatusBadge from "./StockStatusBadge";
 import ProductModal from "./ProductModal";
 import DeleteModal from "./DeleteModal";
 import Pagination from "@/components/Pagination";
-import toast from "react-hot-toast";
-import { EMPTY_FORM } from "@/constants/defaults";
-import { useRouter, useSearchParams } from "next/navigation";
-import { PRODUCT_MANAGEMENT_PAGE_SIZE } from "@/constants/pagination";
 import Loader from "@/components/Loader";
-import { getProducts } from "@/api/product";
+import SearchField from "@/components/SearchField";
+import SortableHeader from "@/components/SortableHeader";
+import { EMPTY_FORM } from "@/constants/defaults";
+import { PRODUCT_MANAGEMENT_PAGE_SIZE } from "@/constants/pagination";
+import { ROLE_ADMIN } from "@/constants/user";
+import { getProducts, getTotalCount } from "@/api/product";
+import { apiErrorMessage, formatNPR } from "@/utils/format";
+import { fadeUp } from "@/utils/motion";
+import { nextSortKey, sortJSON } from "@/utils/sort";
+import { useQueryParams } from "@/hooks/useQueryParams";
+import { useResource } from "@/hooks/useResource";
 
-const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 12 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.35, delay, ease: [0.22, 1, 0.36, 1] },
-});
+const DEFAULT_SORT_KEY = "-createdAt";
 
-const ProductDashboard = ({ totalItems }) => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState("");
-  const [sortField, setSortField] = useState("createdAt");
-  const [sortDir, setSortDir] = useState("desc");
+const COLUMNS = [
+  { label: "Product", field: "name" },
+  { label: "Brand", field: "brand" },
+  { label: "Category", field: "category" },
+  { label: "Price", field: "price" },
+  { label: "Stock", field: "stock" },
+  { label: "Status" },
+  { label: "" },
+];
+
+const STOCK_FILTERS = [
+  { value: "", label: "All" },
+  { value: "low", label: "Low stock" },
+  { value: "out", label: "Out of stock" },
+];
+
+const ProductDashboard = () => {
+  const { user } = useSelector((state) => state.auth);
+  const isAdmin = user?.roles?.includes(ROLE_ADMIN);
+  const { searchParams, setParams } = useQueryParams();
   const [editProduct, setEditProduct] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const router = useRouter();
-  const totalCount = totalItems || 0;
-  const searchParams = useSearchParams();
+  const [version, setVersion] = useState(0);
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLoading(true);
-    const fetchProducts = async () => {
-      try {
-        const limit = PRODUCT_MANAGEMENT_PAGE_SIZE;
-        const page = Math.max(1, Number(searchParams.get("page")) || 1);
-        const offset = (page - 1) * limit;
-        const query = Object.fromEntries(searchParams.entries());
+  const page = Math.max(1, Number(searchParams.get("page")) || 1);
+  const search = searchParams.get("search") ?? "";
+  const stock = searchParams.get("stock") ?? "";
+  const sortKey = searchParams.get("sort") ?? DEFAULT_SORT_KEY;
 
-        const products = await getProducts({
-          ...query,
-          limit,
-          offset,
-        });
-        setProducts(products);
-      } catch (error) {
-        console.error("Error fetching products:", error);
-      }
-    };
-    fetchProducts().finally(() => setLoading(false));
-  }, [searchParams]);
-  
-  const handleSave = (savedProduct, isEdit) => {
-    router.refresh();
-    setProducts((prev) =>
-      isEdit
-        ? prev.map((p) => (p._id === savedProduct._id ? savedProduct : p))
-        : [savedProduct, ...prev],
-    );
+  // Merchants only see (and may only edit) their own listings; the old page
+  // listed the whole catalog and every edit on someone else's item 403'd.
+  const owner = isAdmin ? "" : (user?._id ?? "");
+  const scope = owner ? { createdBy: owner } : {};
+
+  const stats = useResource(`${owner}|${version}`, async () => {
+    const [all, low, out] = await Promise.all([
+      getTotalCount(scope),
+      getTotalCount({ ...scope, stock: "low" }),
+      getTotalCount({ ...scope, stock: "out" }),
+    ]);
+    return { total: all.totalCount, low: low.totalCount, out: out.totalCount };
+  });
+
+  const listKey = `${owner}|${page}|${search}|${stock}|${sortKey}|${version}`;
+  const { data, loading, error } = useResource(listKey, async () => {
+    const filters = { ...scope, name: search, stock };
+    const limit = PRODUCT_MANAGEMENT_PAGE_SIZE;
+    const [products, count] = await Promise.all([
+      getProducts({
+        ...filters,
+        sort: sortJSON(sortKey),
+        limit,
+        offset: (page - 1) * limit,
+      }),
+      getTotalCount(filters),
+    ]);
+    return { products, total: count.totalCount };
+  });
+  const products = data?.products ?? [];
+  const hasFilters = Boolean(search || stock);
+
+  const refresh = () => setVersion((v) => v + 1);
+
+  const handleSave = (_saved, isEdit) => {
     setEditProduct(null);
     toast.success(isEdit ? "Product updated." : "Product added.");
+    refresh();
   };
 
-  const handleDeleted = async (deletedId) => {
-    setProducts((prev) => prev.filter((product) => product._id !== deletedId));
+  const handleDeleted = () => {
     setDeleteTarget(null);
     toast.success("Product deleted.");
+    // Step back if that was the last row on this page.
+    if (products.length === 1 && page > 1) setParams({ page: page - 1 });
+    refresh();
   };
+
+  const closeEditor = useCallback(() => setEditProduct(null), []);
+  const closeDelete = useCallback(() => setDeleteTarget(null), []);
 
   const toggleSort = (field) => {
-    if (sortField === field) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else {
-      setSortField(field);
-      setSortDir("asc");
-    }
+    const next = nextSortKey(sortKey, field);
+    setParams({ sort: next === DEFAULT_SORT_KEY ? "" : next });
   };
 
-  const handleSearch = (val) => {
-    setSearch(val);
-  };
-
-  const SortIcon = ({ field }) => {
-    if (sortField !== field) return null;
-    return sortDir === "asc" ? (
-      <ChevronUp size={12} />
-    ) : (
-      <ChevronDown size={12} />
-    );
-  };
-
-  // This filters/sorts only the current page's data client-side.
-  // (Search/sort here won't reach across pages unless the backend also
-  // supports search/sort query params — see note below.)
-  const filtered = products
-    .filter((p) =>
-      [p.name, p.brand, p.category].some((v) =>
-        v?.toLowerCase().includes(search.toLowerCase()),
-      ),
-    )
-    .sort((a, b) => {
-      const dir = sortDir === "asc" ? 1 : -1;
-      if (sortField === "price" || sortField === "stock")
-        return (a[sortField] - b[sortField]) * dir;
-      return String(a[sortField]).localeCompare(String(b[sortField])) * dir;
-    });
+  const statTiles = [
+    { label: isAdmin ? "Total products" : "Your products", value: stats.data?.total },
+    {
+      label: "In stock",
+      value: stats.data ? stats.data.total - stats.data.out : undefined,
+    },
+    { label: "Low stock", value: stats.data?.low, filter: "low" },
+    { label: "Out of stock", value: stats.data?.out, filter: "out" },
+  ];
 
   return (
-    <div className="container-page py-10 bg-paper dark:bg-[#0e0f12] min-h-screen transition-colors duration-300">
+    <div className="container-page py-8 lg:py-10 transition-colors duration-300">
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <motion.div {...fadeUp()}>
-          <p className="eyebrow dark:text-[#8b8fa8] mb-2">Admin · Products</p>
+          <p className="eyebrow dark:text-[#8b8fa8] mb-2">
+            {isAdmin ? "Admin" : "Merchant"} · Products
+          </p>
           <h1 className="font-display text-3xl font-semibold text-ink dark:text-[#f0efe8]">
-            Product management
+            {isAdmin ? "Product management" : "Your products"}
           </h1>
         </motion.div>
         <motion.button
@@ -139,58 +147,73 @@ const ProductDashboard = ({ totalItems }) => {
         </motion.button>
       </div>
 
-      {/* Stats strip */}
+      {/* Stats strip — counts cover every product, not just this page */}
       <motion.div
         {...fadeUp(0.07)}
-        className="grid grid-cols-2 sm:grid-cols-4 border border-hairline dark:border-[#262932] mb-6"
+        className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-hairline dark:bg-[#262932] border border-hairline dark:border-[#262932] mb-6"
       >
-        {[
-          { label: "Total products", value: totalCount },
-          {
-            label: "In stock",
-            value: products.filter((p) => p.stock > 0).length,
-          },
-          {
-            label: "Low stock",
-            value: products.filter((p) => p.stock > 0 && p.stock <= 5).length,
-          },
-          {
-            label: "Out of stock",
-            value: products.filter((p) => p.stock <= 0).length,
-          },
-        ].map((s, i) => (
-          <div
-            key={s.label}
-            className={`px-5 py-4 ${i < 3 ? "border-r border-hairline dark:border-[#262932]" : ""}`}
-          >
-            <p className="font-display text-2xl font-semibold text-ink dark:text-[#f0efe8]">
-              {s.value}
-            </p>
-            <p className="eyebrow dark:text-[#8b8fa8] mt-1">{s.label}</p>
-          </div>
-        ))}
+        {statTiles.map((s) => {
+          const active = s.filter && stock === s.filter;
+          const body = (
+            <>
+              <p className="font-display text-2xl font-semibold text-ink dark:text-[#f0efe8]">
+                {s.value ?? "—"}
+              </p>
+              <p className="eyebrow dark:text-[#8b8fa8] mt-1">{s.label}</p>
+            </>
+          );
+          return s.filter ? (
+            <button
+              key={s.label}
+              onClick={() => setParams({ stock: active ? "" : s.filter })}
+              aria-pressed={active}
+              className={`text-left px-5 py-4 transition-colors ${
+                active
+                  ? "bg-signal-tint dark:bg-signal/10"
+                  : "bg-paper dark:bg-[#0e0f12] hover:bg-hairline/30 dark:hover:bg-[#16181f]"
+              }`}
+            >
+              {body}
+            </button>
+          ) : (
+            <div key={s.label} className="px-5 py-4 bg-paper dark:bg-[#0e0f12]">
+              {body}
+            </div>
+          );
+        })}
       </motion.div>
 
-      {/* Search */}
+      {/* Filters */}
       <motion.div
         {...fadeUp(0.1)}
-        className="flex items-center border border-hairline dark:border-[#262932] px-3 py-2.5 gap-2 mb-4 max-w-sm focus-within:border-ink dark:focus-within:border-[#f0efe8] transition-colors"
+        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4"
       >
-        <Search size={14} className="text-slate dark:text-[#8b8fa8] shrink-0" />
-        <input
+        <SearchField
           value={search}
-          onChange={(e) => handleSearch(e.target.value)}
-          placeholder="Search name, brand, category…"
-          className="w-full bg-transparent text-sm outline-none text-ink dark:text-[#f0efe8] placeholder:text-slate-light dark:placeholder:text-[#5b5e72]"
+          onChange={(value) => setParams({ search: value })}
+          placeholder="Search products by name…"
+          label="Search products"
+          className="w-full sm:max-w-sm"
         />
-        {search && (
-          <button
-            onClick={() => handleSearch("")}
-            className="text-slate dark:text-[#8b8fa8] hover:text-ink dark:hover:text-[#f0efe8]"
-          >
-            <X size={13} />
-          </button>
-        )}
+        <div role="group" aria-label="Filter by stock" className="flex gap-1">
+          {STOCK_FILTERS.map((f) => {
+            const active = stock === f.value;
+            return (
+              <button
+                key={f.value || "all"}
+                onClick={() => setParams({ stock: f.value })}
+                aria-pressed={active}
+                className={`px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest border transition-colors ${
+                  active
+                    ? "border-ink dark:border-[#f0efe8] bg-ink dark:bg-[#f0efe8] text-paper dark:text-[#0e0f12]"
+                    : "border-hairline dark:border-[#262932] text-slate dark:text-[#8b8fa8] hover:border-ink dark:hover:border-[#f0efe8] hover:text-ink dark:hover:text-[#f0efe8]"
+                }`}
+              >
+                {f.label}
+              </button>
+            );
+          })}
+        </div>
       </motion.div>
 
       {/* Table */}
@@ -200,43 +223,59 @@ const ProductDashboard = ({ totalItems }) => {
       >
         {loading ? (
           <Loader label="Loading products" />
-        ) : products.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-3">
-            <PackageOpen size={28} className="text-slate dark:text-[#8b8fa8]" />
+        ) : error ? (
+          <div role="alert" className="flex flex-col items-center justify-center py-20 gap-3 text-center px-6">
+            <AlertTriangle size={26} className="text-danger" />
             <p className="font-display font-semibold text-ink dark:text-[#f0efe8]">
-              No products found
+              Couldn&apos;t load products
             </p>
             <p className="text-sm text-slate dark:text-[#8b8fa8]">
-              Try a different search or add a new product.
+              {apiErrorMessage(error, "Check your connection and try again.")}
             </p>
+            <button onClick={refresh} className="btn-secondary mt-2">
+              Try again
+            </button>
+          </div>
+        ) : products.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-3 text-center px-6">
+            <PackageOpen size={28} className="text-slate dark:text-[#8b8fa8]" />
+            <p className="font-display font-semibold text-ink dark:text-[#f0efe8]">
+              {hasFilters ? "No products match" : "No products yet"}
+            </p>
+            <p className="text-sm text-slate dark:text-[#8b8fa8]">
+              {hasFilters
+                ? "Try a different search or stock filter."
+                : "Add your first product to start selling."}
+            </p>
+            {hasFilters ? (
+              <button
+                onClick={() => setParams({ search: "", stock: "" })}
+                className="btn-secondary mt-2"
+              >
+                Clear filters
+              </button>
+            ) : (
+              <button onClick={() => setEditProduct(EMPTY_FORM)} className="btn-primary mt-2">
+                <Plus size={15} /> Add product
+              </button>
+            )}
           </div>
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-hairline dark:border-[#262932] bg-paper dark:bg-[#0e0f12]">
-                {[
-                  { label: "Product", field: "name" },
-                  { label: "Brand", field: "brand" },
-                  { label: "Category", field: "category" },
-                  { label: "Price", field: "price" },
-                  { label: "Stock", field: "stock" },
-                  { label: "Status", field: null },
-                  { label: "Actions", field: null },
-                ].map((col) => (
-                  <th
-                    key={col.label}
-                    onClick={() => col.field && toggleSort(col.field)}
-                    className={`px-4 py-3 text-left font-mono text-[11px] uppercase tracking-widest text-slate dark:text-[#8b8fa8] whitespace-nowrap ${col.field ? "cursor-pointer hover:text-ink dark:hover:text-[#f0efe8] select-none" : ""}`}
-                  >
-                    <span className="inline-flex items-center gap-1">
-                      {col.label} <SortIcon field={col.field} />
-                    </span>
-                  </th>
+              <tr className="border-b border-hairline dark:border-[#262932]">
+                {COLUMNS.map((col) => (
+                  <SortableHeader
+                    key={col.label || "actions"}
+                    {...col}
+                    sortKey={sortKey}
+                    onSort={toggleSort}
+                  />
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-hairline dark:divide-[#262932]">
-              {filtered.map((product, i) => (
+              {products.map((product, i) => (
                 <motion.tr
                   key={product._id}
                   initial={{ opacity: 0 }}
@@ -250,33 +289,33 @@ const ProductDashboard = ({ totalItems }) => {
                         {product.imageUrls?.[0] ? (
                           <Image
                             src={product.imageUrls[0]}
-                            alt={product.name}
+                            alt=""
                             width={40}
                             height={40}
                             className="h-full w-full object-cover"
                           />
                         ) : (
                           <div className="h-full w-full grid place-items-center">
-                            <PackageOpen
-                              size={14}
-                              className="text-slate dark:text-[#8b8fa8]"
-                            />
+                            <PackageOpen size={14} className="text-slate dark:text-[#8b8fa8]" />
                           </div>
                         )}
                       </div>
-                      <span className="font-medium text-ink dark:text-[#f0efe8] max-w-[180px] truncate">
+                      <span
+                        className="font-medium text-ink dark:text-[#f0efe8] max-w-45 truncate"
+                        title={product.name}
+                      >
                         {product.name}
                       </span>
                     </div>
                   </td>
                   <td className="px-4 py-3 text-slate dark:text-[#8b8fa8]">
-                    {product.brand}
+                    {product.brand || "—"}
                   </td>
                   <td className="px-4 py-3 text-slate dark:text-[#8b8fa8]">
-                    {product.category}
+                    {product.category || "—"}
                   </td>
-                  <td className="px-4 py-3 font-mono text-ink dark:text-[#f0efe8]">
-                    Rs. {Number(product.price).toLocaleString("en-IN")}
+                  <td className="px-4 py-3 font-mono text-ink dark:text-[#f0efe8] whitespace-nowrap">
+                    {formatNPR(product.price)}
                   </td>
                   <td className="px-4 py-3 font-mono text-ink dark:text-[#f0efe8]">
                     {product.stock}
@@ -285,18 +324,18 @@ const ProductDashboard = ({ totalItems }) => {
                     <StatusBadge stock={product.stock} />
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => setEditProduct(product)}
                         className="grid h-8 w-8 place-items-center border border-hairline dark:border-[#262932] text-slate dark:text-[#8b8fa8] hover:border-ink dark:hover:border-[#f0efe8] hover:text-ink dark:hover:text-[#f0efe8] transition-colors"
-                        aria-label="Edit"
+                        aria-label={`Edit ${product.name}`}
                       >
                         <Pencil size={13} />
                       </button>
                       <button
                         onClick={() => setDeleteTarget(product)}
                         className="grid h-8 w-8 place-items-center border border-hairline dark:border-[#262932] text-slate dark:text-[#8b8fa8] hover:border-danger hover:text-danger dark:hover:border-danger dark:hover:text-danger transition-colors"
-                        aria-label="Delete"
+                        aria-label={`Delete ${product.name}`}
                       >
                         <Trash2 size={13} />
                       </button>
@@ -309,8 +348,7 @@ const ProductDashboard = ({ totalItems }) => {
         )}
       </motion.div>
 
-      {/* Pagination — now only needs total + pageSize */}
-      <Pagination total={totalCount} pageSize={PRODUCT_MANAGEMENT_PAGE_SIZE} />
+      <Pagination total={data?.total ?? 0} pageSize={PRODUCT_MANAGEMENT_PAGE_SIZE} />
 
       {/* Modals */}
       <AnimatePresence>
@@ -318,7 +356,7 @@ const ProductDashboard = ({ totalItems }) => {
           <ProductModal
             key="product-modal"
             product={editProduct?._id ? editProduct : null}
-            onClose={() => setEditProduct(null)}
+            onClose={closeEditor}
             onSave={handleSave}
           />
         )}
@@ -326,7 +364,7 @@ const ProductDashboard = ({ totalItems }) => {
           <DeleteModal
             key="delete-modal"
             product={deleteTarget}
-            onClose={() => setDeleteTarget(null)}
+            onClose={closeDelete}
             onConfirm={handleDeleted}
           />
         )}

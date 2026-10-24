@@ -10,11 +10,12 @@ const ThemeToggler = () => {
   return (
     <button
       onClick={() => dispatch(toggleTheme())}
-      className=" flex items-center gap-3 w-full px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-[#1c1e24] dark:text-paper transition"
+      aria-pressed={theme === "dark"}
+      className="flex items-center gap-3 w-full px-4 py-3 text-sm text-ink hover:bg-hairline/50 dark:hover:bg-[#262932] dark:text-[#f0efe8] transition"
     >
       {theme === "dark" ? <SunIcon size={14} /> : <MoonIcon size={14} />}
 
-      {theme === "dark" ? "Light Mode" : "Dark Mode"}
+      {theme === "dark" ? "Light mode" : "Dark mode"}
     </button>
   );
 };

@@ -1,21 +1,27 @@
-import { CheckCircle2, Clock, DollarSign, Loader2, Truck, Verified } from "lucide-react";
+import { CheckCircle2, ClipboardCheck, Clock, Truck } from "lucide-react";
+
+const TIMELINE = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED"];
+// A dollar sign read as "paid", but confirmation doesn't mean payment (COD).
+const ICONS = [Clock, ClipboardCheck, Truck, CheckCircle2];
 
 const OrderTimeline = ({ status }) => {
-  const TIMELINE = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED"];
   const current = TIMELINE.indexOf(status?.toUpperCase());
   if (current === -1) return null;
 
   return (
     <div className="card-frame p-6">
       <p className="eyebrow dark:text-[#8b8fa8] mb-5">Order progress</p>
-      <div className="flex items-start">
+      <ol className="flex items-start">
         {TIMELINE.map((step, i) => {
           const done = i <= current;
           const active = i === current;
-          const icons = [Clock, DollarSign, Truck, CheckCircle2];
-          const Icon = icons[i];
+          const Icon = ICONS[i];
           return (
-            <div key={step} className="flex-1 flex flex-col items-center">
+            <li
+              key={step}
+              aria-current={active ? "step" : undefined}
+              className="flex-1 flex flex-col items-center"
+            >
               <div className="w-full flex items-center">
                 {i > 0 && (
                   <div
@@ -31,7 +37,7 @@ const OrderTimeline = ({ status }) => {
                         : "border-hairline dark:border-[#262932] text-slate dark:text-[#8b8fa8]"
                   }`}
                 >
-                  <Icon size={14} />
+                  <Icon size={14} aria-hidden />
                 </div>
                 {i < TIMELINE.length - 1 && (
                   <div
@@ -48,10 +54,10 @@ const OrderTimeline = ({ status }) => {
               >
                 {step}
               </p>
-            </div>
+            </li>
           );
         })}
-      </div>
+      </ol>
     </div>
   );
 };

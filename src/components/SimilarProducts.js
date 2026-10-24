@@ -1,44 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import ProductCard from "@/components/ProductCard";
 import Loader from "@/components/Loader";
 import { getProducts } from "@/api/product";
+import { useResource } from "@/hooks/useResource";
+
+const toList = (data) => (Array.isArray(data) ? data : (data?.products ?? []));
 
 const SimilarProducts = ({ category, currentProductId }) => {
-  console.log(category);
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // One extra so the list still has four after the current product is dropped.
+  const { data, loading } = useResource(category ?? "", () =>
+    category ? getProducts({ category, limit: 5 }) : Promise.resolve([])
+  );
 
-  useEffect(() => {
-    if (!category) return;
+  const products = toList(data)
+    .filter((p) => (p._id || p.id) !== currentProductId)
+    .slice(0, 4);
 
-    let active = true;
-
-    const fetch = async () => {
-      setLoading(true);
-      try {
-        const data = await getProducts({ category });
-        if (!active) return;
-        const filtered = (Array.isArray(data) ? data : (data?.products ?? []))
-          .filter((p) => (p._id || p.id) !== currentProductId)
-          .slice(0, 4);
-        setProducts(filtered);
-      } catch (err) {
-        console.error("Similar products fetch failed:", err);
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
-
-    fetch();
-    return () => {
-      active = false;
-    };
-  }, [category, currentProductId]);
-
-  if (!loading && products.length === 0) return null;
+  // A failed fetch just hides the section; it's supplementary content.
+  if (!category || (!loading && products.length === 0)) return null;
 
   return (
     <section className="mt-20">

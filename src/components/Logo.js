@@ -5,27 +5,34 @@ import Link from "next/link";
 import React from "react";
 import { useSelector } from "react-redux";
 
+const roleTag = (user) => {
+  if (user?.roles?.includes(ROLE_ADMIN)) return "Admin";
+  if (user?.roles?.includes(ROLE_MERCHANT)) return "Merchant";
+  return null;
+};
+
 const Logo = () => {
   const { user } = useSelector((state) => state.auth);
+  const tag = roleTag(user);
 
   return (
-    <div>
-      <Link href={HOME_ROUTE} className="flex items-center gap-2 shrink-0">
-        <span className="grid h-8 w-8 place-items-center bg-ink font-mono text-sm text-signal">
-          N
-        </span>
-        <span className="font-display text-lg font-semibold tracking-tight dark:text-white">
-          NEXORA
-          <span className="ml-1 font-mono text-[10px] uppercase tracking-widest text-slate dark:text-[#8b8fa8]">
-            {user?.roles?.includes(ROLE_ADMIN)
-              ? "Admin"
-              : user?.roles?.includes(ROLE_MERCHANT)
-                ? "Merchant"
-                : "NEXORA"}
+    <Link
+      href={HOME_ROUTE}
+      className="flex items-center gap-2 shrink-0"
+      aria-label="Nexora home"
+    >
+      <span className="grid h-8 w-8 place-items-center bg-ink dark:bg-[#f0efe8] font-mono text-sm font-bold text-signal dark:text-ink">
+        N
+      </span>
+      <span className="font-display text-lg font-semibold tracking-tight text-ink dark:text-[#f0efe8]">
+        NEXORA
+        {tag && (
+          <span className="ml-1.5 font-mono text-[10px] uppercase tracking-widest text-slate dark:text-[#8b8fa8]">
+            {tag}
           </span>
-        </span>
-      </Link>
-    </div>
+        )}
+      </span>
+    </Link>
   );
 };
 

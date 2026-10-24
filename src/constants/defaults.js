@@ -1,5 +1,6 @@
 export const DEFAULT_SORT = JSON.stringify({ createdAt: -1 });
-export const DEFAULT_BRAND = [""];
+// No brands selected. ([""] rendered an empty chip.)
+export const DEFAULT_BRAND = [];
 export const DEFAULT_MIN_Price = 0;
 export const DEFAULT_MAX_Price = "";
 export const DEFAULT_CATEGORY = "";
@@ -21,6 +22,9 @@ export const FALLBACK_IMG =
       <text x="300" y="308" font-family="monospace" font-size="13" fill="#6B7280" text-anchor="middle">NO IMAGE</text>
     </svg>`,
   );
+
+// Matches the backend's `stock=low` filter (1–5 left).
+export const LOW_STOCK_THRESHOLD = 5;
 
 export const EMPTY_FORM = {
   name: "",

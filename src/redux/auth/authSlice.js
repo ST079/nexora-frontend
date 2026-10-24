@@ -9,12 +9,17 @@ const authSlice = createSlice({
     error: null,
   },
   reducers: {
+    // The stored token is cleared by the listener in redux/store.js.
     logout: (state) => {
       state.user = null;
-      localStorage.removeItem("authToken");
+      state.error = null;
     },
     setUser: (state, action) => {
       state.user = action.payload;
+    },
+    // Login and register share `error`; each form clears it on mount.
+    clearAuthError: (state) => {
+      state.error = null;
     },
   },
   extraReducers: (builder) =>
@@ -47,6 +52,6 @@ const authSlice = createSlice({
       }),
 });
 
-export const { logout, setUser } = authSlice.actions;
+export const { logout, setUser, clearAuthError } = authSlice.actions;
 
 export default authSlice.reducer;

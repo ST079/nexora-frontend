@@ -2,7 +2,6 @@ import { queryFormatter } from "@/utils/format";
 import api from ".";
 import axios from "axios";
 import { config } from "@/config/config";
-import { ConstructionIcon } from "lucide-react";
 
 export const getProducts = async (searchParams) => {
   const query = queryFormatter(await searchParams);
@@ -27,11 +26,13 @@ export const updateProduct = async (id, data) => {
 
 export const deleteProduct = async (id) => {
   const response = await api.delete(`api/v1/products/${id}`);
-  console.log(response);
   return response.data;
 };
 
-export const getTotalCount = async () => {
-  const response = await axios.get(`${config.apiUrl}api/v1/products/count`);
+export const getTotalCount = async (searchParams = {}) => {
+  const query = queryFormatter(await searchParams);
+  const response = await axios.get(
+    `${config.apiUrl}api/v1/products/count?${query}`,
+  );
   return response.data;
 };

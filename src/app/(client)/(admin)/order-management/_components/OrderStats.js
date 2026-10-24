@@ -1,64 +1,55 @@
+"use client";
+
 import React, { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { getAllOrders } from "@/api/order";
-import { fadeUp } from "@/app/(storeFront)/orders/page";
-import { ORDER_STATUS_CANCELLED, ORDER_STATUS_CONFIRMED, ORDER_STATUS_PENDING } from "@/constants/orders";
-import { PAYMENT_STATUS_SUCCESS } from "@/constants/payment";
+import { motion } from "framer-motion";
+import { getOrderStats } from "@/api/order";
+import { fadeUp } from "@/utils/motion";
+import { formatNPR } from "@/utils/format";
+import {
+  ORDER_STATUS_CANCELLED,
+  ORDER_STATUS_CONFIRMED,
+  ORDER_STATUS_DELIVERED,
+  ORDER_STATUS_PENDING,
+  ORDER_STATUS_SHIPPED,
+} from "@/constants/orders";
 
-const OrderStats =  () => {
-  const [orders, setOrders] = useState([]);
+// Counts come from /orders/stats (one aggregate, scoped to the caller's role)
+// instead of downloading every order. `refreshKey` re-fetches after edits.
+const OrderStats = ({ refreshKey = 0 }) => {
+  const [stats, setStats] = useState(null);
+
   useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const data = await getAllOrders();
-        setOrders(data);
-      } catch (error) {
-        console.error("Error fetching orders:", error);
-      }
+    let cancelled = false;
+    getOrderStats()
+      .then((data) => !cancelled && setStats(data))
+      .catch(() => !cancelled && setStats(null));
+    return () => {
+      cancelled = true;
     };
+  }, [refreshKey]);
 
-    fetchOrders();
-  }, []);
+  const count = (status) => stats?.byStatus?.[status] ?? "—";
+  const tiles = [
+    { label: "Total orders", value: stats?.total ?? "—" },
+    { label: "Pending", value: count(ORDER_STATUS_PENDING) },
+    { label: "Confirmed", value: count(ORDER_STATUS_CONFIRMED) },
+    { label: "Shipped", value: count(ORDER_STATUS_SHIPPED) },
+    { label: "Delivered", value: count(ORDER_STATUS_DELIVERED) },
+    { label: "Cancelled", value: count(ORDER_STATUS_CANCELLED) },
+    { label: "Revenue", value: stats ? formatNPR(stats.revenue) : "—", wide: true },
+  ];
 
   return (
     <motion.div
       {...fadeUp(0.07)}
-      className="grid grid-cols-2 sm:grid-cols-5 border border-hairline dark:border-[#262932] mb-6"
+      className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7 gap-px bg-hairline dark:bg-[#262932] border border-hairline dark:border-[#262932] mb-6"
     >
-      {[
-        { label: "Total orders", value: orders.length },
-        {
-          label: "Pending",
-          value: orders.filter(
-            (o) => o.status.toUpperCase() === ORDER_STATUS_PENDING,
-          ).length,
-        },
-        {
-          label: "Confirmed",
-          value: orders.filter(
-            (o) => o.status.toUpperCase() === ORDER_STATUS_CONFIRMED,
-          ).length,
-        },
-        {
-          label: "Paid",
-          value: orders.filter(
-            (o) => o.payment?.status.toUpperCase() === PAYMENT_STATUS_SUCCESS,
-          ).length,
-        },
-        {
-          label: "Cancelled",
-          value: orders.filter(
-            (o) => o.status.toUpperCase() === ORDER_STATUS_CANCELLED,
-          ).length,
-        },
-      ].map((s, i) => (
+      {tiles.map((s) => (
         <div
           key={s.label}
-          className={`px-5 py-4 ${
-            i < 3 ? "border-r border-hairline dark:border-[#262932]" : ""
-          }`}
+          className={`bg-paper dark:bg-[#0e0f12] px-5 py-4 ${s.wide ? "col-span-2 sm:col-span-1" : ""}`}
         >
-          <p className="font-display text-2xl font-semibold text-ink dark:text-[#f0efe8]">
+          <p className="font-display text-2xl font-semibold tabular-nums text-ink dark:text-[#f0efe8] truncate">
             {s.value}
           </p>
           <p className="eyebrow dark:text-[#8b8fa8] mt-1">{s.label}</p>

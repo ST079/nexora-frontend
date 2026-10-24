@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ArrowRight } from "lucide-react";
 import Link from "next/link";
@@ -9,15 +9,27 @@ import { categories } from "@/constants/categories";
 
 const ProductsMenu = () => {
   const [open, setOpen] = useState(false);
+  const containerRef = useRef(null);
+
+  // Keyboard users: open while focus is inside, close when it leaves or on Escape.
+  const onBlur = (e) => {
+    if (!containerRef.current?.contains(e.relatedTarget)) setOpen(false);
+  };
 
   return (
     <div
+      ref={containerRef}
       className="relative"
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
+      onFocus={() => setOpen(true)}
+      onBlur={onBlur}
+      onKeyDown={(e) => e.key === "Escape" && setOpen(false)}
     >
       <Link
         href={PRODUCTS_ROUTE}
+        aria-haspopup="true"
+        aria-expanded={open}
         className={`eyebrow flex items-center gap-1 transition-colors hover:text-ink dark:hover:text-[#f0efe8] ${
           open
             ? "text-ink dark:text-[#f0efe8]"
@@ -47,10 +59,11 @@ const ProductsMenu = () => {
               <div className="flex items-center justify-between mb-4">
                 <p className="eyebrow dark:text-[#8b8fa8]">Shop by category</p>
                 <Link
-                  href="/products"
+                  href={PRODUCTS_ROUTE}
+                  onClick={() => setOpen(false)}
                   className="font-mono text-xs text-slate dark:text-[#8b8fa8] hover:text-signal dark:hover:text-signal inline-flex items-center gap-1 transition-colors"
                 >
-                  All Products <ArrowRight size={11} />
+                  All products <ArrowRight size={11} />
                 </Link>
               </div>
 
@@ -63,7 +76,7 @@ const ProductsMenu = () => {
                     transition={{ duration: 0.2, delay: i * 0.025 }}
                   >
                     <Link
-                      href={`/products?category=${encodeURIComponent(c.label)}`}
+                      href={`${PRODUCTS_ROUTE}?category=${encodeURIComponent(c.label)}`}
                       onClick={() => setOpen(false)}
                       className="group flex items-start gap-3 border border-hairline dark:border-[#262932] p-3 hover:border-ink dark:hover:border-[#f0efe8] transition-colors"
                     >

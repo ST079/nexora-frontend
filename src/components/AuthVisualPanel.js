@@ -13,13 +13,15 @@ const DEFAULT_LOG = [
 const AuthVisualPanel = ({ eyebrow = "Secure access", title, log = DEFAULT_LOG }) => {
   const [visibleLines, setVisibleLines] = useState(0);
 
+  // Depend on the length, not the array: parents pass a fresh literal on
+  // every render, which used to restart the typing loop on each keystroke.
+  const lineCount = log.length;
   useEffect(() => {
-    setVisibleLines(0);
     const interval = setInterval(() => {
-      setVisibleLines((v) => (v >= log.length ? 0 : v + 1));
+      setVisibleLines((v) => (v >= lineCount ? 0 : v + 1));
     }, 950);
     return () => clearInterval(interval);
-  }, [log]);
+  }, [lineCount]);
 
   return (
     <div className="relative hidden lg:flex lg:w-[42%] flex-col justify-between overflow-hidden bg-[#14151A] dark:bg-[#0a0b0e] text-[#FAFAF7] p-10 transition-colors duration-300">

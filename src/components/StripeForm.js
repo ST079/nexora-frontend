@@ -1,6 +1,6 @@
 "use client";
-import { confirmPayment, payViaStripe } from "@/api/order";
-import { PAYMENT_STATUS_COMPLETED } from "@/constants/payment";
+import { confirmPayment } from "@/api/order";
+import { apiErrorMessage } from "@/utils/format";
 import {
   PaymentElement,
   useElements,
@@ -33,11 +33,21 @@ const StripeForm = ({ onClose, onSuccess, orderId }) => {
       return;
     }
 
-    if (paymentIntent?.status === "succeeded") {
-      await confirmPayment(orderId, PAYMENT_STATUS_COMPLETED);
-      onSuccess();
+    // The backend re-checks the intent with Stripe before marking it paid.
+    if (["succeeded", "processing"].includes(paymentIntent?.status)) {
+      try {
+        await confirmPayment(orderId);
+        onSuccess();
+      } catch (err) {
+        setError(
+          apiErrorMessage(
+            err,
+            "We couldn't confirm your payment yet. Refresh the order in a moment."
+          )
+        );
+      }
     } else {
-      setError(`Unexpected payment status: ${paymentIntent?.status}`);
+      setError("Payment wasn't completed. Please try again.");
     }
 
     setPaying(false);

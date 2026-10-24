@@ -5,7 +5,7 @@ export const CONTACT_ROUTE = "/contact";
 export const LOGIN_ROUTE = "/login";
 export const REGISTER_ROUTE = "/register";
 export const FORGOT_PASSWORD_ROUTE = "/forgot-password";
-export const REST_PASSWORD_ROUTE = "/reset-password";
+export const RESET_PASSWORD_ROUTE = "/reset-password";
 
 //user
 export const ACCOUNT_SETTING_ROUTE = "/account";
@@ -15,8 +15,7 @@ export const CART_ROUTE = "/cart";
 export const CHECKOUT_ROUTE = "/checkout";
 export const ORDERS_ROUTE = "/orders";
 
-//admin routes
-export const ADMIN_ROUTE = "/admin";
+//admin & merchant routes
 export const DASHBOARD_ROUTE = "/dashboard";
 export const PRODUCT_MANAGEMENT_ROUTE = "/product-management";
 export const ORDER_MANAGEMENT_ROUTE = "/order-management";

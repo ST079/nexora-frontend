@@ -4,6 +4,8 @@ export const productImage = (product, index = 0) => {
   const images = product?.imageUrls;
   if (Array.isArray(images) && images.length > index && images[index])
     return images[index];
+  // Cart items store a single image string under imageUrls.
+  if (typeof images === "string" && images) return images;
   if (typeof product?.image === "string" && product.image) return product.image;
   return FALLBACK_IMG;
 };
@@ -22,18 +24,32 @@ export const formatSize = (bytes) => {
 
 export const formatExt = (name) => name.split(".").pop().toUpperCase();
 
+// Filters the backend understands, across products, orders and users.
+const PASSTHROUGH_KEYS = [
+  "name",
+  "brands",
+  "category",
+  "min",
+  "max",
+  "createdBy",
+  "stock",
+  "status",
+  "search",
+  "role",
+  "limit",
+  "offset",
+];
+
 export const queryFormatter = (searchParams = {}) => {
   const params = new URLSearchParams();
 
   params.set("sort", searchParams.sort ?? DEFAULT_SORT);
 
-  if (searchParams.name) params.set("name", searchParams.name);
-  if (searchParams.brands) params.set("brands", searchParams.brands);
-  if (searchParams.category) params.set("category", searchParams.category);
-  if (searchParams.min) params.set("min", searchParams.min);
-  if (searchParams.max) params.set("max", searchParams.max);
-  if (searchParams.limit) params.set("limit", searchParams.limit);
-  if (searchParams.offset) params.set("offset", searchParams.offset);
+  PASSTHROUGH_KEYS.forEach((key) => {
+    const value = searchParams[key];
+    if (value !== undefined && value !== null && value !== "")
+      params.set(key, value);
+  });
 
   return params.toString();
 };
@@ -50,19 +66,23 @@ export function slugStatus(status = "") {
 }
 
 export const STATUS_STYLES = {
-  PENDING: "bg-signal-tint text-signal-dim",
-  PROCESSING: "bg-blueprint-tint text-blueprint-dim",
-  SHIPPED: "bg-blueprint-tint text-blueprint-dim",
+  PENDING: "bg-signal-tint text-signal-dim dark:bg-signal/15 dark:text-signal",
+  CONFIRMED: "bg-ok/10 text-ok",
+  SHIPPED: "bg-blueprint-tint text-blueprint-dim dark:bg-blueprint/20 dark:text-[#8b9bff]",
   DELIVERED: "bg-ok/10 text-ok",
   COMPLETED: "bg-ok/10 text-ok",
+  FAILED: "bg-danger/10 text-danger",
+  REFUNDED: "bg-hairline text-slate-dim dark:bg-[#262932] dark:text-[#8b8fa8]",
   CANCELLED: "bg-danger/10 text-danger",
-  CANCELED: "bg-danger/10 text-danger",
-  UNPAID: "bg-signal-tint text-signal-dim",
+  UNPAID: "bg-signal-tint text-signal-dim dark:bg-signal/15 dark:text-signal",
   PAID: "bg-ok/10 text-ok",
 };
 
 export function statusStyle(status) {
-  return STATUS_STYLES[slugStatus(status)] || "bg-hairline text-slate";
+  return (
+    STATUS_STYLES[slugStatus(status)] ||
+    "bg-hairline text-slate-dim dark:bg-[#262932] dark:text-[#8b8fa8]"
+  );
 }
 
 
@@ -73,3 +93,13 @@ export const initials = (name = "") =>
     .slice(0, 2)
     .map((p) => p[0]?.toUpperCase())
     .join("");
+
+// Reads the first useful message out of an axios error (including Zod
+// field errors) so toasts say what actually went wrong.
+export const apiErrorMessage = (error, fallback = "Something went wrong.") => {
+  const data = error?.response?.data;
+  const fieldError = Object.values(data?.properties ?? {})
+    .flatMap((field) => field?.errors ?? [])
+    .find(Boolean);
+  return fieldError || data?.message || error?.message || fallback;
+};

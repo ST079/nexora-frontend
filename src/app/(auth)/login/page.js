@@ -13,17 +13,30 @@ import AnimatedField from "@/components/AnimatedField";
 import AuthVisualPanel from "@/components/AuthVisualPanel";
 import { useForm } from "react-hook-form";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { loginUser } from "@/redux/auth/authActions";
+import { clearAuthError } from "@/redux/auth/authSlice";
+import { FORGOT_PASSWORD_ROUTE, REGISTER_ROUTE } from "@/constants/routes";
+import { USER_RULES } from "@/constants/user";
+import { withNext } from "@/utils/navigation";
 
-const LoginPage = () => {
-  const { register, handleSubmit } = useForm();
+const LoginForm = () => {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm();
   const [showPassword, setShowPassword] = useState(false);
-  const router = useRouter();
   const dispatch = useDispatch();
+  const next = useSearchParams().get("next");
+
+  // Don't greet the form with an error left over from another attempt.
+  useEffect(() => {
+    dispatch(clearAuthError());
+  }, [dispatch]);
 
   const { loading, error, user } = useSelector((state) => state.auth);
   const status = loading
@@ -36,14 +49,12 @@ const LoginPage = () => {
 
   const loginCredentials = async (data) => {
     const result = await dispatch(loginUser(data));
-    if (loginUser.fulfilled.match(result)) {
-      toast.success("Welcome back.");
-      router.replace("/");
-    }
+    // The (auth) layout redirects once `user` is set, honouring `?next=`.
+    if (loginUser.fulfilled.match(result)) toast.success("Welcome back.");
   };
 
   return (
-    <div className="flex h-screen bg-paper dark:bg-[#0e0f12] transition-colors duration-300">
+    <div className="flex min-h-screen bg-paper dark:bg-[#0e0f12] transition-colors duration-300">
       <AuthVisualPanel
         eyebrow="Secure access"
         title="Every session starts with a verified handshake."
@@ -87,6 +98,7 @@ const LoginPage = () => {
 
           {/* Form */}
           <motion.form
+            noValidate
             className="space-y-4"
             onSubmit={handleSubmit(loginCredentials)}
             animate={status === "error" ? { x: [0, -8, 8, -5, 5, 0] } : {}}
@@ -97,7 +109,8 @@ const LoginPage = () => {
               type="email"
               autoComplete="email"
               placeholder="you@example.com"
-              {...register("email", { required: "Email is required" })}
+              error={errors.email?.message}
+              {...register("email", USER_RULES.email)}
             />
 
             <AnimatedField
@@ -105,11 +118,14 @@ const LoginPage = () => {
               type={showPassword ? "text" : "password"}
               autoComplete="current-password"
               placeholder="••••••••"
-              {...register("password", { required: "Password is required" })}
+              error={errors.password?.message}
+              {...register("password", {
+                required: "Password is required",
+                minLength: { value: 6, message: "At least 6 characters" },
+              })}
               right={
                 <button
                   type="button"
-                  tabIndex={-1}
                   onClick={() => setShowPassword((s) => !s)}
                   className="text-slate dark:text-[#8b8fa8] hover:text-ink dark:hover:text-[#f0efe8]"
                   aria-label={showPassword ? "Hide password" : "Show password"}
@@ -121,7 +137,7 @@ const LoginPage = () => {
 
             <div className="flex justify-end">
               <Link
-                href="/forgot-password"
+                href={FORGOT_PASSWORD_ROUTE}
                 className="font-mono text-xs text-slate dark:text-[#8b8fa8] hover:text-signal dark:hover:text-signal"
               >
                 Forgot password?
@@ -180,7 +196,7 @@ const LoginPage = () => {
           <p className="mt-6 text-sm text-slate dark:text-[#8b8fa8]">
             New to Nexora?{" "}
             <Link
-              href="/register"
+              href={withNext(REGISTER_ROUTE, next)}
               className="text-ink dark:text-[#f0efe8] underline hover:text-signal dark:hover:text-signal"
             >
               Create an account
@@ -191,5 +207,12 @@ const LoginPage = () => {
     </div>
   );
 };
+
+// useSearchParams needs a Suspense boundary or the route can't prerender.
+const LoginPage = () => (
+  <Suspense fallback={null}>
+    <LoginForm />
+  </Suspense>
+);
 
 export default LoginPage;
