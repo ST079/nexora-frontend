@@ -492,11 +492,13 @@ Tints were computed as a plain blend over `panel`, which is close to the `color-
 | Home hero fan | The front card covered the caption of the card behind it | That caption moves to the uncovered side |
 | Shop filters, desktop | The footer's background showed past the card's rounded corners | Transparent on desktop |
 | Copy | Delivery and returns claims the store hasn't committed to, including "We deliver anywhere in Nepal" at checkout and registration and "a return" on the contact page | Rewritten to describe only what the app does |
+| Dashboard, 1024–1150px with the staff sidebar | Recent orders, Pipeline and Stock health ran past the right edge. The grids used `auto` columns, which grow to fit an order line's full unwrapped text. The page scrolled sideways inside `main`, so a check on the whole document missed it. The three stat tiles also left about 80px for text, which cut "confirmation" off mid-word | Every dashboard grid uses `minmax(0, …)` columns, and cards get `min-w-0`. Recent orders sits beside the side column only from `xl`. Below that it takes the full width, and Pipeline and Stock health share a row from `md`. From `sm` to `xl`, stat tiles stack the icon above the text and pin the arrow to the corner |
 
 ### Visual QA
 
 - A seeded in-memory test API ran on :5055, with a scratch copy of the frontend on :3100 pointed at it, so your database was never used. Your dev servers on :3000 and :5000 were left alone.
 - Headless Chrome captured 37 screenshots across desktop, dark mode and phone width. Each page was checked for console errors and sideways scrolling, and none remain.
+- Staff pages scroll inside `main` from `lg` up, so they're checked by comparing `main`'s `scrollWidth` with its `clientWidth`, not the document's width. The dashboard was re-measured this way for admin and merchant at 360, 390, 768, 1024, 1180 and 1280px. None of them scroll sideways.
 - Headless capture doesn't draw `backdrop-filter`, so the glass bars look more see-through in the screenshots than in a browser. Their computed styles were checked instead.
 - The screenshots used test data. One more pass on your real catalogue, with real photos and long names, is still worth doing.
 

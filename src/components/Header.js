@@ -8,7 +8,6 @@ import { useDispatch, useSelector } from "react-redux";
 import ProductsMenu from "@/components/ProductsMenu";
 import Logo from "./Logo";
 import UserProfile from "./UserProfile";
-import ThemeToggler from "./ThemeToggler";
 import CartCount from "./CartCount";
 import MobileTabBar from "./MobileTabBar";
 import SearchPalette, { openSearch } from "./SearchPalette";
@@ -99,8 +98,6 @@ const Header = () => {
                   ⌘K
                 </kbd>
               </button>
-
-              <ThemeToggler variant="icon" />
 
               <button
                 onClick={() => dispatch(openCart())}

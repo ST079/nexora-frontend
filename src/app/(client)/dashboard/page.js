@@ -111,12 +111,14 @@ const RevenueHero = ({ stats, resource, isAdmin, pending }) => (
 
 /* ── Stat tile ─────────────────────────────────────────────────────────── */
 
+// From sm to xl the tiles sit three across and get narrow, so the icon stacks
+// above the text and the arrow moves to the corner to give the copy the width.
 const StatTile = ({ label, value, hint, icon: Icon, tone, href, delay, loading, stale }) => (
   <motion.div {...fadeUp(delay)}>
     <motion.div whileHover={{ y: -4 }} transition={spring} className="h-full">
       <Link
         href={href}
-        className="group flex h-full items-center gap-4 rounded-3xl border border-hairline bg-panel p-5 transition-shadow hover:shadow-lift"
+        className="group relative flex h-full items-center gap-4 rounded-3xl border border-hairline bg-panel p-5 transition-shadow hover:shadow-lift sm:flex-col sm:items-start sm:gap-3 xl:flex-row xl:items-center xl:gap-4"
       >
         <span
           className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl transition-transform duration-500 ease-spring group-hover:-rotate-12 group-hover:scale-110 ${tone}`}
@@ -132,9 +134,9 @@ const StatTile = ({ label, value, hint, icon: Icon, tone, href, delay, loading, 
           ) : (
             <p className="mt-0.5 text-3xl font-semibold tracking-tight text-ink">{value}</p>
           )}
-          {hint && !loading && <p className="mt-1 truncate text-xs text-slate">{hint}</p>}
+          {hint && !loading && <p className="mt-1 line-clamp-2 text-xs text-slate">{hint}</p>}
         </div>
-        <span className="grid h-8 w-8 shrink-0 self-start place-items-center rounded-full bg-mist text-slate transition-colors group-hover:bg-ink group-hover:text-paper">
+        <span className="grid h-8 w-8 shrink-0 self-start place-items-center rounded-full bg-mist text-slate transition-colors group-hover:bg-ink group-hover:text-paper sm:absolute sm:right-4 sm:top-4 xl:static">
           <ArrowUpRight size={14} aria-hidden />
         </span>
       </Link>
@@ -318,7 +320,7 @@ const Card = ({ title, eyebrow, action, delay, id, children }) => (
   <motion.section
     {...fadeUp(delay)}
     aria-labelledby={id}
-    className="rounded-4xl border border-hairline bg-panel p-4 sm:p-5"
+    className="min-w-0 rounded-4xl border border-hairline bg-panel p-4 sm:p-5"
   >
     <div className="mb-3 flex items-end justify-between gap-3 px-1 sm:px-2">
       <div>
@@ -488,10 +490,12 @@ const DashboardPage = () => {
         </motion.button>
       </div>
 
-      {/* Hero + KPI tiles */}
-      <div className="mb-6 grid gap-4 xl:grid-cols-[1.35fr_1fr]">
+      {/* Hero + KPI tiles. Every grid here uses minmax(0, …) columns (what
+          grid-cols-1 compiles to): an `auto` column grows to fit unbreakable
+          content such as truncated order lines, and pushes the page sideways. */}
+      <div className="mb-6 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
         <RevenueHero stats={stats} resource={orderStats} isAdmin={isAdmin} pending={pending} />
-        <div className="grid gap-4 sm:grid-cols-3 xl:grid-cols-1 xl:grid-rows-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-1 xl:grid-rows-3">
           {tiles.map((t, i) => (
             <StatTile key={t.label} {...t} delay={0.1 + i * 0.05} />
           ))}
@@ -504,7 +508,7 @@ const DashboardPage = () => {
           <h2 id="attention-title" className="eyebrow mb-3">
             Needs attention
           </h2>
-          <ul className="grid gap-3 md:grid-cols-3">
+          <ul className="grid grid-cols-1 gap-3 md:grid-cols-3">
             {alerts.map((a, i) => {
               const Icon = a.icon;
               return (
@@ -537,7 +541,9 @@ const DashboardPage = () => {
         </motion.section>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+      {/* Side by side only from xl: beside the staff sidebar at lg, recent
+          orders would be left about 300px, too narrow for an order line. */}
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         {/* Recent orders */}
         <Card
           id="recent-orders-title"
@@ -585,8 +591,8 @@ const DashboardPage = () => {
           )}
         </Card>
 
-        {/* Right column */}
-        <div className="space-y-6">
+        {/* Right column on xl; below it, the two cards share a row from md. */}
+        <div className="grid min-w-0 grid-cols-1 content-start gap-6 md:grid-cols-2 xl:grid-cols-1">
           <Card id="status-breakdown-title" eyebrow="Pipeline" title="Orders by status" delay={0.3}>
             {orderStats.loading && !stats ? (
               <div className="space-y-4 px-3 py-2">
