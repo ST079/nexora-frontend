@@ -296,8 +296,9 @@ const OrderDetailPage = () => {
         </div>
       </motion.header>
 
+      {/* min-w-0 lets long product names truncate instead of widening the page. */}
       <div className="grid items-start gap-6 lg:grid-cols-[1fr_360px]">
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           {status === ORDER_STATUS_CANCELLED ? (
             <motion.div
               {...fadeUp(0.05)}
@@ -402,7 +403,7 @@ const OrderDetailPage = () => {
         </div>
 
         {/* While payment is due, the payment card comes first on phones. */}
-        <div className={`space-y-4 lg:sticky lg:top-24 ${canPay ? "order-first lg:order-0" : ""}`}>
+        <div className={`min-w-0 space-y-4 lg:sticky lg:top-24 ${canPay ? "order-first lg:order-0" : ""}`}>
           <motion.section
             {...fadeUp(0.1)}
             aria-labelledby="payment-heading"

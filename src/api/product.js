@@ -37,6 +37,12 @@ export const getTotalCount = async (searchParams = {}) => {
   return response.data;
 };
 
+// Admin only: everyone who has listed products, with `products` (their count).
+export const getProductMerchants = async () => {
+  const response = await api.get(`api/v1/products/merchants`);
+  return response.data;
+};
+
 // TF-IDF + cosine similarity on the backend; each product carries `similarity`.
 export const getSimilarProducts = async (id, limit = 4) => {
   const response = await axios.get(

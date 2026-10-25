@@ -12,6 +12,7 @@ import {
   Loader2,
   CreditCard,
   ChevronLeft,
+  Info,
   MapPin,
   Phone,
   Lock,
@@ -136,6 +137,17 @@ const Checkout = () => {
                 <p className="text-xs text-slate">Where the courier brings this order.</p>
               </div>
             </div>
+
+            {user.isDemo && (
+              <p
+                role="note"
+                className="mb-5 flex items-start gap-2 rounded-2xl bg-marigold-tint p-3 text-xs leading-relaxed text-marigold-dim"
+              >
+                <Info size={14} aria-hidden className="mt-0.5 shrink-0" />
+                You&apos;re on the shared demo account, so anyone who signs in to it can see this
+                order and its address. Use a made-up address, like the one filled in.
+              </p>
+            )}
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>

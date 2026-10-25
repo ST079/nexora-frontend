@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { AlertTriangle, ChevronDown, RefreshCw } from "lucide-react";
 import CountUp from "@/components/CountUp";
 import { bouncy, fadeUp, spring } from "@/utils/motion";
 
@@ -163,8 +163,43 @@ export const FilterChips = ({ options, value, onChange, label, layoutId }) => (
   </div>
 );
 
+// A dropdown filter the same height as FilterChips, for lists too long for
+// chips. It turns ink while a value is picked, like the active chip. The
+// native select sits invisibly on top, so the pill keeps the platform picker
+// (and its keyboard support) on every device.
+export const FilterSelect = ({ options, value, onChange, label, icon: Icon }) => {
+  const current = options.find((o) => o.value === value) ?? options[0];
+  const active = Boolean(value);
+  return (
+    <div
+      className={`relative flex h-9.5 min-w-0 items-center gap-2 rounded-full border px-4 text-xs font-semibold transition-colors focus-within:ring-2 focus-within:ring-signal/50 sm:max-w-64 ${
+        active ? "border-ink bg-ink text-paper" : "border-hairline bg-panel text-slate hover:text-ink"
+      }`}
+    >
+      {Icon && <Icon size={14} aria-hidden className="shrink-0" />}
+      <span className="min-w-0 flex-1 truncate">{current?.label}</span>
+      <ChevronDown size={14} aria-hidden className="shrink-0" />
+      <select
+        aria-label={label}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+      >
+        {options.map((o) => (
+          <option key={o.value || "all"} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+};
+
 // The rounded panel every console table sits in. `stale` dims the rows that
-// are still on screen while the next page or filter loads.
+// are still on screen while the next page or filter loads. The scroller is
+// `relative` so sr-only header text (absolutely positioned) is clipped with
+// the table; otherwise it hangs off the right edge and the whole page
+// scrolls sideways on phones.
 export const TableCard = ({ stale = false, delay = 0.12, children }) => (
   <motion.div
     {...fadeUp(delay)}
@@ -172,7 +207,7 @@ export const TableCard = ({ stale = false, delay = 0.12, children }) => (
     className="overflow-hidden rounded-4xl border border-hairline bg-panel shadow-soft"
   >
     <div
-      className={`custom-scrollbar overflow-x-auto p-2 transition-opacity duration-300 ${
+      className={`custom-scrollbar relative overflow-x-auto p-2 transition-opacity duration-300 ${
         stale ? "pointer-events-none opacity-55" : ""
       }`}
     >

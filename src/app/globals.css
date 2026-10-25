@@ -316,7 +316,9 @@
            text-ink outline-none transition-all duration-200
            placeholder:text-slate-light
            hover:border-ink/25
-           focus:border-signal focus:ring-4 focus:ring-signal/15;
+           focus:border-signal focus:ring-4 focus:ring-signal/15
+           disabled:cursor-not-allowed disabled:bg-mist disabled:text-slate
+           disabled:hover:border-hairline;
   }
 
   .card-frame {

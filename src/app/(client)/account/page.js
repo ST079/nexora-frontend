@@ -223,15 +223,18 @@ const AccountPage = () => {
   };
 
   const avatarSrc = avatarPreview || user.profileImageUrl;
+  // Everyone shares the demo account, so the backend refuses edits to it.
+  const isDemo = Boolean(user.isDemo);
   const passwordType = showPasswords ? "text" : "password";
   const firstName = user.name?.trim().split(/\s+/)[0] || "there";
   const roles = user.roles?.length ? user.roles : [];
   const pills = roles.map((r) => ROLE_PILLS[r] ?? CUSTOMER_PILL);
   if (!pills.length) pills.push(CUSTOMER_PILL);
 
-  // Checklist from the saved profile: what a courier needs to find you.
+  // Checklist from the saved profile: what a courier needs to find you. The
+  // demo account can't add a photo, so it isn't asked for one.
   const checklist = [
-    { label: "Profile photo", done: Boolean(user.profileImageUrl) },
+    ...(isDemo ? [] : [{ label: "Profile photo", done: Boolean(user.profileImageUrl) }]),
     { label: "Phone number", done: Boolean(user.phone) },
     { label: "Province", done: Boolean(user.address?.province) },
     { label: "City", done: Boolean(user.address?.city) },
@@ -254,6 +257,25 @@ const AccountPage = () => {
           Your profile, address and password in one place.
         </p>
       </motion.div>
+
+      {isDemo && (
+        <motion.div
+          {...fadeUp(0.03)}
+          role="note"
+          className="mb-6 flex items-start gap-3 rounded-3xl border border-dashed border-signal/40 bg-signal-tint/50 p-4 dark:bg-signal/10"
+        >
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-2xl bg-signal text-on-signal">
+            <Lock size={16} aria-hidden />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-ink">You&apos;re in the shared demo account</p>
+            <p className="mt-0.5 text-xs leading-relaxed text-slate">
+              Anyone can sign in to it, so its profile, photo and password can&apos;t be changed.
+              Sign up for your own account to try those.
+            </p>
+          </div>
+        </motion.div>
+      )}
 
       <div className="grid items-start gap-6 lg:grid-cols-[300px_1fr] lg:gap-8">
         {/* ── Sidebar: avatar, checklist, quick links ── */}
@@ -305,24 +327,26 @@ const AccountPage = () => {
                     )}
                   </AnimatePresence>
                 </motion.div>
-                <label
-                  htmlFor="avatar-upload"
-                  title="Change photo"
-                  className={`group absolute bottom-0.5 right-0.5 grid h-10 w-10 place-items-center rounded-full border-4 border-panel bg-ink text-paper shadow-lift transition-transform focus-within:ring-2 focus-within:ring-signal ${
-                    uploadingAvatar ? "cursor-wait opacity-60" : "cursor-pointer hover:scale-110"
-                  }`}
-                >
-                  <Camera size={15} aria-hidden="true" className="transition-transform group-hover:-rotate-12" />
-                  <span className="sr-only">Change profile photo</span>
-                  <input
-                    id="avatar-upload"
-                    type="file"
-                    accept="image/*"
-                    disabled={uploadingAvatar}
-                    onChange={handleAvatarChange}
-                    className="sr-only"
-                  />
-                </label>
+                {!isDemo && (
+                  <label
+                    htmlFor="avatar-upload"
+                    title="Change photo"
+                    className={`group absolute bottom-0.5 right-0.5 grid h-10 w-10 place-items-center rounded-full border-4 border-panel bg-ink text-paper shadow-lift transition-transform focus-within:ring-2 focus-within:ring-signal ${
+                      uploadingAvatar ? "cursor-wait opacity-60" : "cursor-pointer hover:scale-110"
+                    }`}
+                  >
+                    <Camera size={15} aria-hidden="true" className="transition-transform group-hover:-rotate-12" />
+                    <span className="sr-only">Change profile photo</span>
+                    <input
+                      id="avatar-upload"
+                      type="file"
+                      accept="image/*"
+                      disabled={uploadingAvatar}
+                      onChange={handleAvatarChange}
+                      className="sr-only"
+                    />
+                  </label>
+                )}
               </div>
 
               <p className="font-display text-lg font-bold text-ink wrap-break-word">{user.name}</p>
@@ -338,7 +362,9 @@ const AccountPage = () => {
                   </span>
                 ))}
               </div>
-              <p className="mt-4 text-[11px] text-slate">JPG, PNG or WebP · up to 5 MB</p>
+              {!isDemo && (
+                <p className="mt-4 text-[11px] text-slate">JPG, PNG or WebP · up to 5 MB</p>
+              )}
             </div>
           </div>
 
@@ -440,136 +466,145 @@ const AccountPage = () => {
             <form
               onSubmit={handleProfileSubmit(onProfileSubmit)}
               noValidate
-              className="space-y-5"
             >
-              <div className="grid gap-4 sm:grid-cols-2">
+              <fieldset disabled={isDemo} className="min-w-0 space-y-5">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <AnimatedField
+                    label="Full name"
+                    autoComplete="name"
+                    required
+                    {...registerProfile("name", USER_RULES.name)}
+                    error={profileErrors.name?.message}
+                  />
+                  <AnimatedField
+                    label="Email"
+                    type="email"
+                    autoComplete="email"
+                    disabled
+                    hint="Email can't be changed here."
+                    className="[&_input]:cursor-not-allowed [&_input]:bg-mist [&_input]:text-slate"
+                    {...registerProfile("email")}
+                  />
+                </div>
+
                 <AnimatedField
-                  label="Full name"
-                  autoComplete="name"
+                  label="Phone"
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel-national"
+                  placeholder="98XXXXXXXX"
                   required
-                  {...registerProfile("name", USER_RULES.name)}
-                  error={profileErrors.name?.message}
+                  hint={profileErrors.phone ? undefined : "10 digits, e.g. 9800000000"}
+                  {...registerProfile("phone", USER_RULES.phone)}
+                  error={profileErrors.phone?.message}
                 />
-                <AnimatedField
-                  label="Email"
-                  type="email"
-                  autoComplete="email"
-                  disabled
-                  hint="Email can't be changed here."
-                  className="[&_input]:cursor-not-allowed [&_input]:bg-mist [&_input]:text-slate"
-                  {...registerProfile("email")}
-                />
-              </div>
 
-              <AnimatedField
-                label="Phone"
-                type="tel"
-                inputMode="numeric"
-                autoComplete="tel-national"
-                placeholder="98XXXXXXXX"
-                required
-                hint={profileErrors.phone ? undefined : "10 digits, e.g. 9800000000"}
-                {...registerProfile("phone", USER_RULES.phone)}
-                error={profileErrors.phone?.message}
-              />
-
-              <div className="rounded-3xl bg-mist/60 p-4 sm:p-5">
-                <div className="mb-4 flex items-center gap-2">
-                  <MapPin size={15} className="text-signal-dim" aria-hidden />
-                  <h3 className="text-sm font-semibold text-ink">Shipping address</h3>
-                </div>
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <div>
-                    <label
-                      htmlFor="account-province"
-                      className="mb-1.5 block text-xs font-semibold text-slate-dim"
-                    >
-                      Province
-                    </label>
-                    <div className="relative">
-                      <select
-                        id="account-province"
-                        autoComplete="address-level1"
-                        className="field cursor-pointer appearance-none pr-10"
-                        {...registerProfile("province")}
-                      >
-                        <option value="">Select a province</option>
-                        {NEPAL_PROVINCES.map((p) => (
-                          <option key={p} value={p}>
-                            {p}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown
-                        size={15}
-                        aria-hidden
-                        className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate"
-                      />
-                    </div>
+                <div className="rounded-3xl bg-mist/60 p-4 sm:p-5">
+                  <div className="mb-4 flex items-center gap-2">
+                    <MapPin size={15} className="text-signal-dim" aria-hidden />
+                    <h3 className="text-sm font-semibold text-ink">Shipping address</h3>
                   </div>
-                  <AnimatedField
-                    label="City"
-                    autoComplete="address-level2"
-                    placeholder="e.g. Bhaktapur"
-                    {...registerProfile("city")}
-                  />
-                  <AnimatedField
-                    label="Street"
-                    autoComplete="street-address"
-                    placeholder="e.g. Nagarkot Road"
-                    {...registerProfile("street")}
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-3 border-t border-hairline pt-5">
-                <button
-                  type="submit"
-                  disabled={savingProfile || !profileDirty}
-                  className="btn-primary disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {savingProfile ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-                  {savingProfile ? "Saving…" : "Save changes"}
-                </button>
-                <AnimatePresence mode="wait" initial={false}>
-                  {profileDirty ? (
-                    <motion.div
-                      key="dirty"
-                      initial={{ opacity: 0, x: -6 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -6 }}
-                      transition={spring}
-                      className="flex items-center gap-3"
-                    >
-                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-marigold-dim">
-                        <span className="relative flex h-2 w-2">
-                          <span className="absolute inset-0 animate-ping rounded-full bg-marigold/70" />
-                          <span className="relative h-2 w-2 rounded-full bg-marigold" />
-                        </span>
-                        Unsaved changes
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => resetProfileForm()}
-                        disabled={savingProfile}
-                        className="btn-ghost px-3 py-1.5 text-xs"
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div>
+                      <label
+                        htmlFor="account-province"
+                        className="mb-1.5 block text-xs font-semibold text-slate-dim"
                       >
-                        <RotateCcw size={12} /> Discard
-                      </button>
-                    </motion.div>
-                  ) : (
-                    <motion.span
-                      key="clean"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="inline-flex items-center gap-1.5 text-xs text-slate"
-                    >
-                      <Check size={12} className="text-ok" aria-hidden /> All changes saved
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </div>
+                        Province
+                      </label>
+                      <div className="relative">
+                        <select
+                          id="account-province"
+                          autoComplete="address-level1"
+                          className="field cursor-pointer appearance-none pr-10"
+                          {...registerProfile("province")}
+                        >
+                          <option value="">Select a province</option>
+                          {NEPAL_PROVINCES.map((p) => (
+                            <option key={p} value={p}>
+                              {p}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown
+                          size={15}
+                          aria-hidden
+                          className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate"
+                        />
+                      </div>
+                    </div>
+                    <AnimatedField
+                      label="City"
+                      autoComplete="address-level2"
+                      placeholder="e.g. Bhaktapur"
+                      {...registerProfile("city")}
+                    />
+                    <AnimatedField
+                      label="Street"
+                      autoComplete="street-address"
+                      placeholder="e.g. Nagarkot Road"
+                      {...registerProfile("street")}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3 border-t border-hairline pt-5">
+                  <button
+                    type="submit"
+                    disabled={savingProfile || !profileDirty}
+                    className="btn-primary disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {savingProfile ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                    {savingProfile ? "Saving…" : "Save changes"}
+                  </button>
+                  <AnimatePresence mode="wait" initial={false}>
+                    {profileDirty ? (
+                      <motion.div
+                        key="dirty"
+                        initial={{ opacity: 0, x: -6 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -6 }}
+                        transition={spring}
+                        className="flex items-center gap-3"
+                      >
+                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-marigold-dim">
+                          <span className="relative flex h-2 w-2">
+                            <span className="absolute inset-0 animate-ping rounded-full bg-marigold/70" />
+                            <span className="relative h-2 w-2 rounded-full bg-marigold" />
+                          </span>
+                          Unsaved changes
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => resetProfileForm()}
+                          disabled={savingProfile}
+                          className="btn-ghost px-3 py-1.5 text-xs"
+                        >
+                          <RotateCcw size={12} /> Discard
+                        </button>
+                      </motion.div>
+                    ) : (
+                      <motion.span
+                        key="clean"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="inline-flex items-center gap-1.5 text-xs text-slate"
+                      >
+                        {isDemo ? (
+                          <>
+                            <Lock size={12} aria-hidden /> Locked on the demo account
+                          </>
+                        ) : (
+                          <>
+                            <Check size={12} className="text-ok" aria-hidden /> All changes saved
+                          </>
+                        )}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </fieldset>
             </form>
           </motion.section>
 
@@ -598,97 +633,98 @@ const AccountPage = () => {
             <form
               onSubmit={handlePasswordSubmit(onPasswordSubmit)}
               noValidate
-              className="space-y-4"
             >
-              {/* Lets password managers pair the new password with this account. */}
-              <input
-                type="text"
-                name="username"
-                autoComplete="username"
-                value={user.email ?? ""}
-                readOnly
-                hidden
-              />
-              <AnimatedField
-                label="Current password"
-                type={passwordType}
-                autoComplete="current-password"
-                required
-                {...registerPassword("currentPassword", {
-                  required: "Current password is required",
-                })}
-                error={passwordErrors.currentPassword?.message}
-              />
+              <fieldset disabled={isDemo} className="min-w-0 space-y-4">
+                {/* Lets password managers pair the new password with this account. */}
+                <input
+                  type="text"
+                  name="username"
+                  autoComplete="username"
+                  value={user.email ?? ""}
+                  readOnly
+                  hidden
+                />
+                <AnimatedField
+                  label="Current password"
+                  type={passwordType}
+                  autoComplete="current-password"
+                  required
+                  {...registerPassword("currentPassword", {
+                    required: "Current password is required",
+                  })}
+                  error={passwordErrors.currentPassword?.message}
+                />
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <AnimatedField
+                      label="New password"
+                      type={passwordType}
+                      autoComplete="new-password"
+                      required
+                      hint={passwordErrors.newPassword ? undefined : "At least 6 characters"}
+                      {...registerPassword("newPassword", {
+                        ...USER_RULES.password,
+                        required: "New password is required",
+                        validate: (val, values) =>
+                          val !== values.currentPassword ||
+                          "Use a different password from your current one",
+                        deps: ["confirmPassword"],
+                      })}
+                      error={passwordErrors.newPassword?.message}
+                    />
+                    <AnimatePresence initial={false}>
+                      {newPassword && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="flex items-center gap-2 pt-2.5" aria-live="polite">
+                            <div className="flex flex-1 gap-1" aria-hidden>
+                              {[1, 2, 3, 4].map((n) => (
+                                <span key={n} className="h-1.5 flex-1 overflow-hidden rounded-full bg-mist">
+                                  <motion.span
+                                    initial={false}
+                                    animate={{ width: score >= n ? "100%" : "0%" }}
+                                    transition={{ duration: 0.3 }}
+                                    className={`block h-full rounded-full ${strength.bar}`}
+                                  />
+                                </span>
+                              ))}
+                            </div>
+                            <span className={`w-16 text-right text-[11px] font-semibold ${strength.text}`}>
+                              {strength.label}
+                            </span>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                   <AnimatedField
-                    label="New password"
+                    label="Confirm new password"
                     type={passwordType}
                     autoComplete="new-password"
                     required
-                    hint={passwordErrors.newPassword ? undefined : "At least 6 characters"}
-                    {...registerPassword("newPassword", {
-                      ...USER_RULES.password,
-                      required: "New password is required",
+                    {...registerPassword("confirmPassword", {
+                      required: "Please confirm your new password",
                       validate: (val, values) =>
-                        val !== values.currentPassword ||
-                        "Use a different password from your current one",
-                      deps: ["confirmPassword"],
+                        val === values.newPassword || "Passwords don't match",
                     })}
-                    error={passwordErrors.newPassword?.message}
+                    error={passwordErrors.confirmPassword?.message}
                   />
-                  <AnimatePresence initial={false}>
-                    {newPassword && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="flex items-center gap-2 pt-2.5" aria-live="polite">
-                          <div className="flex flex-1 gap-1" aria-hidden>
-                            {[1, 2, 3, 4].map((n) => (
-                              <span key={n} className="h-1.5 flex-1 overflow-hidden rounded-full bg-mist">
-                                <motion.span
-                                  initial={false}
-                                  animate={{ width: score >= n ? "100%" : "0%" }}
-                                  transition={{ duration: 0.3 }}
-                                  className={`block h-full rounded-full ${strength.bar}`}
-                                />
-                              </span>
-                            ))}
-                          </div>
-                          <span className={`w-16 text-right text-[11px] font-semibold ${strength.text}`}>
-                            {strength.label}
-                          </span>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
                 </div>
-                <AnimatedField
-                  label="Confirm new password"
-                  type={passwordType}
-                  autoComplete="new-password"
-                  required
-                  {...registerPassword("confirmPassword", {
-                    required: "Please confirm your new password",
-                    validate: (val, values) =>
-                      val === values.newPassword || "Passwords don't match",
-                  })}
-                  error={passwordErrors.confirmPassword?.message}
-                />
-              </div>
 
-              <button
-                type="submit"
-                disabled={savingPassword}
-                className="btn-secondary mt-2 disabled:opacity-60"
-              >
-                {savingPassword ? <Loader2 size={14} className="animate-spin" /> : <Lock size={14} />}
-                {savingPassword ? "Updating…" : "Update password"}
-              </button>
+                <button
+                  type="submit"
+                  disabled={savingPassword}
+                  className="btn-secondary mt-2 disabled:opacity-60"
+                >
+                  {savingPassword ? <Loader2 size={14} className="animate-spin" /> : <Lock size={14} />}
+                  {savingPassword ? "Updating…" : "Update password"}
+                </button>
+              </fieldset>
             </form>
           </motion.section>
         </div>

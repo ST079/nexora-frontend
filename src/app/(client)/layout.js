@@ -49,10 +49,13 @@ const ClientLayout = ({ children }) => {
     );
   }
 
+  // `relative` makes main the containing block for sr-only text (absolutely
+  // positioned), so it scrolls with main instead of stretching the document,
+  // which left a blank band below the console after the last card.
   return (
     <div className="flex min-h-screen flex-col bg-paper lg:h-screen lg:flex-row lg:overflow-hidden">
       <AdminSidebar />
-      <main className="flex-1 min-w-0 lg:overflow-y-auto">{children}</main>
+      <main className="relative flex-1 min-w-0 lg:overflow-y-auto">{children}</main>
     </div>
   );
 };

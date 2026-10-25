@@ -3,8 +3,10 @@
 **Date:** 24 Oct 2026
 **Scope:** `nexora-backend` (Express 5 + MongoDB) and `nexora-frontend` (Next.js 16, React 19, Tailwind 4)
 **State:** the changes are committed in `nexora-frontend` `aa057c7` and `nexora-backend` `df1753f` (24 Oct, 12:51–12:52), under your git identity. The audit itself didn't stage or commit anything. No `.env` file was opened for editing, and no migration was run against your database.
-**Redesign:** the frontend redesign in [section 11](#11-frontend-redesign) is **not committed**. It sits in the `nexora-frontend` working tree on top of `8c52465`.
-**Algorithms:** the work in [section 12](#12-algorithms-bca-project-ii) is **not committed**, in either repo.
+**Redesign:** you committed the frontend redesign in [section 11](#11-frontend-redesign) on 24 Oct (`c9b3317`, `9b79d29`).
+**Algorithms:** you committed the work in [section 12](#12-algorithms-bca-project-ii) on 25 Oct at 17:27: `nexora-backend` `01eda41` and `nexora-frontend` `f91e846`.
+**Demo catalogue:** 82 demo products were added to the **live Atlas database** on 25 Oct 2026, owned by Ramu Store. See [section 13](#13-demo-catalogue). One command removes them. You committed the script on 25 Oct at 17:59 (`nexora-backend` `9f155f8`).
+**Merchant filter and demo account:** the admin's merchant filter and two layout fixes in [section 14](#14-admin-merchant-filter-and-console-layout-fixes), and the demo account in [section 15](#15-demo-account), are **not committed**, and neither are these doc updates. The demo account itself was created in the **live Atlas database** on 25 Oct 2026.
 
 | | Frontend | Backend |
 |---|---|---|
@@ -550,3 +552,214 @@ Four algorithms, written by hand with no ML library. Formulas, worked examples a
   - Screenshots were taken of the product page, the shop's fuzzy notice on a phone, and the planner on desktop, phone and dark mode, for both admin and merchant.
   - No page scrolls sideways.
   - ESLint is clean on the changed files.
+
+## 13. Demo catalogue
+
+The shop had 10 products, and several category chips were empty. `nexora-backend/scripts/seed-demo-products.js` adds 82 products copied from DummyJSON, a free demo catalogue. Details are in `nexora-backend/docs/ALGORITHMS.md`, under "Demo catalogue".
+
+- **Where.**
+  - The products were written to the Atlas database in `DBURL`, which the live site reads.
+  - They belong to the Ramu Store merchant (`merchantramu@gmail.com`), the one general store among your merchant accounts.
+  - Your own login has the USER role, so it can't own products.
+- **What.**
+
+  | Category | Products |
+  |---|---|
+  | Smartphones | 10 |
+  | Tech & Electronics | 12 |
+  | Clothing | 12 |
+  | Groceries | 12 |
+  | Home & Living | 12 |
+  | Beauty | 12 |
+  | Sports | 12 |
+
+  The shop now lists 92 products. Books stays empty because DummyJSON has none.
+- **Photos.** 177 photos were copied into the `nexora-demo-products` folder in Cloudinary.
+- **Prices.** Prices are DummyJSON's US dollar prices at Rs 140 per dollar. They are demo prices.
+- **Your products.** The 10 products you listed were not changed.
+- **Undo.**
+  - Run `node scripts/seed-demo-products.js --clean --yes` in `nexora-backend`.
+  - It deletes every product whose photos are in that folder, then the photos.
+  - Run it with the same `DBURL`.
+- **Brand filter.** The shop's brand filter is a fixed list in `src/constants/brands.js`. Samsung, Apple, Dell, Lenovo and Nike products can be filtered by brand. Oppo, Realme, Vivo and the rest can't, until they are added to that list.
+- **Checks.**
+  - Ran against a scratch MongoDB first: seed, re-run (adds 0), unknown merchant (refused), then clean (82 rows and 177 photos removed, the other products kept).
+  - After the Atlas run, your backend on :5000 returned:
+
+    | Request | Result |
+    |---|---|
+    | All products | 92 |
+    | Smartphones | 11 |
+    | Tech & Electronics | 13 |
+    | Clothing | 17 |
+    | Groceries | 13 |
+    | Home & Living | 12 |
+    | Beauty | 14 |
+    | Sports | 12 |
+    | Search for "nescaf cofee" | Suggests "nescafe coffee" |
+
+  - Screenshots of the shop, a Sports page on a phone and a product page on :3000 show the copied photos and NPR prices. No page scrolls sideways.
+- **Not done.** The demo order seeder was not run against Atlas: it is meant for demo or local databases only.
+
+---
+
+## 14. Admin merchant filter and console layout fixes
+
+### Merchant filter
+
+Admins can now narrow the product console to one merchant.
+
+- **Backend.** New route `GET /api/v1/products/merchants`, admin only (`auth` + `checkRole(ROLE_ADMIN)`).
+  - It returns everyone who has listed a product, how many each has listed, and their name, email and roles. Passwords are never included.
+  - It groups products by `createdBy`, so an admin who listed items is included. So is an owner whose account was deleted; they come back with no name.
+  - It is registered before `/:id`, so `merchants` is never read as a product id.
+  - Files: [`product.route.js`](../../nexora-backend/src/routes/product.route.js), [`product.controller.js`](../../nexora-backend/src/controllers/product.controller.js) (`getMerchants`), [`product.service.js`](../../nexora-backend/src/services/product.service.js) (`getMerchants`).
+- **Frontend.** Changes are in [`ProductDashboard.js`](../src/app/(client)/(admin)/product-management/_components/ProductDashboard.js), plus `getProductMerchants` in [`api/product.js`](../src/api/product.js).
+  - **Menu.** A "Filter by merchant" dropdown sits next to the stock chips. Each entry reads "name · product count". The dropdown is the new `FilterSelect` in [`Console.js`](../src/app/(client)/(admin)/_components/Console.js). It is the same height as the chips and turns ink while a merchant is picked. It is a native `<select>`, so phones get their own picker.
+  - **Link.** The pick is saved in the URL as `?merchant=<user id>`. A filtered view can be bookmarked or shared, and picking a merchant goes back to page 1.
+  - **Tiles.** The total, low-stock and out-of-stock tiles and the table all follow the picked merchant. The first tile reads "Merchant's products" while one is picked.
+  - **Merchant column.** With no merchant picked, the table has a Merchant column. Clicking a name filters to that merchant. The column is hidden once a merchant is picked, because every row would show the same name.
+  - **Labels.** Admin-owned listings show "(admin)" after the name. Owners whose accounts were deleted show as "Deleted account", at the bottom of the menu. A link naming an id that isn't in the list shows "Unknown merchant".
+  - **Clear filters.** The empty state's "Clear filters" button also clears the merchant.
+  - **Merchants.** Merchants don't see the dropdown, and their console is unchanged. Their page never calls the admin-only endpoint.
+  - **Toolbar.** With two filters, the admin toolbar stacks until the `lg` breakpoint. The merchant toolbar still goes side by side from `sm`.
+- **Checks.**
+  - Against a scratch database:
+
+    | Request to `/merchants` | Result |
+    |---|---|
+    | No token, or a bad token (also on your :5000) | 401 |
+    | Customer | 403 |
+    | Merchant | 403 |
+    | Admin | 200, no password field |
+
+  - Each merchant's count matches `/products?createdBy=<id>`.
+  - A malformed `createdBy` returns 400.
+  - Backend tests: 56 of 56 pass.
+  - ESLint is clean on the four changed frontend files.
+  - Screenshots look right for:
+    - admin desktop (light and dark)
+    - an 820px tablet and a 390px phone
+    - a link with an unknown merchant id
+    - the merchant console (unchanged)
+- **Not tested.** Clicking a name in the Merchant column wasn't run in a browser. It makes the same `setParams` call as the dropdown, which was tested.
+
+### Blank space under the admin dashboard
+
+On desktop, the admin dashboard scrolled past its last card into an empty band.
+
+- **Cause.**
+  - The Restock planner's table labels are `md:sr-only`: hidden on screen but kept for screen readers.
+  - Tailwind's `sr-only` is `position: absolute`. No ancestor was positioned, so the labels were placed against the page itself, not against the console's scrolling `<main>`.
+  - The labels sit far down the planner, so they made the page 1,942px tall in a 900px window. Scrolling the window showed the empty space below the console.
+- **Fix.** `relative` on `<main>` in [`(client)/layout.js`](../src/app/(client)/layout.js). The labels now belong to `<main>` and scroll inside it.
+- **Checks.** On every admin and merchant page, the page is now exactly as tall as the window, at 1440×900 and 1024×768. The phone layout is unchanged.
+
+### Tables scrolled sideways on phones
+
+This bug was older than the merchant filter; it turned up while testing it.
+
+- **Cause.** The products, orders and users tables have a hidden "Actions" header (`sr-only` in [`SortableHeader.js`](../src/components/SortableHeader.js)). It had the same problem: it was placed against the page, past the table's right edge, so the whole page could scroll sideways on a phone.
+- **Fix.** `relative` on the `TableCard` scroller in [`Console.js`](../src/app/(client)/(admin)/_components/Console.js). The header is now clipped with the table.
+- **Checks.** No sideways page scroll on the products, orders or users page at phone, tablet or desktop widths.
+
+---
+
+## 15. Demo account
+
+Visitors can try checkout and order tracking without making an account.
+
+| Email | Password | Role |
+|---|---|---|
+| `demo@example.com` | `demo1234` | Customer (USER) |
+
+The password is public on purpose. It is printed on the sign-in page.
+
+### Sign-in page
+
+- **Card.** A "Just looking around?" card sits above the form in [`login/page.js`](../src/app/(auth)/login/page.js). It shows the email and password.
+- **Button.** "Sign in as the demo customer" fills both fields, so visitors see which details are used, then signs in. It's disabled while signing in.
+- **Greeting.** The toast says "You're in the demo account. Have a look around." in place of "Welcome back."
+- **Credentials.** They live in [`constants/demo.js`](../src/constants/demo.js). The backend script has the same values; change both together.
+
+### The account can't be taken over
+
+Anyone can sign in to it, so one visitor mustn't be able to lock out the next one or rename it. A new `isDemo` flag on the user ([`User.js`](../../nexora-backend/src/models/User.js)) marks it, and the login response now includes `isDemo`.
+
+| Request, signed in as the demo account | Result |
+|---|---|
+| Change password | 403 "The demo account can't be changed. Create your own account to try this." |
+| Edit name, phone or address | 403, same message |
+| Upload a profile photo | 403, refused before the upload starts |
+| Forgot password | The usual "if the email exists, a link was sent" reply, but no link is created or sent |
+| Admin gives it a staff role | 400 "The demo account can only be a customer." |
+| Admin sets it back to USER, edits it, or deactivates it | Allowed |
+
+The checks are in [`user.service.js`](../../nexora-backend/src/services/user.service.js) (`updateUser`, `updateUserProfileImage`, `changePassword`, `updateUserRoles`) and [`auth.service.js`](../../nexora-backend/src/services/auth.service.js) (`forgotPassword`).
+
+### What visitors see
+
+- **Account page** ([`account/page.js`](../src/app/(client)/account/page.js)).
+  - A note says this is the shared demo account and why it can't be changed.
+  - The profile and password fields are disabled. The photo upload is hidden.
+  - "Locked on the demo account" shows where "All changes saved" would.
+  - The "Finish your profile" list leaves out the photo, so the demo account reads "Profile complete".
+- **Disabled fields.** `.field` in [`globals.css`](../src/app/globals.css) now has a disabled style: grey fill, grey text and a not-allowed cursor, as the email field already had. Before this, disabled fields looked editable. Only the email field and the demo account's fields are ever disabled, so nothing else changes.
+- **Checkout** ([`checkout/page.js`](../src/app/(storeFront)/checkout/page.js)). A note says anyone who signs in to the demo account can see its orders and their addresses, so use a made-up address. The saved one is "Demo Street, Kathmandu".
+- **Orders.** Three sample orders are there from the start, so the timeline has every step to show:
+
+  | Order | Status | Payment |
+  |---|---|---|
+  | SAMPLE-0001 | Delivered, 9 days ago | Cash on delivery, paid |
+  | SAMPLE-0002 | Shipped, 2 days ago | Cash on delivery, not yet paid |
+  | SAMPLE-0003 | Confirmed, 5 hours ago | Cash on delivery, not yet paid |
+
+  They use the first product of four categories from the demo catalogue ([section 13](#13-demo-catalogue)). They're history, so they didn't change stock.
+
+### The script
+
+[`scripts/seed-demo-user.js`](../../nexora-backend/scripts/seed-demo-user.js), run in `nexora-backend`:
+
+- `node scripts/seed-demo-user.js --yes` creates the account. Run again, it resets the password, name, phone (`9800000001`), address and role, and replaces the three sample orders. Orders visitors placed are kept.
+- `node scripts/seed-demo-user.js --clean --yes` removes the account, all its orders and their payments. Orders that were still open give their stock back, the same rule as deleting an order in the admin.
+- It refuses to run if `demo@example.com` or the phone number belongs to a real account.
+- It writes to the database in `DBURL`. Without `--yes` it changes nothing.
+
+### Things to know
+
+- **Visitor orders are real orders.** An order placed on the demo account holds stock and shows up in the merchant's and admin's order lists, like any other. Delete stray ones in order management (open orders give their stock back), or run `--clean` and then `--yes` to start over.
+- **Everything on the account is shared.** Every visitor sees every order placed on it and the address each one went to. The checkout note says so.
+- **Payments.** Your local `.env` uses the Khalti sandbox (`dev.khalti.com`) and a Stripe test key, so a visitor can't pay real money there. Check that production (Vercel and Render) uses test keys too, or that you're happy for demo orders to be paid for for real. Cash on delivery never takes money online.
+- **Admins** can still edit or deactivate the account. Deactivating it switches the demo off: the sign-in card then shows "User Deactivated!", and visitors already signed in are signed out on their next request. Reactivating turns it back on.
+
+### Also fixed: order page on phones
+
+This bug was older than the demo account; it turned up while testing it.
+
+- **Cause.** On the order page ([`orders/[id]/page.js`](../src/app/(storeFront)/orders/[id]/page.js)), the two columns grew to fit the longest product name instead of truncating it. "Mechanical Keyboard Full-sized Backlight RGB" made the page 500px wide on a 390px phone, so it scrolled sideways.
+- **Fix.** `min-w-0` on both columns. Long names now end in "…".
+
+### Checks
+
+- **Scratch database and scratch backend:**
+  - Every row in the guard table above gives the result shown. A normal customer can still edit their own profile.
+  - The password still works after the forgot-password request, and no reset link was stored.
+  - An admin deactivated the account (sign-in returned 400 "User Deactivated!", and an open session got 401), then reactivated it (sign-in works again).
+  - The demo account's order list shows the three sample orders.
+  - Placing an order and choosing cash on delivery as the demo account works: the order is confirmed and stock goes down by one.
+  - `--clean` removed the account and its 4 orders, gave that stock back, and running it again did nothing. A real account with the same phone number made the script stop without changing anything.
+- **Atlas.** The script was run against Atlas on 25 Oct 2026, after a read-only check that the email and phone weren't in use. On your backend on :5000:
+  - The demo account signs in, with `isDemo` set and only the USER role.
+  - The sample orders are SAMPLE-0001 (delivered, paid), SAMPLE-0002 (shipped) and SAMPLE-0003 (confirmed).
+  - Changing its password returns 403.
+- **Screenshots** on a scratch copy of the frontend:
+  - the sign-in card in light, dark and on a phone; clicking it filled in both fields and signed in
+  - the locked account page on desktop and phone
+  - the checkout note
+  - the orders list
+  - the shipped order's timeline on desktop and phone
+  - no page scrolls sideways
+- **Tests and lint.**
+  - Backend tests: 56 of 56 pass.
+  - ESLint is clean on the changed frontend files.
+- **Not tested.** Paying for a demo order with Khalti or a card.

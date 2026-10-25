@@ -5,6 +5,7 @@ import AnimatedField from "@/components/AnimatedField";
 import AuthShell, { AuthError, PasswordToggle, SubmitButton } from "@/components/AuthShell";
 import { useForm } from "react-hook-form";
 import { motion } from "framer-motion";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useSearchParams } from "next/navigation";
@@ -13,6 +14,7 @@ import { loginUser } from "@/redux/auth/authActions";
 import { clearAuthError } from "@/redux/auth/authSlice";
 import { FORGOT_PASSWORD_ROUTE, REGISTER_ROUTE } from "@/constants/routes";
 import { USER_RULES } from "@/constants/user";
+import { DEMO_ACCOUNT } from "@/constants/demo";
 import { withNext } from "@/utils/navigation";
 
 const PANEL = {
@@ -30,6 +32,7 @@ const LoginForm = () => {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm();
   const [showPassword, setShowPassword] = useState(false);
@@ -53,7 +56,17 @@ const LoginForm = () => {
   const loginCredentials = async (data) => {
     const result = await dispatch(loginUser(data));
     // The (auth) layout redirects once `user` is set, honouring `?next=`.
-    if (loginUser.fulfilled.match(result)) toast.success("Welcome back.");
+    if (loginUser.fulfilled.match(result))
+      toast.success(
+        result.payload?.user?.isDemo ? "You're in the demo account. Have a look around." : "Welcome back.",
+      );
+  };
+
+  // Fills the form in, so visitors see which details are used, then signs in.
+  const signInAsDemo = () => {
+    setValue("email", DEMO_ACCOUNT.email, { shouldValidate: true });
+    setValue("password", DEMO_ACCOUNT.password, { shouldValidate: true });
+    handleSubmit(loginCredentials)();
   };
 
   return (
@@ -67,6 +80,32 @@ const LoginForm = () => {
       }
       intro="Pick up your cart and order history where you left off."
     >
+      <div className="mb-6 rounded-3xl border border-dashed border-signal/40 bg-signal-tint/50 p-4 dark:bg-signal/10">
+        <div className="flex items-start gap-3">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-2xl bg-signal text-on-signal">
+            <Sparkles size={16} aria-hidden />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-ink">Just looking around?</p>
+            <p className="mt-0.5 text-xs leading-relaxed text-slate">
+              Use the shared demo account to try checkout and order tracking without signing up.
+            </p>
+            <p className="mt-2 break-all font-mono text-[11px] text-slate-dim">
+              {DEMO_ACCOUNT.email} · {DEMO_ACCOUNT.password}
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={signInAsDemo}
+          disabled={status === "loading" || status === "success"}
+          className="btn-secondary group mt-3 w-full"
+        >
+          Sign in as the demo customer
+          <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
+        </button>
+      </div>
+
       <AuthError message={status === "error" ? error?.message || error : null} />
 
       <motion.form
