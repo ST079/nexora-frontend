@@ -7,40 +7,69 @@ import { PRODUCTS_ROUTE } from "@/constants/routes";
 import { revealUp } from "@/utils/motion";
 import ProductCard from "@/components/ProductCard";
 import ProductGridSkeleton from "@/components/ProductGridSkeleton";
-import { getProducts } from "@/api/product";
+import { getProducts, getSimilarProducts } from "@/api/product";
 import { useResource } from "@/hooks/useResource";
 
 const toList = (data) => (Array.isArray(data) ? data : (data?.products ?? []));
 
-const SimilarProducts = ({ category, currentProductId }) => {
+// TF-IDF matches from the backend first. If that request fails or finds
+// nothing close, fall back to the newest products in the same category.
+const loadSimilar = async (id, category) => {
+  try {
+    const similar = toList(await getSimilarProducts(id, 4));
+    if (similar.length) return { mode: "similar", products: similar };
+  } catch {
+    // Fall through to the category list.
+  }
+  if (!category) return { mode: "category", products: [] };
+
   // One extra so the list still has four after the current product is dropped.
-  const { data, loading } = useResource(category ?? "", () =>
-    category ? getProducts({ category, limit: 5 }) : Promise.resolve([])
+  const list = toList(await getProducts({ category, limit: 5 }));
+  return {
+    mode: "category",
+    products: list.filter((p) => (p._id || p.id) !== id).slice(0, 4),
+  };
+};
+
+const SimilarProducts = ({ category, currentProductId }) => {
+  const { data, loading } = useResource(`${currentProductId}|${category ?? ""}`, () =>
+    loadSimilar(currentProductId, category)
   );
 
-  const products = toList(data)
-    .filter((p) => (p._id || p.id) !== currentProductId)
-    .slice(0, 4);
+  const products = data?.products ?? [];
 
   // A failed fetch just hides the section; it's supplementary content.
-  if (!category || (!loading && products.length === 0)) return null;
+  if (!loading && products.length === 0) return null;
 
   return (
-    <section className="mt-20 lg:mt-28">
+    <section className="mt-20 lg:mt-28" aria-labelledby="similar-products-title">
       <motion.div {...revealUp()} className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="eyebrow mb-2">More like this</p>
-          <h2 className="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
-            Also in <span className="marker">{category}</span>
+          <h2
+            id="similar-products-title"
+            className="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl"
+          >
+            {data?.mode === "category" ? (
+              <>
+                Also in <span className="marker">{category}</span>
+              </>
+            ) : (
+              <>
+                Similar <span className="marker">products</span>
+              </>
+            )}
           </h2>
         </div>
-        <Link
-          href={`${PRODUCTS_ROUTE}?category=${encodeURIComponent(category)}`}
-          className="btn-secondary group py-2.5"
-        >
-          See all
-          <ArrowRight size={15} className="transition-transform group-hover:translate-x-1" />
-        </Link>
+        {category && (
+          <Link
+            href={`${PRODUCTS_ROUTE}?category=${encodeURIComponent(category)}`}
+            className="btn-secondary group py-2.5"
+          >
+            See all {category}
+            <ArrowRight size={15} className="transition-transform group-hover:translate-x-1" />
+          </Link>
+        )}
       </motion.div>
 
       {loading ? (

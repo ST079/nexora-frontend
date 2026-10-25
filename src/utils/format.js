@@ -38,6 +38,8 @@ const PASSTHROUGH_KEYS = [
   "role",
   "limit",
   "offset",
+  "days",
+  "leadTime",
 ];
 
 export const queryFormatter = (searchParams = {}) => {

@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { X } from "lucide-react";
+import { SpellCheck, X } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import ProductFilter from "@/components/ProductFilter";
 import Pagination from "@/components/Pagination";
@@ -193,6 +193,33 @@ const ProductsPage = async ({ searchParams }) => {
         </Suspense>
 
         <div>
+          {/* The backend falls back to typo-tolerant matching when a search
+              finds nothing exactly, and says so; the shopper should know too. */}
+          {count?.fuzzy && (products.length > 0 || count.suggestion) && (
+            <div
+              role="status"
+              className="mb-4 flex items-start gap-3 rounded-2xl border border-hairline bg-panel px-4 py-3 text-sm text-slate"
+            >
+              <SpellCheck size={16} aria-hidden className="mt-0.5 shrink-0 text-signal-dim" />
+              <p>
+                No exact matches for “{filters.name}”
+                {products.length > 0 ? ", so these are close spellings." : "."}
+                {count.suggestion && (
+                  <>
+                    {" "}Did you mean{" "}
+                    <Link
+                      href={hrefWith(filters, { name: count.suggestion })}
+                      className="font-semibold text-ink underline decoration-signal underline-offset-2 hover:decoration-2"
+                    >
+                      {count.suggestion}
+                    </Link>
+                    ?
+                  </>
+                )}
+              </p>
+            </div>
+          )}
+
           {products.length === 0 ? (
             page > 1 && total > 0 ? (
               <EmptyState

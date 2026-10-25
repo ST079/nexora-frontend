@@ -4,6 +4,7 @@
 **Scope:** `nexora-backend` (Express 5 + MongoDB) and `nexora-frontend` (Next.js 16, React 19, Tailwind 4)
 **State:** the changes are committed in `nexora-frontend` `aa057c7` and `nexora-backend` `df1753f` (24 Oct, 12:51–12:52), under your git identity. The audit itself didn't stage or commit anything. No `.env` file was opened for editing, and no migration was run against your database.
 **Redesign:** the frontend redesign in [section 11](#11-frontend-redesign) is **not committed**. It sits in the `nexora-frontend` working tree on top of `8c52465`.
+**Algorithms:** the work in [section 12](#12-algorithms-bca-project-ii) is **not committed**, in either repo.
 
 | | Frontend | Backend |
 |---|---|---|
@@ -520,3 +521,32 @@ Tints were computed as a plain blend over `panel`, which is close to the `color-
   - `app/apple-icon.png`: 180×180, full-bleed, for iOS home screens.
   - `app/favicon.ico`: 16, 32 and 48 px. It replaces the default Next.js icon.
 - **Removed:** `components/HeroBackground.js`, replaced by the new home hero
+
+## 12. Algorithms (BCA Project II)
+
+Four algorithms, written by hand with no ML library. Formulas, worked examples and all 56 unit test cases are in `nexora-backend/docs/ALGORITHMS.md`.
+
+| Algorithm | Where it shows | Backend |
+|---|---|---|
+| TF-IDF + cosine similarity | Product page, "Similar products" | `GET /api/v1/products/:id/similar` |
+| Apriori association rules | Product page, "Often bought with this" | `GET /api/v1/products/:id/bought-together` |
+| Exponential smoothing + reorder point | Dashboard, "Restock planner" (merchant: own products, admin: all) | `GET /api/v1/products/restock-forecast` |
+| Levenshtein distance | Shop search: close spellings and "Did you mean …?" when nothing matches exactly | `GET /api/v1/products` and `/count` |
+
+- **Algorithm code.** `nexora-backend/src/algorithms/` holds `tfidf.js`, `apriori.js`, `forecast.js` and `levenshtein.js`. They take plain arrays and never touch the database.
+- **Tests.** `nexora-backend/tests/` holds the unit tests. Run `npm test` in `nexora-backend`; all 56 pass.
+- **Demo data.**
+  - `node scripts/seed-demo-orders.js --yes` adds about 150 demo orders (`DEMO-` order numbers), and `--clean --yes` removes them.
+  - Use it on a demo or local database only.
+  - Without orders, "Often bought with this" stays hidden, and the planner shows every product as "No recent sales".
+- **New frontend files.**
+  - `components/BoughtTogether.js` is new.
+  - `components/SimilarProducts.js` now asks for TF-IDF matches first and falls back to the newest products in the category.
+  - The restock planner lives in `app/(client)/dashboard/page.js`.
+- **Similar products: same category first.** For "Samsung Galaxy S25", text similarity alone ranked the Samsung Galaxy Book laptop above every phone. Category names are on many products, so they carry little weight. Products in the viewed product's category now come first.
+- **Forecast copy.** The planner calls its figures estimates. It explains where demand comes from (the last 30 days of orders, cancelled ones excluded) and what the reorder quantity covers.
+- **Checks.**
+  - All checks ran against a scratch MongoDB and a scratch backend on :5155, with a frontend copy on :3100. Your dev servers on :3000 and :5000 and your database were not touched.
+  - Screenshots were taken of the product page, the shop's fuzzy notice on a phone, and the planner on desktop, phone and dark mode, for both admin and merchant.
+  - No page scrolls sideways.
+  - ESLint is clean on the changed files.

@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { getAllOrders, getMerchantOrders, getOrderStats } from "@/api/order";
 import { getUserStats } from "@/api/user";
-import { getTotalCount as getProductCount } from "@/api/product";
+import { getRestockForecast, getTotalCount as getProductCount } from "@/api/product";
 import { formatDate, formatNPR } from "@/utils/format";
 import { EASE_OUT, fadeUp, spring } from "@/utils/motion";
 import { useResource } from "@/hooks/useResource";
@@ -322,7 +322,7 @@ const Card = ({ title, eyebrow, action, delay, id, children }) => (
     aria-labelledby={id}
     className="min-w-0 rounded-4xl border border-hairline bg-panel p-4 sm:p-5"
   >
-    <div className="mb-3 flex items-end justify-between gap-3 px-1 sm:px-2">
+    <div className="mb-3 flex flex-wrap items-end justify-between gap-3 px-1 sm:px-2">
       <div>
         {eyebrow && <p className="eyebrow mb-1">{eyebrow}</p>}
         <h2 id={id} className="font-display text-lg font-bold tracking-tight text-ink">
@@ -335,12 +335,205 @@ const Card = ({ title, eyebrow, action, delay, id, children }) => (
   </motion.section>
 );
 
+/* ── Restock forecast: exponential smoothing over daily sales ──────────── */
+
+const LEAD_TIMES = [3, 7, 14];
+const FORECAST_PREVIEW = 6;
+const FORECAST_LIMIT = 100;
+
+// Status colour always ships with its icon and label.
+const RESTOCK_STATUS = {
+  out: { label: "Out of stock", icon: PackageX, tone: "bg-danger/10 text-danger" },
+  reorder: { label: "Reorder now", icon: AlertTriangle, tone: "bg-marigold-tint text-marigold-dim" },
+  ok: { label: "On track", icon: CheckCircle2, tone: "bg-ok/12 text-ok" },
+  idle: { label: "No recent sales", icon: Clock, tone: "bg-mist text-slate" },
+};
+
+const oneDecimal = (n) => (n > 0 && n < 0.1 ? "<0.1" : String(Math.round(n * 10) / 10));
+const daysLeft = (days) => (days == null ? "—" : days > 365 ? "365+" : oneDecimal(days));
+
+// Same columns for the header and every row, so the numbers line up.
+const FORECAST_GRID = "md:grid-cols-[minmax(0,2.4fr)_minmax(0,1.5fr)_repeat(4,minmax(0,1fr))]";
+
+// Labels show above each number on small screens; from md the header row
+// carries them and they stay for screen readers only.
+const Metric = ({ label, strong, children }) => (
+  <div className="min-w-0 md:text-right">
+    <span className="block text-[11px] text-slate md:sr-only">{label}</span>
+    <span className={`tabular-nums ${strong ? "font-semibold text-ink" : "text-ink"}`}>{children}</span>
+  </div>
+);
+
+const ForecastRow = ({ item }) => {
+  const cfg = RESTOCK_STATUS[item.status] ?? RESTOCK_STATUS.idle;
+  const Icon = cfg.icon;
+  // An "on track" product still has a long-run order size, but suggesting it
+  // now would be noise, so only the two urgent groups get a number.
+  const urgent = item.status === "out" || item.status === "reorder";
+
+  return (
+    <li
+      className={`grid grid-cols-2 gap-x-4 gap-y-2 rounded-2xl px-3 py-3 text-sm transition-colors hover:bg-mist sm:grid-cols-4 md:items-center ${FORECAST_GRID}`}
+    >
+      {/* One line with the badge on small screens; two columns from md. */}
+      <div className="col-span-2 flex items-start justify-between gap-3 sm:col-span-4 md:contents">
+        <div className="min-w-0">
+          <Link
+            href={`${PRODUCT_MANAGEMENT_ROUTE}?search=${encodeURIComponent(item.product.name)}`}
+            title={item.product.name}
+            className="block truncate font-medium text-ink hover:underline"
+          >
+            {item.product.name}
+          </Link>
+          <p className="truncate text-xs text-slate">{item.product.category}</p>
+        </div>
+        <span className={`badge shrink-0 md:justify-self-start ${cfg.tone}`}>
+          <Icon size={11} aria-hidden /> {cfg.label}
+        </span>
+      </div>
+      <Metric label="In stock">{item.product.stock}</Metric>
+      <Metric label="Sells / day">{oneDecimal(item.dailyDemand)}</Metric>
+      <Metric label="Days left">{daysLeft(item.daysUntilStockout)}</Metric>
+      <Metric label="Reorder qty" strong>
+        {urgent && item.reorderQuantity ? item.reorderQuantity : "—"}
+      </Metric>
+    </li>
+  );
+};
+
+const LeadTimePicker = ({ value, onChange }) => (
+  <div role="group" aria-label="Supplier lead time" className="inline-flex items-center gap-1 rounded-full bg-mist p-1 text-xs">
+    <span className="px-2 text-slate">Lead time</span>
+    {LEAD_TIMES.map((days) => (
+      <button
+        key={days}
+        type="button"
+        aria-pressed={value === days}
+        onClick={() => onChange(days)}
+        className={`rounded-full px-2.5 py-1 font-semibold transition-colors ${
+          value === days ? "bg-panel text-ink shadow-soft" : "text-slate hover:text-ink"
+        }`}
+      >
+        {days}d
+      </button>
+    ))}
+  </div>
+);
+
+const RestockForecast = ({ resource, onRetry }) => {
+  const [filter, setFilter] = useState(null);
+  const [expanded, setExpanded] = useState(false);
+  const data = resource.data;
+
+  if (resource.loading && !data) {
+    return (
+      <div className="space-y-2 px-1">
+        <div className="flex gap-2 px-2 pb-2">
+          {Object.keys(RESTOCK_STATUS).map((key) => (
+            <span key={key} className="skeleton h-8 w-28 rounded-full" />
+          ))}
+        </div>
+        {Array.from({ length: 4 }, (_, i) => (
+          <span key={i} className="skeleton block h-12 rounded-2xl" />
+        ))}
+      </div>
+    );
+  }
+  if (resource.error) return <SectionError message="Couldn't load the forecast." onRetry={onRetry} />;
+
+  const items = data?.items ?? [];
+  if (!items.length) {
+    return (
+      <p className="px-6 py-12 text-center text-sm text-slate">
+        Add products to see when each one is likely to run out.
+      </p>
+    );
+  }
+
+  const summary = data.summary;
+  const total = Object.values(summary).reduce((sum, n) => sum + n, 0);
+  const shown = filter ? items.filter((item) => item.status === filter) : items;
+  const visible = expanded ? shown : shown.slice(0, FORECAST_PREVIEW);
+
+  return (
+    <div className={staleClass(resource)}>
+      <div role="group" aria-label="Filter by forecast status" className="mb-4 flex flex-wrap gap-2 px-1 sm:px-2">
+        {Object.entries(RESTOCK_STATUS).map(([key, cfg]) => {
+          const Icon = cfg.icon;
+          const active = filter === key;
+          return (
+            <button
+              key={key}
+              type="button"
+              aria-pressed={active}
+              disabled={!summary[key] && !active}
+              onClick={() => setFilter(active ? null : key)}
+              className={`chip disabled:cursor-not-allowed disabled:opacity-50 ${active ? "chip-active" : ""}`}
+            >
+              <span className={`grid h-5 w-5 place-items-center rounded-full ${active ? "bg-paper/15" : cfg.tone}`}>
+                <Icon size={11} aria-hidden />
+              </span>
+              {cfg.label}
+              <span className="font-semibold">{summary[key]}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {summary.idle === total && (
+        <p className="mb-3 px-3 text-sm text-slate">
+          No orders in the last {data.windowDays} days, so there&apos;s no demand to forecast yet.
+        </p>
+      )}
+
+      <div
+        aria-hidden
+        className={`hidden gap-x-4 border-b border-hairline px-3 pb-2 text-[11px] font-medium uppercase tracking-wider text-slate md:grid ${FORECAST_GRID}`}
+      >
+        <span>Product</span>
+        <span>Status</span>
+        <span className="text-right">In stock</span>
+        <span className="text-right">Sells / day</span>
+        <span className="text-right">Days left</span>
+        <span className="text-right">Reorder qty</span>
+      </div>
+
+      {shown.length ? (
+        <ul className="divide-y divide-hairline md:divide-y-0">
+          {visible.map((item) => (
+            <ForecastRow key={item.product._id} item={item} />
+          ))}
+        </ul>
+      ) : (
+        <p className="px-3 py-8 text-center text-sm text-slate">Nothing in this group.</p>
+      )}
+
+      {shown.length > FORECAST_PREVIEW && (
+        <div className="mt-2 px-1">
+          <button type="button" onClick={() => setExpanded((e) => !e)} className="btn-ghost px-3 py-1.5 text-xs">
+            {expanded ? "Show fewer" : `Show all ${shown.length}`}
+          </button>
+        </div>
+      )}
+
+      <p className="mt-4 border-t border-hairline px-3 pt-3 text-xs leading-relaxed text-slate">
+        Estimates, not guarantees. Daily demand comes from the last {data.windowDays} days of orders
+        (cancelled ones excluded), smoothed with exponential smoothing. The reorder quantity covers the{" "}
+        {data.leadTimeDays}-day lead time plus {data.coverDays} days of sales, with safety stock for uneven
+        weeks.
+        {items.length < total && ` Showing the ${items.length} most urgent of ${total} products.`}
+      </p>
+    </div>
+  );
+};
+
 /* ── Page ──────────────────────────────────────────────────────────────── */
 
 const DashboardPage = () => {
   const { user } = useSelector((state) => state.auth);
   const isAdmin = Boolean(user?.roles?.includes(ROLE_ADMIN));
   const [version, setVersion] = useState(0);
+  const [leadTime, setLeadTime] = useState(7);
   const refresh = () => setVersion((v) => v + 1);
 
   // Every number below is scoped on the server: admins see the whole
@@ -369,10 +562,14 @@ const DashboardPage = () => {
     };
   });
 
+  const forecast = useResource(`restock|${scopeKey}|${leadTime}`, () =>
+    getRestockForecast({ leadTime, limit: FORECAST_LIMIT }),
+  );
+
   const stats = orderStats.data;
   const cat = catalog.data;
   const pending = stats?.byStatus?.[ORDER_STATUS_PENDING] ?? 0;
-  const busy = orderStats.loading || recent.loading || catalog.loading;
+  const busy = orderStats.loading || recent.loading || catalog.loading || forecast.loading;
 
   const tiles = [
     {
@@ -624,6 +821,18 @@ const DashboardPage = () => {
             )}
           </Card>
         </div>
+      </div>
+
+      <div className="mt-6">
+        <Card
+          id="restock-forecast-title"
+          eyebrow="Demand forecast"
+          title="Restock planner"
+          delay={0.4}
+          action={<LeadTimePicker value={leadTime} onChange={setLeadTime} />}
+        >
+          <RestockForecast resource={forecast} onRetry={refresh} />
+        </Card>
       </div>
     </div>
   );

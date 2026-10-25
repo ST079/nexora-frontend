@@ -36,3 +36,26 @@ export const getTotalCount = async (searchParams = {}) => {
   );
   return response.data;
 };
+
+// TF-IDF + cosine similarity on the backend; each product carries `similarity`.
+export const getSimilarProducts = async (id, limit = 4) => {
+  const response = await axios.get(
+    `${config.apiUrl}api/v1/products/${id}/similar?limit=${limit}`,
+  );
+  return response.data;
+};
+
+// Apriori rules from past orders; each product carries `orders` and `confidence`.
+export const getBoughtTogether = async (id, limit = 4) => {
+  const response = await axios.get(
+    `${config.apiUrl}api/v1/products/${id}/bought-together?limit=${limit}`,
+  );
+  return response.data;
+};
+
+// Exponential-smoothing forecast; merchants get their own products only.
+export const getRestockForecast = async (searchParams = {}) => {
+  const query = queryFormatter(await searchParams);
+  const response = await api.get(`api/v1/products/restock-forecast?${query}`);
+  return response.data;
+};

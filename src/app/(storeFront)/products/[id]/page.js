@@ -6,6 +6,7 @@ import ProductDetailClient from "@/components/ProductDetailClient";
 import { getProductById } from "@/api/product";
 import { PRODUCTS_ROUTE } from "@/constants/routes";
 import SimilarProducts from "@/components/SimilarProducts";
+import BoughtTogether from "@/components/BoughtTogether";
 import { productImage } from "@/utils/format";
 import { FALLBACK_IMG } from "@/constants/defaults";
 
@@ -108,6 +109,7 @@ const ProductDetailPage = async ({ params }) => {
       </nav>
 
       <ProductDetailClient product={product} />
+      <BoughtTogether productId={product._id} />
       <SimilarProducts category={product.category} currentProductId={product._id} />
     </section>
   );
